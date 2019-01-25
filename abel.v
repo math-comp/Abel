@@ -222,6 +222,7 @@ Proof. by rewrite -size_poly_eq0 size_poly_ex. Qed.
 
 (* Usually, this is done with Eisenstein's criterion, but I don't think it is *)
 (* already formalized in mathcomp                                             *)
+(***  By Cyril ?                                                            ***)
 Lemma irreducible_ex :
   irreducible_poly poly_example.
 Proof.
@@ -245,6 +246,7 @@ Proof. by rewrite size_poly_ex. Qed.
 
 (* Using the package real_closed, we should be able to monitor the sign of    *)
 (* the derivative, and find that the polynomial has exactly three real roots. *)
+(*** By Cyril ?                                                             ***)
 Lemma count_roots_ex :
   let rs := sval (closed_field_poly_normal ((map_poly ratr poly_example) : {poly algC})) in
   count (fun x => x \isn't Num.real) rs == 2.
