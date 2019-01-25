@@ -69,7 +69,7 @@ End Defs.
 Section Examples.
 
 
-Import GRing.Theory.
+Import GRing.Theory Num.Theory.
 
 Open Scope ring_scope.
 
@@ -162,6 +162,37 @@ move=> K_splitP; rewrite (AbelGalois K_splitP).
 have := (example1 K_splitP separable_ex irreducible_ex prime_ex count_roots_ex).
 by move/isog_sol => ->; apply: not_solvable_Sym; rewrite card_ord size_poly_ex.
 Qed.
+
+
+
+Inductive algformula : Type :=
+| Var of nat
+| Const of rat
+| Add of algformula & algformula
+| Opp of algformula
+| Mul of algformula & algformula
+| Inv of algformula
+| NRoot of nat & algformula.
+  
+Fixpoint alg_eval (f : algformula) (s : seq rat) : algC := 
+  match f with
+  | Var n => ratr (nth 0 s n)
+  | Const x => ratr x
+  | Add f1 f2 => (alg_eval f1 s) + (alg_eval f2 s)
+  | Opp f1 => - (alg_eval f1 s)
+  | Mul f1 f2 => (alg_eval f1 s) * (alg_eval f2 s)
+  | Inv f1 => (alg_eval f1 s)^-1
+  | NRoot n f1 => nthroot n (alg_eval f1 s)
+  end.
+
+(* I changed a little bit the statement your proposed as being solvable by    *)
+(* radicals can't be obtain from a formula for only one root.                 *)
+(* I also feel that giving both the coefficients of the polynomial and access *)
+(* to the rationals is redundant.                                             *)
+Lemma example_formula (P : {poly rat}) :
+  splittingFieldFor 1%AS (map_poly ratr poly_example) K ->
+  solvable_by_radicals 1%AS K (map_poly ratr P) <-> 
+  {in root (map_poly ratr P), forall x, exists f : algformula, alg_eval f P = x}.
 
 
 End Examples.
