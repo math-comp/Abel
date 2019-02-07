@@ -1,5 +1,5 @@
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra all_solvable.
-From mathcomp Require Import all_field.
+From mathcomp Require Import all_field finmap.
 From Abel Require Import Sn_solvable.
 
 (******************************************************************************)
@@ -26,23 +26,23 @@ Section Defs.
 
 Variables (F : fieldType) (L : splittingFieldType F).
 
-(* Giving the parameters m and x in the definition makes it a boolean         *)
+(* Giving the parameters n and x in the definition makes it a boolean         *)
 (* predicate which is useful as the tower property can be expressed as a path,*)
 (* but it feels quite ugly for a tower                                        *)
-Definition pure_extension (K E : {subfield L}) (x : L) (m : nat) :=
-  [&& m > 0, (x ^+ m)%R \in K & (<<K; x>>%VS == E)].
+Definition pure_extension (K E : {subfield L}) (x : L) (n : nat) :=
+  [&& n > 0, (x ^+ n)%R \in K & (<<K; x>>%VS == E)].
 
-Definition radical_tower (n : nat) (K : {subfield L})
-  (sE : n.-tuple {subfield L}) (sx : n.-tuple L) (sm : n.-tuple nat) :=
-  path (fun (U V : {subfield L} * (L * nat)) =>
-     (U.1 <= V.1)%VS && pure_extension U.1 V.1 V.2.1 V.2.2)
-     (K,(0%R,0)) [tuple (tnth sE i, (tnth sx i, tnth sm i)) | i < n].
+(* n acts as an upper bound for the degree of the pure extension              *)
+(* and sx as the set used to extend K                                         *)
+Definition radical_tower (K : {subfield L}) (sE : seq {subfield L}) (n : nat)
+  (A : {fset L}) :=
+  path (fun (U V : {subfield L}) =>
+    [exists x : A, [exists m : 'I_n, pure_extension U V (val x) m]]) K sE.
 
 (* Here, it feels really heavy with all the exists... *)
 Definition radical_extension (K E : {subfield L}) :=
-  exists2 n : nat, n > 0 & exists2 sE : n.-tuple {subfield L},
-  last K sE == E & exists sx : n.-tuple L, exists sm : n.-tuple nat,
-  radical_tower K sE sx sm.
+  exists2 n : nat, n > 0 & exists2 sE : seq {subfield L},
+  last K sE == E & exists A : {fset L}, radical_tower K sE n A.
 
 
 
