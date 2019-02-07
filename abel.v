@@ -32,7 +32,7 @@ Variables (F : fieldType) (L : splittingFieldType F).
 Definition pure_extension (K E : {subfield L}) (x : L) (m : nat) :=
   [&& m > 0, (x ^+ m)%R \in K & (<<K; x>>%VS == E)].
 
-Definition radical_tower (n : nat) (K : {subfield L}) 
+Definition radical_tower (n : nat) (K : {subfield L})
   (sE : n.-tuple {subfield L}) (sx : n.-tuple L) (sm : n.-tuple nat) :=
   path (fun (U V : {subfield L} * (L * nat)) =>
      (U.1 <= V.1)%VS && pure_extension U.1 V.1 V.2.1 V.2.2)
@@ -51,7 +51,7 @@ Definition radical_extension (K E : {subfield L}) :=
 
 Definition solvable_by_radicals (k K : {subfield L}) (p : {poly L}) :=
   splittingFieldFor k p K ->
-  exists2 E : {subfield L}, radical_extension k E & (K <= E)%VS. 
+  exists2 E : {subfield L}, radical_extension k E & (K <= E)%VS.
 
 Lemma AbelGalois (k : {subfield L}) (K : {subfield L}) (p : {poly L}) :
   splittingFieldFor k p K ->
@@ -97,7 +97,7 @@ Admitted.
 
 
 (* This lemma should be divided into smaller parts                            *)
-Definition pre_gal_perm (g : gal_of K) (i : 'I_p) : 'I_p.  
+Definition pre_gal_perm (g : gal_of K) (i : 'I_p) : 'I_p.
 Admitted.
 
 Lemma gal_perm_is_perm (g : gal_of K) : injectiveb (finfun (pre_gal_perm g)).
@@ -112,7 +112,7 @@ Lemma injective_gal_perm : injective gal_perm.
 Proof.
 Admitted.
 
-Lemma gal_perm_is_morphism :  
+Lemma gal_perm_is_morphism :
   {in ('Gal(K / 1%AS))%G &, {morph gal_perm : x y / (x * y)%g >-> (x * y)%g}}.
 Proof.
 Admitted.
@@ -179,12 +179,12 @@ End Example1.
 (* Let P be an irreducible polynomial with rational coefficients, separable   *)
 (* and of degree p prime. If P has precisely two nonreal roots in the complex *)
 (* numbers, then the Galois group of P is Sp                                  *)
-Lemma example1 (P : {poly rat}) :
-  splittingFieldFor 1%AS (map_poly ratr P) K -> 
+Lemma example1 (P : {poly rat}) (C : numClosedFieldType) :
+  splittingFieldFor 1%AS (map_poly ratr P) K ->
   separable_poly P ->
   irreducible_poly P ->
   let p := (size P).-1 in prime p ->
-  let rs := sval (closed_field_poly_normal ((map_poly ratr P) : {poly algC})) in
+  let rs := sval (closed_field_poly_normal ((map_poly ratr P) : {poly C})) in
   count (fun x => x \isn't Num.real) rs == 2 ->
   'Gal (K / 1%AS) \isog ('Sym_('I_p)).
 Proof.
@@ -199,38 +199,26 @@ Proof.
 (* See Section Example1 just above for a first draft of the steps             *)
 Admitted.
 
+Definition poly_example : {poly rat} := 'X^5 - 4%:R *: 'X + 2%:R%:P.
 
-
-
-Definition poly_example : {poly rat} :=
-  'X^5 - 4%:R *: 'X + 2%:R%:P.
-
-
-Lemma size_poly_ex :
-  (size poly_example) = 6.
+Lemma size_poly_ex : size poly_example = 6.
 Proof.
-have size_X5 : size ('X^5 : {poly rat}) = 6 by rewrite size_polyXn.
-have size_X4 : size ('X^5 - 4%:R *: 'X : {poly rat}) = 6.
-  by rewrite size_addl ?size_X5 ?size_opp ?size_scale ?size_polyX.
-by rewrite size_addl ?size_X4 ?size_polyC.
+rewrite /poly_example -addrA size_addl ?size_polyXn//.
+by rewrite size_addl ?size_opp ?size_scale ?size_polyX ?size_polyC.
 Qed.
 
-Lemma poly_example_neq0 :
-  poly_example != 0.
+Lemma poly_example_neq0 : poly_example != 0.
 Proof. by rewrite -size_poly_eq0 size_poly_ex. Qed.
-
 
 (* Usually, this is done with Eisenstein's criterion, but I don't think it is *)
 (* already formalized in mathcomp                                             *)
 (***  By Cyril ?                                                            ***)
-Lemma irreducible_ex :
-  irreducible_poly poly_example.
+Lemma irreducible_ex : irreducible_poly poly_example.
 Proof.
 Admitted.
 
 
-Lemma separable_ex : 
-  separable_poly poly_example.
+Lemma separable_ex : separable_poly poly_example.
 Proof.
 apply/coprimepP => d /(irredp_XsubCP irreducible_ex) [//| eqd].
 have size_deriv_ex : size poly_example^`() = 5.
@@ -239,9 +227,7 @@ have size_deriv_ex : size poly_example^`() = 5.
 by rewrite gtNdvdp -?size_poly_eq0 ?size_deriv_ex ?(eqp_size eqd) ?size_poly_ex.
 Qed.
 
-
-Lemma prime_ex :
-  prime (size poly_example).-1.
+Lemma prime_ex : prime (size poly_example).-1.
 Proof. by rewrite size_poly_ex. Qed.
 
 (* Using the package real_closed, we should be able to monitor the sign of    *)
@@ -259,43 +245,39 @@ Lemma example_not_solvable_by_radicals :
   splittingFieldFor 1%AS (map_poly ratr poly_example) K ->
   ~ solvable_by_radicals 1%AS K (map_poly ratr poly_example).
 Proof.
-move=> K_splitP; rewrite (AbelGalois K_splitP). 
+move=> K_splitP; rewrite (AbelGalois K_splitP).
 have := (example1 K_splitP separable_ex irreducible_ex prime_ex count_roots_ex).
 by move/isog_sol => ->; apply: not_solvable_Sym; rewrite card_ord size_poly_ex.
 Qed.
 
 
-
 Inductive algformula : Type :=
-| Var of nat
 | Const of rat
 | Add of algformula & algformula
 | Opp of algformula
 | Mul of algformula & algformula
 | Inv of algformula
 | NRoot of nat & algformula.
-  
-Fixpoint alg_eval (f : algformula) (s : seq rat) : algC := 
+
+Fixpoint alg_eval (f : algformula) : algC :=
   match f with
-  | Var n => ratr (nth 0 s n)
   | Const x => ratr x
-  | Add f1 f2 => (alg_eval f1 s) + (alg_eval f2 s)
-  | Opp f1 => - (alg_eval f1 s)
-  | Mul f1 f2 => (alg_eval f1 s) * (alg_eval f2 s)
-  | Inv f1 => (alg_eval f1 s)^-1
-  | NRoot n f1 => nthroot n (alg_eval f1 s)
+  | Add f1 f2 => (alg_eval f1) + (alg_eval f2)
+  | Opp f1 => - (alg_eval f1)
+  | Mul f1 f2 => (alg_eval f1) * (alg_eval f2)
+  | Inv f1 => (alg_eval f1)^-1
+  | NRoot n f1 => nthroot n (alg_eval f1)
   end.
 
 (* I changed a little bit the statement your proposed as being solvable by    *)
 (* radicals can't be obtain from a formula for only one root.                 *)
 (* I also feel that giving both the coefficients of the polynomial and access *)
 (* to the rationals is redundant.                                             *)
-Lemma example_formula (P : {poly rat}) :
+Lemma example_formula (p : {poly rat}) :
   splittingFieldFor 1%AS (map_poly ratr poly_example) K ->
-  solvable_by_radicals 1%AS K (map_poly ratr P) <-> 
-  {in root (map_poly ratr P), forall x, exists f : algformula, alg_eval f P = x}.
+  solvable_by_radicals 1%AS K (map_poly ratr p) <->
+  {in root (map_poly ratr p), forall x, exists f : algformula, alg_eval f = x}.
 Proof.
 Admitted.
-
 
 End Examples.
