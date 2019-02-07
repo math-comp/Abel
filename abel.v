@@ -294,6 +294,8 @@ Lemma example_formula (P : {poly rat}) :
   splittingFieldFor 1%AS (map_poly ratr poly_example) K ->
   solvable_by_radicals 1%AS K (map_poly ratr P) <-> 
   {in root (map_poly ratr P), forall x, exists f : algformula, alg_eval f P = x}.
+Proof.
+Admitted.
 
 
 End Examples.
