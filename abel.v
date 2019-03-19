@@ -39,11 +39,9 @@ Definition radical_tower (K : {subfield L}) (sE : seq {subfield L}) (n : nat)
   path (fun (U V : {subfield L}) =>
     [exists x : A, [exists m : 'I_n, pure_extension U V (val x) m]]) K sE.
 
-(* Here, it feels really heavy with all the exists... *)
 Definition radical_extension (K E : {subfield L}) :=
   exists2 n : nat, n > 0 & exists2 sE : seq {subfield L},
   last K sE == E & exists A : {fset L}, radical_tower K sE n A.
-
 
 
 (* Can we have a direct definition for 'the splitting field of a polynomial'  *)
@@ -53,17 +51,92 @@ Definition solvable_by_radicals (k K : {subfield L}) (p : {poly L}) :=
   splittingFieldFor k p K ->
   exists2 E : {subfield L}, radical_extension k E & (K <= E)%VS.
 
+
+
+End Defs.
+
+Section Abel.
+
+Variables (F : fieldType) (L : splittingFieldType F).
+
+(* Following the french wikipedia proof :
+https://fr.wikipedia.org/wiki/Th%C3%A9or%C3%A8me_d%27Abel_(alg%C3%A8bre)#D%C3%A9monstration_du_th%C3%A9or%C3%A8me_de_Galois
+*)
+
+Section Part1.
+
+(* Let K be a finite extension of k with degre n. *)
+(* Let G = Gal(K/k). *)
+(* - then the order of G is n *)
+
+
+(* Part 1a : *)
+(* If : *)
+(* - G is abelian *)
+(* - k contains the n-th roots of the unity *)
+(* We want to prove that there exists a basis of K (as a k-vectoriel space) *)
+(* which only has radical elements on k *)
+(* Proof : *)
+(* X^n - 1 splits on k in linear terms and it is separable *)
+(* - with Lagrange, each element of G is canceled by X^n - 1 *)
+(* - each element of G is diagonalizable *)
+(* - the elements of G commutes because G is abelian *)
+(* - the elements of G are simultaneously diagonalizable *)
+(* - their eigenvalues are n-th root of the unity because their minimal *) 
+(*   polynomial divides X^n - 1 *)
+(* - let (r1, ..., rn) be their common basis *)
+(* - we use the fact :  ri^n is unchanged by any m of G => ri^n is in k *)
+(*   - let lambda be the eigenvalue which corresponds to m and ri *)
+(*   - then m(ri^n) = (m(ri))^n (m automorphism) *)
+(*   - m(ri) = lambda ri (lambda eigenvalue) *)
+(*   - lambda^n ri^n = ri^n (lambda is an n-th root of the unity) *)
+(*   - ri^n is unchanged by m *)
+(*   - then ri^n is in k *)
+(* - ri is a radical element on k *)
+(* We can also add that K is solvable by radicals on k *)
+
+(* Part 1b : *)
+(* If : *)
+(* - G is solvable *)
+(* - k contains the n-th roots of the unity *)
+(* We want to prove that K is solvable by radicals *)
+(* We proceed by recurrence on the length of the solvability chain of G *)
+(* ({e} = G0 <| G1 <| ...<| Gi = G *)
+(* - if i = 0, G is trivial, and K = k *)
+(* - if i >= 0, let ki = K^Gi *)
+(* - by Galois, K/ki and ki/k are Galois extension *)
+(* - by recurrence, K is solvable by radicals on ki (the chain has length i-1)*)
+(* - G = Gi x| G/Gi *)
+(* - G/Gi is abelian thus ki is solvable by radicals on k (using Part1a) *)
+(* - by transitivity, K is solvable by radicals on k *)
+
+(* Part 1c : *)
+(* If : *)
+(* - G is solvable *)
+(* We want to prove that K is solvable by radicals on k *)
+(* - Let k' = k(dzeta) where dzeta is an n-th root of the unity *)
+(* - k' is solvable by radicals on k *)
+(* - k' is a splitting field for X^n - 1 ***)
+(* - k/k' is then Galois *)
+(* - Let K' = k'K *)
+(* - K' is Galois over k' *)
+(* - Gal(K'/k') is isomorphic to a subgroup of G *)
+(* - Gal(K'/k') is thus solvable *)
+(* - K' is solvable by radicals on k' (Part1b) *)
+(* - K' is solvable by radicals on k (transitivity) *)
+(* - K <= K' so K is solvable by radicals *)
+	
+End Part1.
+
+
+
 Lemma AbelGalois (k : {subfield L}) (K : {subfield L}) (p : {poly L}) :
   splittingFieldFor k p K ->
   solvable_by_radicals k K p <-> solvable ('Gal (K / k)).
 Proof.
 Admitted.
 
-
-End Defs.
-
-
-
+End Abel.
 
 
 Section Examples.
