@@ -128,7 +128,53 @@ Section Part1.
 	
 End Part1.
 
+Section Part2.
 
+(* Let p be a polynomial *)
+(* Let K be a splitting field of p over k *)
+(* p is solvable by radicals *)
+(* - there exists a sequence x1,.., xn such that K is included in k(x1,..,xn) *)
+(*   and a sequence of natural numbers m1,..,mn such that xi^mi is in *)
+(*   k(x1,..xi-1) *)
+(* - wlog all the mi are prime numbers (we can add intermediate fields) *)
+(* - we can also add a m0 = (m1*..*mn)-th root of the unity at the beginning *)
+(* - we proceed by recurrence on n, by proving that each extension K(x0,..,xn)*)
+(*   of K is Galois and its Galois group is solvable. *)
+(* - by Galois, K(x0,..,xn) is Galois over K *)
+(* - Gal(K/k) = Gal(k(x0,..,xn)/k) / Gal(K(x0,..,xn)/K) *)
+(* - then, Gal(K/k) is also solvable (quotient_sol) *)
+
+(* Part 2a : *)
+(* If : *)
+(* - K contains the p-th root of the unity, where p is prime *)
+(* - let x be a p-th root of an element of K *)
+(* We want to prove that K(x) is Galois and abelian *)
+(* - K(x) is the splitting field of X^p - x^p *)
+(* - K(x) is thus Galois *)
+(* - the roots of X^p - x^p are the x * a p-th root of the unity *)
+(* - Every automorphism of K(x) which fixes K send x on one of the p roots of *)
+(*   X^p - x^p *)
+(* - Gal(K(x) / K) has order p *)
+(* - Gal(K(x) / K) is cyclic *)
+(* - Gal(K(x) / K) is abelian *)
+
+(* Part 2b : *)
+(* - Let Fi = K(x0,..,xi) and Gi = Gal(Fi / K) *)
+(* - By recurrence *)
+(*   - i = 0 : *)
+(*     - F0 is cyclotomic *)
+(*     - F0 is Galois and G0 is abelian (part2a) *)
+(*     - G0 is then solvable *)
+(*   - i >= 0 : *)
+(*     - we suppose that Fi is Galois and solvable *)
+(*     - Fi+1 / Fi is Galois and its Galois group H is abelian (part2a) *)
+(*     - Fi+1 / K is Galois *)
+(*     - Gi+1 = Gi x| H *)
+(*     - Gi+1 is solvable *)
+(* - K(x0,..,xn) is solvable *)
+
+
+End Part2.
 
 Lemma AbelGalois (k : {subfield L}) (K : {subfield L}) (p : {poly L}) :
   splittingFieldFor k p K ->
