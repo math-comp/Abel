@@ -44,9 +44,6 @@ Definition radical_extension (K E : {subfield L}) :=
   last K sE == E & exists A : {fset L}, radical_tower K sE n A.
 
 
-(* Can we have a direct definition for 'the splitting field of a polynomial'  *)
-(* which is a {subfield L} ? But L must then be big enough                    *)
-
 Definition solvable_by_radicals (k K : {subfield L}) (p : {poly L}) :=
   splittingFieldFor k p K ->
   exists2 E : {subfield L}, radical_extension k E & (K <= E)%VS.
@@ -69,11 +66,26 @@ Section Part1.
 (* Let G = Gal(K/k). *)
 (* - then the order of G is n *)
 
+Section Part1a.
+
+(* common context *)
+Variables (k K : {subfield L}) (P : {poly L}).
+Hypothesis P_split : splittingFieldFor k P K.
+Hypothesis k_sub_K : (k <= K)%VS.
+Local Notation G := ('Gal(K / k)%g).
+Local Notation n := (\dim_k K).
+
 
 (* Part 1a : *)
 (* If : *)
 (* - G is abelian *)
 (* - k contains the n-th roots of the unity *)
+Variable (r : L).
+Hypothesis abelian_G : abelian G.
+Hypothesis r_nth_root : (n.-primitive_root r)%R.
+Hypothesis r_in_k : r \in k.
+
+
 (* We want to prove that there exists a basis of K (as a k-vectoriel space) *)
 (* which only has radical elements on k *)
 (* Proof : *)
@@ -95,10 +107,31 @@ Section Part1.
 (* - ri is a radical element on k *)
 (* We can also add that K is solvable by radicals on k *)
 
+Lemma part1a : radical_extension k K.
+Proof.
+Admitted.
+
+End Part1a.
+
+Section Part1b.
+
+(* common context *)
+Variables (k K : {subfield L}) (P : {poly L}).
+Hypothesis P_split : splittingFieldFor k P K.
+Hypothesis k_sub_K : (k <= K)%VS.
+Local Notation G := ('Gal(K / k)%g).
+Local Notation n := (\dim_k K).
+
 (* Part 1b : *)
 (* If : *)
 (* - G is solvable *)
 (* - k contains the n-th roots of the unity *)
+Hypothesis solvable_G : solvable G.
+Variable (r : L).
+Hypothesis r_nth_root : (n.-primitive_root r)%R.
+Hypothesis r_in_k : r \in k.
+
+
 (* We want to prove that K is solvable by radicals *)
 (* We proceed by recurrence on the length of the solvability chain of G *)
 (* ({e} = G0 <| G1 <| ...<| Gi = G *)
@@ -110,9 +143,28 @@ Section Part1.
 (* - G/Gi is abelian thus ki is solvable by radicals on k (using Part1a) *)
 (* - by transitivity, K is solvable by radicals on k *)
 
+Lemma part1b : radical_extension k K.
+Proof.
+Admitted.
+
+End Part1b.
+
+Section Part1c.
+
+(* common context *)
+Variables (k K : {subfield L}) (P : {poly L}).
+Hypothesis P_split : splittingFieldFor k P K.
+Hypothesis k_sub_K : (k <= K)%VS.
+Local Notation G := ('Gal(K / k)%g).
+Local Notation n := (\dim_k K).
+
 (* Part 1c : *)
 (* If : *)
 (* - G is solvable *)
+Hypothesis solvable_G : solvable G.
+Variable (r : L).
+Hypothesis r_nth_root : (n.-primitive_root r)%R.
+
 (* We want to prove that K is solvable by radicals on k *)
 (* - Let k' = k(dzeta) where dzeta is an n-th root of the unity *)
 (* - k' is solvable by radicals on k *)
@@ -125,29 +177,60 @@ Section Part1.
 (* - K' is solvable by radicals on k' (Part1b) *)
 (* - K' is solvable by radicals on k (transitivity) *)
 (* - K <= K' so K is solvable by radicals *)
-	
+
+Lemma part1c : solvable_by_radicals k K P.
+Proof.	
+Admitted.
+
+End Part1c.
+
+(* Main lemma of part 1 *)
+(* there is the problem of the nth-root which must be present in the big field L
+to resolve here, but here is a first suggestion *)
+Lemma part1 (k K : {subfield L}) (p : {poly L}) :
+  let n := (\dim_k K) in
+  exists r : L, (n.-primitive_root r)%R ->
+  splittingFieldFor k p K -> solvable 'Gal(K / k) -> solvable_by_radicals k K p.
+Proof.
+Admitted.
+
 End Part1.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Section Part2.
 
-(* Let p be a polynomial *)
-(* Let K be a splitting field of p over k *)
-(* p is solvable by radicals *)
-(* - there exists a sequence x1,.., xn such that K is included in k(x1,..,xn) *)
-(*   and a sequence of natural numbers m1,..,mn such that xi^mi is in *)
-(*   k(x1,..xi-1) *)
-(* - wlog all the mi are prime numbers (we can add intermediate fields) *)
-(* - we can also add a m0 = (m1*..*mn)-th root of the unity at the beginning *)
-(* - we proceed by recurrence on n, by proving that each extension K(x0,..,xn)*)
-(*   of K is Galois and its Galois group is solvable. *)
-(* - by Galois, K(x0,..,xn) is Galois over K *)
-(* - Gal(K/k) = Gal(k(x0,..,xn)/k) / Gal(K(x0,..,xn)/K) *)
-(* - then, Gal(K/k) is also solvable (quotient_sol) *)
+Section IntermediateLemmas.
 
 (* Part 2a : *)
 (* If : *)
 (* - K contains the p-th root of the unity, where p is prime *)
 (* - let x be a p-th root of an element of K *)
+Variables (K : {subfield L}) (p : nat) (x : L) (r : L).
+Hypothesis prime_p : prime p.
+Hypothesis r_pth_root : (p.-primitive_root r)%R.
+Hypothesis x_notin_K : x \notin K.
+Hypothesis xp_in_K : (x ^+ p)%R \in K.
+Local Notation Kx := (<<K; x>>%VS).
+Local Notation G := (('Gal(Kx / K))%g).
+
+
 (* We want to prove that K(x) is Galois and abelian *)
 (* - K(x) is the splitting field of X^p - x^p *)
 (* - K(x) is thus Galois *)
@@ -158,31 +241,225 @@ Section Part2.
 (* - Gal(K(x) / K) is cyclic *)
 (* - Gal(K(x) / K) is abelian *)
 
-(* Part 2b : *)
+Lemma radical_extension_roots (i : 'I_p) : root ('X^p - x%:P) ((x * r) ^+ i)%R.
+Proof.
+Admitted.
+
+(* using a decomposition of minPoly in linear terms : its constant coefficient*)
+(* is a power of x, and in K : it can only be at power p, hence its size *)
+Lemma radical_extension_size_minPoly : size (minPoly K x) = p.+1.
+Proof.
+Admitted.
+
+Lemma radical_extension_minPoly : minPoly K x = ('X^p + (x ^+ p)%:P)%R.
+Proof.
+Admitted.
+
+(* using separable (separable_Fadjoin_seq & charf0_separable) *)
+(* and probably normalFieldP *)
+Lemma radical_extension_galois : galois K Kx.
+Proof.
+Admitted.
+
+(* using galois_dim and radical_extension_minPoly *)
+Lemma radical_extension_order_group : #|G| = p.
+Proof.
+Admitted.
+
+(* using prime_cyclic & cyclic_abelian *) 
+Lemma radical_extension_abelian : abelian G.
+Proof.
+Admitted.
+
+(* in the recurrence : *)
 (* - Let Fi = K(x0,..,xi) and Gi = Gal(Fi / K) *)
-(* - By recurrence *)
-(*   - i = 0 : *)
-(*     - F0 is cyclotomic *)
-(*     - F0 is Galois and G0 is abelian (part2a) *)
-(*     - G0 is then solvable *)
 (*   - i >= 0 : *)
 (*     - we suppose that Fi is Galois and solvable *)
 (*     - Fi+1 / Fi is Galois and its Galois group H is abelian (part2a) *)
 (*     - Fi+1 / K is Galois *)
 (*     - Gi+1 = Gi x| H *)
 (*     - Gi+1 is solvable *)
-(* - K(x0,..,xn) is solvable *)
 
+(* transitivity of galois (of normal & separable) *)
+Lemma recurrence_step_galois (k : {subfield L}) :
+  r \in k -> galois k K -> galois k (<<K; x>>%VS).
+Proof.
+Admitted.
+
+(* return to the definition of solvable / transitivity *)
+Lemma recurrence_step_solvable (k : {subfield L}) :
+  r \in k -> galois k K -> solvable 'Gal(K / k) -> 
+    solvable 'Gal(<<K; x>>%VS / k).
+Proof.
+Admitted.
+
+End IntermediateLemmas.
+
+
+Local Notation pure_extension_prime K E x n := 
+  (pure_extension K E x n && prime n).
+Local Notation radical_tower_prime K sE n A :=
+  (path (fun (U V : {subfield L}) => [exists x : A, 
+  [exists m : 'I_n, pure_extension_prime U V (val x) m]]) K sE).
+Local Notation radical_extension_prime K E :=
+  (exists2 n : nat, n > 0 & exists2 sE : seq {subfield L},
+  last K sE == E & exists A : {fset L}, radical_tower_prime K sE n A).
+
+
+(* Let p be a polynomial *)
+(* Let K be a splitting field of p over k *)
+(* p is solvable by radicals *)
+(* - there exists a sequence x1,.., xn such that K is included in k(x1,..,xn) *)
+(*   and a sequence of natural numbers m1,..,mn such that xi^mi is in *)
+(*   k(x1,..xi-1) *)
+(* - wlog all the mi are prime numbers (we can add intermediate fields) *)
+Lemma radical_extension_primeP K E :
+  radical_extension_prime K E <-> radical_extension K E.
+Proof.
+Admitted.
+
+(* Exposing the list of exponents, and elements *)
+Lemma solvable_by_radicals_primeP k K p :
+  solvable_by_radicals k K p <-> (splittingFieldFor k p K ->
+  exists n : nat, exists tn : nat ^ n, exists2 tx : L ^ n,
+  (K <= <<k & (val tx)>>)%VS & [forall i : 'I_n, pure_extension_prime 
+  <<k & (take i (val tx))>>%AS <<k & (take i.+1 (val tx))>>%AS (tx i) (tn i)]).
+Proof.
+Admitted.  
+
+Section MainPart.
+
+(* Let p be a polynomial *)
+(* Let K be a splitting field of p over k *)
+(* p is solvable by radicals *)
+Variables (K k : {subfield L}) (P : {poly L}) (n : nat).
+Variables (tn : nat ^ n) (tx : L ^ n) (r : L).
+Hypothesis K_split : splittingFieldFor k P K.
+Hypothesis p_solvable : solvable_by_radicals k K P.
+
+(* - we can also add a m0 = (m1*..*mn)-th root of the unity at the beginning *)
+Local Notation m := (\prod_(i < n) tn i).
+Hypothesis r_pth_root : (m.-primitive_root r)%R.
+
+(* in the recurrence : *)
+(* - Let Fi = K(x0,..,xi) and Gi = Gal(Fi / K) *)
+(*   - i = 0 : *)
+(*     - F0 is cyclotomic *)
+(*     - F0 is Galois and G0 is abelian *)
+(*     - G0 is then solvable *)
+
+(* cyclotomic extension *)
+
+(* minPoly %| cyclotomic, then same arguments as in radical_extension_minPoly *)
+Lemma cyclotomic_minPoly : minPoly k r = cyclotomic r m.
+Proof.
+Admitted.
+
+
+(* using separable (separable_Fadjoin_seq & charf0_separable) *)
+(* and probably normalFieldP *)
+(* same as radical_extension_galois *)
+Lemma galois_cyclotomic : galois k <<k; r>>%VS.
+Proof.
+Admitted.
+
+(* using the definition, gal_adjoin_eq and prim_rootP *)
+Lemma abelian_cyclotomic : abelian 'Gal(<<k; r>>%VS / k)%g.
+Proof.
+rewrite card_classes_abelian /classes.
+apply/eqP; apply: card_in_imset => f g f_in g_in; rewrite -!orbitJ.
+move/orbit_eqP/orbitP => [] h h_in <- {f f_in}; apply/eqP.
+rewrite gal_adjoin_eq //= /conjg /= ?groupM ?groupV //.
+rewrite ?galM ?memv_gal ?memv_adjoin //.
+have hg_gal f : f \in 'Gal(<<k; r>>%VS / k)%g -> ((f r) ^+ m = 1)%R.
+  move=> f_in; apply/prim_expr_order.
+  have /and3P[subF _ NF] := galois_cyclotomic.
+  rewrite  -(root_cyclotomic r_pth_root) -cyclotomic_minPoly.
+  rewrite root_minPoly_gal // ?subF ?subvv ?memv_adjoin //.
+have := svalP (prim_rootP r_pth_root (hg_gal _ g_in)); set ig := sval _ => hg.
+have h1_in : (h^-1)%g \in 'Gal(<<k; r>>%VS / k)%g by rewrite ?groupV.
+have := svalP (prim_rootP r_pth_root (hg_gal _ h1_in)); set ih1 := sval _ => hh1.
+rewrite hh1 GRing.rmorphX /= hg GRing.exprAC -hh1 GRing.rmorphX /=.
+by rewrite -galM ?memv_adjoin // mulVg gal_id.
+Qed.
+
+
+(* direct *)
+Lemma solvable_nth_root : solvable 'Gal(<<k; r>>%VS / k).
+Proof.
+Admitted.
+
+Local Notation ki i := <<<<k; r>> & (take i (val tx))>>%VS. 
+Local Notation Gi i := ('Gal(ki i / k))%g.
+
+
+(* - we proceed by recurrence on n, by proving that each extension k(x0,..,xn)*)
+(*   of k is Galois and its Galois group is solvable. *)
+(* - by Galois, k(x0,..,xn) is Galois over k (recurrence step) *)
+(* using the cyclotomic extension for the initial step *)
+(* using recurrence_step_galois and recurrence_step_solvable for the step *)
+Lemma whole_recurrence : galois k (ki n) && solvable (Gi n).
+Proof.
+Admitted.
+
+(* - Gal(K/k) = Gal(k(x0,..,xn)/k) / Gal(k(x0,..,xn)/K) *)
+(* - then, Gal(K/k) is also solvable (quotient_sol) *)
+Lemma solvable_Gal_Kk : solvable 'Gal(K / k).
+Proof.
+Admitted.
+
+End MainPart.
+
+(* Main lemma of part 2 *)
+(* there is still the problem of the nth-root... but I don't know how to resolve it
+here, as I don't see how we can explicitly get an upper_bound (which would be
+enough) for the value of n *)
+(* a solution would be to explicitly give an upper bound in solvable_by_radicals *)
+Lemma part2 (k K : {subfield L}) (p : {poly L}) :
+  splittingFieldFor k p K -> solvable_by_radicals k K p -> solvable 'Gal(K / k).
+Proof.
+Admitted.
 
 End Part2.
 
-Lemma AbelGalois (k : {subfield L}) (K : {subfield L}) (p : {poly L}) :
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Lemma AbelGalois (k K : {subfield L}) (p : {poly L}) :
   splittingFieldFor k p K ->
-  solvable_by_radicals k K p <-> solvable ('Gal (K / k)).
+  solvable_by_radicals k K p <-> solvable 'Gal (K / k).
 Proof.
 Admitted.
 
 End Abel.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 Section Examples.
