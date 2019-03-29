@@ -4,15 +4,18 @@ From Abel Require Import Sn_solvable.
 
 (******************************************************************************)
 (*                                                                            *)
-(*  Definitions for the statement ?                                           *)
-(*    pure extension                                                          *)
-(*    radical tower                                                           *)
-(*    radical extension                                                       *)
-(*    solvable by radicals                                                    *)
-(*    Galois group of a polynomial ?                                          *)
-(*                                                                            *)
-(*  Additional lemmas ?                                                       *)
-(*    Eisenstein criterion                                                    *)
+(* radical n x U V := V is a pure radical extension of U, by element x, with  *)
+(*                    degree n                                                *)
+(* r.-tower n A U sU := U :: sU is a tower of extensions, and for each        *)
+(*                      extension, there exists an x in A, and an m <= n such *)
+(*                      that r m x                                            *)
+(* r.-ext U V := there exists a n, an A and a tower of extension which ends   *)
+(*               exactly on V, which is an r.-tower n A                       *)
+(* solvable_by r E F := E <= F and there exists a field K such that F <= K    *)
+(*                      and K is an extension which respects r (r.-ext E K)   *)
+(* solvable_by_radicals_poly E F p := if F is a splitting field of p on E     *)
+(*                                    then F is solvable_by radicals on E     *)
+(* pradical n x U V := prime n && radical n x U V                             *)
 (*                                                                            *)
 (******************************************************************************)
 
@@ -20,94 +23,270 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Open Scope ring_scope.
+
+Section RadicalExtension.
+
+Variables (F0 : fieldType) (L : splittingFieldType F0).
 
 Section Defs.
 
-
-Variables (F : fieldType) (L : splittingFieldType F).
-
 (* Giving the parameters n and x in the definition makes it a boolean         *)
 (* predicate which is useful as the tower property can be expressed as a path,*)
-(* but it feels quite ugly for a tower                                        *)
-Definition pure_extension (K E : {subfield L}) (x : L) (n : nat) :=
-  [&& n > 0, (x ^+ n)%R \in K & (<<K; x>>%VS == E)].
+Definition radical (n : nat) (x : L) (U V : {vspace L}) :=
+  [&& (n > 0)%N, x ^+ n \in U & (<<U; x>>%VS == V)].
 
 (* n acts as an upper bound for the degree of the pure extension              *)
-(* and sx as the set used to extend K                                         *)
-Definition radical_tower (K : {subfield L}) (sE : seq {subfield L}) (n : nat)
-  (A : {fset L}) :=
-  path (fun (U V : {subfield L}) =>
-    [exists x : A, [exists m : 'I_n, pure_extension U V (val x) m]]) K sE.
+(* and A as the set used to extend U                                          *)
+Definition tower (r : nat -> L -> rel {vspace L}) (n : nat) (A : {fset L}) :=
+  path (fun U V => [exists x : A, [exists m : 'I_n, r m (val x) U V]]).
 
-Definition radical_extension (K E : {subfield L}) :=
-  exists2 n : nat, n > 0 & exists2 sE : seq {subfield L},
-  last K sE == E & exists A : {fset L}, radical_tower K sE n A.
+Local Notation "r .-tower" := (tower r)
+  (at level 2, format "r .-tower") : ring_scope.
 
+(* the quantification on n is useless as we directly have an upper bound      *)
+Definition extension_pred (r : nat -> L -> rel {vspace L}) (U V : {vspace L}) :=
+  exists2 sU : seq {vspace L}, exists A : {fset L}, 
+  r.-tower (\dim_U V) A U sU & last U sU = V.
 
-Definition solvable_by_radicals (k K : {subfield L}) (p : {poly L}) :=
-  splittingFieldFor k p K ->
-  exists2 E : {subfield L}, radical_extension k E & (K <= E)%VS.
+Local Notation "r .-ext" := (extension_pred r) 
+  (at level 2, format "r .-ext") : ring_scope.
 
+Definition solvable_by (r : nat -> L -> rel {vspace L}) (E F : {subfield L}) :=
+  (E <= F)%VS /\ exists2 K : {subfield L}, r.-ext E K & (F <= K)%VS.
 
+Definition solvable_by_radicals_poly (E F : {subfield L}) (p : {poly L}) :=
+  splittingFieldFor E p F -> solvable_by radical E F.
 
 End Defs.
 
-Section Abel.
+Local Notation "r .-tower" := (tower r)
+  (at level 2, format "r .-tower") : ring_scope.
+Local Notation "r .-ext" := (extension_pred r) 
+  (at level 2, format "r .-ext") : ring_scope.
 
-Variables (F : fieldType) (L : splittingFieldType F).
+
+
+Section Properties.
+
+Implicit Type r : nat -> L -> rel {vspace L}.
+
+Lemma rext_refl r (E : {subfield L}) : r.-ext E E.
+Proof.
+Admitted.
+
+Lemma rext_r r (n : nat) (x : L) (U V : {vspace L}) :
+  r n x U V -> r.-ext U V.
+Proof.
+Admitted.
+
+(* adding a field in the tower                                                *)
+(* order of the variables E F K ?                                             *)
+Lemma rext_r_trans r (x : L) (n : nat) (E F K : {subfield L}) :
+  r.-ext E F -> r n x F K -> r.-ext E K.
+Proof.
+(* directly from the definition, small tweak for the dimensions *)
+Admitted.
+
+(* adding a tower                                                             *)
+Lemma rext_trans r (E F K : {subfield L}) :
+  r.-ext E F -> r.-ext F K -> r.-ext E K.
+Proof.
+Admitted.
+
+Lemma solvable_by_radicals_radicalext (E F : {subfield L}) :
+  radical.-ext E F -> solvable_by radical E F.
+Proof.
+(* direct *)
+Admitted.
+
+Lemma radical_Fadjoin (n : nat) (x : L) (E : {subfield L}) :
+  (0 < n)%N -> x ^+ n \in E -> radical n x E <<E; x>>%VS.
+Proof.
+(* direct *)
+Admitted.
+
+Lemma rext_Fadjoin (n : nat) (x : L) (E : {subfield L}) :
+  (0 < n)%N -> x ^+ n \in E -> radical.-ext E <<E; x>>%VS.
+Proof.
+(* direct *)
+Admitted.
+
+(* radical extension with only pure extensions of prime degree                *)
+Definition pradical (n : nat) (x : L) (U V : {vspace L}) :=
+  radical n x U V && prime n.
+
+Lemma pradicalext_radical (n : nat) (x : L) (E F : {subfield L}) :
+  radical n x E F -> pradical.-ext E F.
+Proof.
+(* factorization of the degree of the extension : if n = uv *)
+(* instead of adding x ^ (uv) in E, we can first add x^u and then x *)
+Admitted.
+
+Lemma radicalext_pradicalext (E F : {subfield L}) :
+  radical.-ext E F <-> pradical.-ext E F.
+Proof.
+(* first implication : using pradicalext_radical *)
+(* second implication : direct *)
+Admitted.
+
+Lemma solvable_by_radical_pradical (E F : {subfield L}) :
+  solvable_by pradical E F <-> solvable_by radical E F.
+Proof.
+Admitted.
+
+
+(* Exposing the list of exponents, and elements                               *)
+Lemma radicalext_explicit_parameters E F :
+  radical.-ext E F -> (exists n : nat, exists tn : nat ^ n, exists2 tx : L ^ n,
+  (\prod_(i < n) tn i = \dim_E F)%N & (F == <<E & (val tx)>>)%VS && 
+  [forall i : 'I_n, prime i && radical (tn i) (tx i) 
+  <<E & (take i (val tx))>>%AS <<E & (take i.+1 (val tx))>>%AS]).
+Proof.
+Admitted.
+
+
+Lemma solvable_by_radical_explicit_parameters E F :
+  solvable_by radical E F <-> (exists n : nat, exists tn : nat ^ n, 
+  exists2 tx : L ^ n, (F <= <<E & (val tx)>>)%VS & [forall i : 'I_n, prime i 
+  && radical (tn i) (tx i) <<E & (take i (val tx))>>%AS 
+  <<E & (take i.+1 (val tx))>>%AS]).
+Proof.
+(* using solvable_by pradical <-> solvable_by radical and the lemma above *)
+Admitted.  
+
+End Properties.
+
+End RadicalExtension.
+
+Arguments tower {F0 L}.
+Arguments extension_pred {F0 L}.
+Arguments radical {F0 L}.
+
+(* splitting field properties *)
+Section Splitting.
+
+Variables (F0 : fieldType) (L : splittingFieldType F0).
+Variables (E F : {subfield L}) (p : {poly L}).
+Hypothesis splitting_p : splittingFieldFor E p F.
+
+Lemma subv_splittingFieldFor : (E <= F)%VS.
+Proof.
+Admitted.
+
+Lemma root_make_separable x : root p x = root (p %/ gcdp p p^`()) x.
+Proof.
+Admitted.
+
+Lemma galois_splittingFieldFor : galois E F.
+Proof.
+(* from definition : *)
+(* for the separable part : with minPoly_dvdp, dvdp_separable,*)
+(* root_make_separable and make_separable, minPoly is separable so every root *)
+(* of p is a separable_element *)
+(* for the normal part : directly splitting_normalField *)
+Admitted.
+
+End Splitting.
+
+(* transitivity *)
+Section Transitivity.
+Variables (F0 : fieldType) (L : splittingFieldType F0).
+Variables (E F K : {subfield L}). (* should this be E K and M ? *)
+Hypothesis subvs_EFK : (E <= F <= K)%VS.
+
+Lemma normalField_trans : normalField E F -> normalField F K -> normalField E K.
+Proof.
+(* using, for example, splitting_normalField *)
+Admitted.
+
+Lemma galois_trans : galois E F -> galois F K -> galois E K.
+Proof.
+(* using the lemma above and the transitivity of separable *)
+Admitted.
+
+End Transitivity.
+
 
 (* Following the french wikipedia proof :
 https://fr.wikipedia.org/wiki/Th%C3%A9or%C3%A8me_d%27Abel_(alg%C3%A8bre)#D%C3%A9monstration_du_th%C3%A9or%C3%A8me_de_Galois
 *)
 
+Section Abel_with_nth_root.
+
+Variables (F0 : fieldType) (L : splittingFieldType F0).
+
+Local Notation "r .-tower" := (tower r)
+  (at level 2, format "r .-tower") : ring_scope.
+Local Notation "r .-ext" := (extension_pred r) 
+  (at level 2, format "r .-ext") : ring_scope.
+
+(******************************************************************************)
+(*                                                                            *)
+(* Part 1 : solvable -> radical.-ext                                          *)
+(*                                                                            *)
+(* With the hypothesis that F has a (order of the galois group)-primitive     *)
+(*  root of the unity :                                                       *)
+(* Part 1a : if G = Gal(F/E) is abelian, then F has a basis (as an E-vspace)  *)
+(*           with only radical elements on E                                  *)
+(* Part 1b : recurrence on the solvability chain or the order of the group,   *)
+(*           using part1a and radicalext_fixedField                           *)
+(*                                                                            *)
+(* With the hypothesis that L contains a (order of the galois group) -        *)
+(*  primitive root of the unity :                                             *)
+(* Part 1c : F is once again a radical extension of E                         *)
+(*                                                                            *)
+(******************************************************************************)
+
 Section Part1.
 
-(* Let K be a finite extension of k with degre n. *)
-(* Let G = Gal(K/k). *)
+(* Let F be a finite extension of E with degre n. *)
+(* Let G = Gal(F/E). *)
 (* - then the order of G is n *)
 
 Section Part1a.
 
-(* common context *)
-Variables (k K : {subfield L}) (P : {poly L}).
-Hypothesis P_split : splittingFieldFor k P K.
-Hypothesis k_sub_K : (k <= K)%VS.
-Local Notation G := ('Gal(K / k)%g).
-Local Notation n := (\dim_k K).
-
+Variables (E F : {subfield L}).
+Hypothesis galois_EF : galois E F.
+Hypothesis subv_EF : (E <= F)%VS.
+Local Notation G := ('Gal(F / E)%g).
+Local Notation n := (\dim_E F).
 
 (* Part 1a : *)
 (* If : *)
 (* - G is abelian *)
-(* - k contains the n-th roots of the unity *)
-Variable (r : L).
+(* - E contains the n-th roots of the unity *)
 Hypothesis abelian_G : abelian G.
-Hypothesis r_nth_root : (n.-primitive_root r)%R.
-Hypothesis r_in_k : r \in k.
+Variable (r : L).
+Hypothesis r_is_nth_root : (n.-primitive_root r)%R.
+Hypothesis r_in_E : r \in E.
 
+(* - with Lagrange, each element of G is canceled by X^n - 1                  *)
+Lemma order_galois g : g \in G -> (g ^+ n = 1)%g.
+Proof.
+Admitted.
 
-(* We want to prove that there exists a basis of K (as a k-vectoriel space) *)
-(* which only has radical elements on k *)
-(* Proof : *)
-(* X^n - 1 splits on k in linear terms and it is separable *)
-(* - with Lagrange, each element of G is canceled by X^n - 1 *)
-(* - each element of G is diagonalizable *)
 (* - the elements of G commutes because G is abelian *)
+Lemma commute_galois : {in G, forall g h, commute g h}.
+Proof.
+Admitted.
+
+(* - each element of G is diagonalizable *)
 (* - the elements of G are simultaneously diagonalizable *)
 (* - their eigenvalues are n-th root of the unity because their minimal *) 
 (*   polynomial divides X^n - 1 *)
 (* - let (r1, ..., rn) be their common basis *)
-(* - we use the fact :  ri^n is unchanged by any m of G => ri^n is in k *)
+(* - we use the fact :  ri^n is unchanged by any m of G => ri^n is in E *)
 (*   - let lambda be the eigenvalue which corresponds to m and ri *)
 (*   - then m(ri^n) = (m(ri))^n (m automorphism) *)
 (*   - m(ri) = lambda ri (lambda eigenvalue) *)
 (*   - lambda^n ri^n = ri^n (lambda is an n-th root of the unity) *)
 (*   - ri^n is unchanged by m *)
-(*   - then ri^n is in k *)
-(* - ri is a radical element on k *)
-(* We can also add that K is solvable by radicals on k *)
+(*   - then ri^n is in E *)
+(* - ri is a radical element on E *)
 
-Lemma part1a : radical_extension k K.
+(* - F is solvable by radicals on E *)
+Lemma part1a : radical.-ext E F.
 Proof.
 Admitted.
 
@@ -115,36 +294,32 @@ End Part1a.
 
 Section Part1b.
 
-(* common context *)
-Variables (k K : {subfield L}) (P : {poly L}).
-Hypothesis P_split : splittingFieldFor k P K.
-Hypothesis k_sub_K : (k <= K)%VS.
-Local Notation G := ('Gal(K / k)%g).
-Local Notation n := (\dim_k K).
+Variable (E : {subfield L}).
 
-(* Part 1b : *)
-(* If : *)
-(* - G is solvable *)
-(* - k contains the n-th roots of the unity *)
-Hypothesis solvable_G : solvable G.
-Variable (r : L).
-Hypothesis r_nth_root : (n.-primitive_root r)%R.
-Hypothesis r_in_k : r \in k.
-
-
-(* We want to prove that K is solvable by radicals *)
-(* We proceed by recurrence on the length of the solvability chain of G *)
-(* ({e} = G0 <| G1 <| ...<| Gi = G *)
-(* - if i = 0, G is trivial, and K = k *)
-(* - if i >= 0, let ki = K^Gi *)
-(* - by Galois, K/ki and ki/k are Galois extension *)
-(* - by recurrence, K is solvable by radicals on ki (the chain has length i-1)*)
-(* - G = Gi x| G/Gi *)
-(* - G/Gi is abelian thus ki is solvable by radicals on k (using Part1a) *)
-(* - by transitivity, K is solvable by radicals on k *)
-
-Lemma part1b : radical_extension k K.
+Lemma part1b (F : {subfield L}) (r : L) :
+  let n := \dim_F E in
+  galois E F -> solvable 'Gal(F / E)%g -> r \in E -> n.-primitive_root r ->
+  radical.-ext E F.
 Proof.
+(* we have n > 0 (order of the group, or dim) *)
+(* either by generalized recurrence on n, (or on the chain of solvability) : *)
+(*   (E or F or both need to be generalize for the induction hypothesis) *)
+(* if n = 1 : we have \dim_E F = 1 so E = F*)
+(* if n > 1 : *)
+(*   we use sol_prime_factor_exists to get a distinguished subgroup H of *)
+(*     Gal(F/E) *)
+(*   we also get that the order of G/H is prime *)
+(*   we directly have that F/F^H is galois and its galois group is H *)
+(*   by normal_fixedField_galois, F^H/E is galois *)
+(*   by normalField_isog, its galois group is isomorphic to G/H *)
+(*   G/H is abelian, as its order is prime (p.-abelem) *)
+(*   by part1a, F^H is radical over E *)
+(*   to use the induction hypothesis we need to show that : *)
+(*     - H is solvable as a subgroup of G *)
+(*     - F^H contains a #|H| primitive root of the unity (#|H| divides n) *)
+(*     - F/F^H is galois (already said before) *)
+(*   so F is radical over F^H *)
+(*   finally, by transitivity, F is radical over E *)
 Admitted.
 
 End Part1b.
@@ -152,34 +327,33 @@ End Part1b.
 Section Part1c.
 
 (* common context *)
-Variables (k K : {subfield L}) (P : {poly L}).
-Hypothesis P_split : splittingFieldFor k P K.
-Hypothesis k_sub_K : (k <= K)%VS.
-Local Notation G := ('Gal(K / k)%g).
-Local Notation n := (\dim_k K).
+Variables (E F : {subfield L}).
+Hypothesis galois_EF : galois E F.
+Hypothesis subv_EF : (E <= F)%VS.
+Local Notation G := ('Gal(F / E)%g).
+Local Notation n := (\dim_E F).
 
 (* Part 1c : *)
 (* If : *)
 (* - G is solvable *)
 Hypothesis solvable_G : solvable G.
 Variable (r : L).
-Hypothesis r_nth_root : (n.-primitive_root r)%R.
+Hypothesis r_is_nth_root : (n.-primitive_root r)%R.
 
-(* We want to prove that K is solvable by radicals on k *)
-(* - Let k' = k(dzeta) where dzeta is an n-th root of the unity *)
-(* - k' is solvable by radicals on k *)
-(* - k' is a splitting field for X^n - 1 ***)
-(* - k/k' is then Galois *)
-(* - Let K' = k'K *)
-(* - K' is Galois over k' *)
-(* - Gal(K'/k') is isomorphic to a subgroup of G *)
-(* - Gal(K'/k') is thus solvable *)
-(* - K' is solvable by radicals on k' (Part1b) *)
-(* - K' is solvable by radicals on k (transitivity) *)
-(* - K <= K' so K is solvable by radicals *)
-
-Lemma part1c : solvable_by_radicals k K P.
+(* We want to prove that F is solvable by radicals on E                       *)
+Lemma part1c : solvable_by radical E F.
 Proof.	
+(* - Let E' = E(r) where r is an n-th root of the unity *)
+(* - E' is solvable by radicals on E *)
+(* - E' is a splitting field for X^n - 1 ***)
+(* - E'/E is then Galois *)
+(* - Let F' = E'F *)
+(* - F' is Galois over E' *)
+(* - Gal(F'/E') is isomorphic to a subgroup of G *)
+(* - Gal(F'/E') is thus solvable *)
+(* - F' is solvable by radicals on E' (Part1b) *)
+(* - F' is solvable by radicals on E (transitivity) *)
+(* - F <= F' so F is solvable by radicals *)
 Admitted.
 
 End Part1c.
@@ -187,32 +361,26 @@ End Part1c.
 (* Main lemma of part 1 *)
 (* there is the problem of the nth-root which must be present in the big field L
 to resolve here, but here is a first suggestion *)
-Lemma part1 (k K : {subfield L}) (p : {poly L}) :
-  let n := (\dim_k K) in
-  exists r : L, (n.-primitive_root r)%R ->
-  splittingFieldFor k p K -> solvable 'Gal(K / k) -> solvable_by_radicals k K p.
+Lemma part1 (E F : {subfield L}) (p : {poly L}) :
+  let n := (\dim_E F) in
+  (exists r : L, (n.-primitive_root r)%R) -> splittingFieldFor E p F -> 
+  solvable 'Gal(F / E) -> solvable_by radical E F.
 Proof.
 Admitted.
 
 End Part1.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+(******************************************************************************)
+(*                                                                            *)
+(* Part 2 : solvable_by_radicals -> solvable                                  *)
+(*  with the hypothesis that F has a (dim of E)-primitive root of the unity   *)
+(*                                                                            *)
+(* Part 2a : let x be a pth root of an element of E with p prime, then E(x)   *)
+(*           is galois and its galois group is abelian                        *)
+(* Part 2b : given a prime extension tower, if L has a nth root of the unity  *)
+(*           then F/E is solvable                                             *)
+(*                                                                            *)
+(******************************************************************************)
 
 Section Part2.
 
@@ -220,203 +388,174 @@ Section IntermediateLemmas.
 
 (* Part 2a : *)
 (* If : *)
-(* - K contains the p-th root of the unity, where p is prime *)
-(* - let x be a p-th root of an element of K *)
-Variables (K : {subfield L}) (p : nat) (x : L) (r : L).
+(* - E contains the p-th root of the unity, where p is prime *)
+(* - let x be a p-th root of an element of E *)
+Variables (E : {subfield L}) (p : nat) (x : L) (r : L).
 Hypothesis prime_p : prime p.
-Hypothesis r_pth_root : (p.-primitive_root r)%R.
-Hypothesis x_notin_K : x \notin K.
-Hypothesis xp_in_K : (x ^+ p)%R \in K.
-Local Notation Kx := (<<K; x>>%VS).
-Local Notation G := (('Gal(Kx / K))%g).
+Hypothesis r_is_pth_root : (p.-primitive_root r)%R.
+Hypothesis x_notin_E : x \notin E.
+Hypothesis xp_in_E : (x ^+ p)%R \in E.
+Local Notation G := ('Gal(<<E; x>>%VS / E))%g.
 
+Section Part2a.
+(* We want to prove that E(x) is Galois and abelian                           *)
 
-(* We want to prove that K(x) is Galois and abelian *)
-(* - K(x) is the splitting field of X^p - x^p *)
-(* - K(x) is thus Galois *)
-(* - the roots of X^p - x^p are the x * a p-th root of the unity *)
-(* - Every automorphism of K(x) which fixes K send x on one of the p roots of *)
-(*   X^p - x^p *)
-(* - Gal(K(x) / K) has order p *)
-(* - Gal(K(x) / K) is cyclic *)
-(* - Gal(K(x) / K) is abelian *)
-
-Lemma radical_extension_roots (i : 'I_p) : root ('X^p - x%:P) ((x * r) ^+ i)%R.
+(* - the roots of X^p - x^p are the x * a p-th root of the unity              *)
+Lemma root_Xp_sub_xp (i : 'I_p) : root ('X^p - x%:P) ((x * r) ^+ i)%R.
 Proof.
 Admitted.
 
-(* using a decomposition of minPoly in linear terms : its constant coefficient*)
-(* is a power of x, and in K : it can only be at power p, hence its size *)
-Lemma radical_extension_size_minPoly : size (minPoly K x) = p.+1.
+Lemma size_Fadjoin_prime : size (minPoly E x) = p.+1.
+Proof.
+(* using a decomposition of minPoly in linear terms : its constant *)
+(* coefficient is a power of x, and in K : it can only be at power p, hence *)
+(* its size *)
+Admitted.
+
+(* - E(x) is the splitting field of X^p - x^p                                 *)
+Lemma minPoly_Fadjoin_prime : minPoly E x = ('X^p - (x ^+ p)%:P)%R.
 Proof.
 Admitted.
 
-Lemma radical_extension_minPoly : minPoly K x = ('X^p + (x ^+ p)%:P)%R.
-Proof.
-Admitted.
-
+(* - E(x) is thus Galois                                                      *)
+Lemma galois_Fadjoin_prime : galois E <<E; x>>%VS.
 (* using separable (separable_Fadjoin_seq & charf0_separable) *)
 (* and probably normalFieldP *)
-Lemma radical_extension_galois : galois K Kx.
 Proof.
 Admitted.
 
+(* - Gal(E(x) / E) has order p                                                *)
+Lemma order_galois_Fadjoin_prime : #|G| = p.
+Proof.
 (* using galois_dim and radical_extension_minPoly *)
-Lemma radical_extension_order_group : #|G| = p.
-Proof.
 Admitted.
 
+(* - Gal(E(x) / E) is cyclic                                                  *)
+(* - Gal(E(x) / E) is abelian                                                 *)
+(* (end of part2a)                                                            *)
+Lemma abelian_Fadjoin_prime : abelian G.
+Proof.
 (* using prime_cyclic & cyclic_abelian *) 
-Lemma radical_extension_abelian : abelian G.
-Proof.
 Admitted.
 
-(* in the recurrence : *)
-(* - Let Fi = K(x0,..,xi) and Gi = Gal(Fi / K) *)
-(*   - i >= 0 : *)
-(*     - we suppose that Fi is Galois and solvable *)
-(*     - Fi+1 / Fi is Galois and its Galois group H is abelian (part2a) *)
-(*     - Fi+1 / K is Galois *)
-(*     - Gi+1 = Gi x| H *)
-(*     - Gi+1 is solvable *)
+End Part2a.
 
-(* transitivity of galois (of normal & separable) *)
-Lemma recurrence_step_galois (k : {subfield L}) :
-  r \in k -> galois k K -> galois k (<<K; x>>%VS).
-Proof.
-Admitted.
 
-(* return to the definition of solvable / transitivity *)
-Lemma recurrence_step_solvable (k : {subfield L}) :
-  r \in k -> galois k K -> solvable 'Gal(K / k) -> 
-    solvable 'Gal(<<K; x>>%VS / k).
+(* in the same context, we can prove a lemma for the next step (part 2b)      *)
+(* in the recurrence :                                                        *)
+(* - Let Fi = K(x0,..,xi) and Gi = Gal(Fi / K)                                *)
+(*   - i >= 0 :                                                               *)
+(*     - we suppose that Fi is Galois and solvable                            *)
+(*     - Fi+1 / Fi is Galois and its Galois group H is abelian (part2a)       *)
+(*     - Fi+1 / K is Galois                                                   *)
+(*     - Gi+1 = Gi x| H                                                       *)
+(*     - Gi+1 is solvable                                                     *)
+Lemma solvable_gal_Fadjoin_prime (F : {subfield L}) :
+  r \in F -> galois F E -> solvable 'Gal(E / F) -> 
+    solvable 'Gal(<<E; x>>%VS / F).
 Proof.
+(* E(x) is galois over E (galois_Fadjoin_prime) *)
+(* its galois group is abelian (abelian_Fadjoin_prime) *)
+(* by transitivity, E(x) is galois over F (its galois group is solvable *)
+(* Gal(E/F) is isomorphic to Gal(E(x)/F) / Gal(E(x)/E) *)
+(* Gal(E(x)/E) <| Gal(E(x)/F) *)
+(* Gal(E(x)/E) is abelian thus solvable *)
+(* Gal(E(x)/F) is solvable (series_sol) *)
 Admitted.
 
 End IntermediateLemmas.
 
+Section Part2b.
 
-Local Notation pure_extension_prime K E x n := 
-  (pure_extension K E x n && prime n).
-Local Notation radical_tower_prime K sE n A :=
-  (path (fun (U V : {subfield L}) => [exists x : A, 
-  [exists m : 'I_n, pure_extension_prime U V (val x) m]]) K sE).
-Local Notation radical_extension_prime K E :=
-  (exists2 n : nat, n > 0 & exists2 sE : seq {subfield L},
-  last K sE == E & exists A : {fset L}, radical_tower_prime K sE n A).
-
-
-(* Let p be a polynomial *)
-(* Let K be a splitting field of p over k *)
-(* p is solvable by radicals *)
-(* - there exists a sequence x1,.., xn such that K is included in k(x1,..,xn) *)
-(*   and a sequence of natural numbers m1,..,mn such that xi^mi is in *)
-(*   k(x1,..xi-1) *)
-(* - wlog all the mi are prime numbers (we can add intermediate fields) *)
-Lemma radical_extension_primeP K E :
-  radical_extension_prime K E <-> radical_extension K E.
-Proof.
-Admitted.
-
-(* Exposing the list of exponents, and elements *)
-Lemma solvable_by_radicals_primeP k K p :
-  solvable_by_radicals k K p <-> (splittingFieldFor k p K ->
-  exists n : nat, exists tn : nat ^ n, exists2 tx : L ^ n,
-  (K <= <<k & (val tx)>>)%VS & [forall i : 'I_n, pure_extension_prime 
-  <<k & (take i (val tx))>>%AS <<k & (take i.+1 (val tx))>>%AS (tx i) (tn i)]).
-Proof.
-Admitted.  
-
-Section MainPart.
-
-(* Let p be a polynomial *)
-(* Let K be a splitting field of p over k *)
-(* p is solvable by radicals *)
-Variables (K k : {subfield L}) (P : {poly L}) (n : nat).
+(* Let F be a finite extension of E                                           *)
+Variables (E F : {subfield L}) (P : {poly L}) (n : nat).
 Variables (tn : nat ^ n) (tx : L ^ n) (r : L).
-Hypothesis K_split : splittingFieldFor k P K.
-Hypothesis p_solvable : solvable_by_radicals k K P.
+Hypothesis galois_EF : galois E F.
+Hypothesis subv_EF : (E <= F)%VS.
+Hypothesis prime_tn : forall i, prime (tn i).
+Hypothesis subv_FEtx : (F <= <<E & (val tx)>>)%VS.
+Hypothesis radical_Ei : forall i, radical (tn i) (tx i) 
+  <<E & (take i (val tx))>>%AS <<E & (take i.+1 (val tx))>>%AS.
 
-(* - we can also add a m0 = (m1*..*mn)-th root of the unity at the beginning *)
-Local Notation m := (\prod_(i < n) tn i).
+(* - we can also add an m0 = (m1*..*mn)-th root of the unity at the beginning *)
+Local Notation m := (\prod_(i < n) tn i)%N.
 Hypothesis r_pth_root : (m.-primitive_root r)%R.
 
 (* in the recurrence : *)
-(* - Let Fi = K(x0,..,xi) and Gi = Gal(Fi / K) *)
+(* - Let Ei = E(x0,..,xi) and Gi = Gal(Ei / E) *)
 (*   - i = 0 : *)
-(*     - F0 is cyclotomic *)
-(*     - F0 is Galois and G0 is abelian *)
-(*     - G0 is then solvable *)
 
-(* cyclotomic extension *)
-
-(* minPoly %| cyclotomic, then same arguments as in radical_extension_minPoly *)
-Lemma cyclotomic_minPoly : minPoly k r = cyclotomic r m.
+(*     - E0 is cyclotomic                                                     *)
+Lemma cyclotomic_minPoly : minPoly E r = cyclotomic r m.
 Proof.
+(* minPoly %| cyclotomic, then same arguments as in radical_extension_minPoly *)
 Admitted.
 
 
+(*     - E0 is Galois and G0 is abelian                                       *)
+Lemma galois_cyclotomic : galois E <<E; r>>%VS.
+Proof.
 (* using separable (separable_Fadjoin_seq & charf0_separable) *)
 (* and probably normalFieldP *)
 (* same as radical_extension_galois *)
-Lemma galois_cyclotomic : galois k <<k; r>>%VS.
-Proof.
 Admitted.
 
-(* using the definition, gal_adjoin_eq and prim_rootP *)
-Lemma abelian_cyclotomic : abelian 'Gal(<<k; r>>%VS / k)%g.
+(*     - G0 is abelian                                                        *)
+Lemma abelian_cyclotomic : abelian 'Gal(<<E; r>>%VS / E)%g.
 Proof.
+(* using the definition, gal_adjoin_eq and prim_rootP *)
 rewrite card_classes_abelian /classes.
 apply/eqP; apply: card_in_imset => f g f_in g_in; rewrite -!orbitJ.
 move/orbit_eqP/orbitP => [] h h_in <- {f f_in}; apply/eqP.
 rewrite gal_adjoin_eq //= /conjg /= ?groupM ?groupV //.
 rewrite ?galM ?memv_gal ?memv_adjoin //.
-have hg_gal f : f \in 'Gal(<<k; r>>%VS / k)%g -> ((f r) ^+ m = 1)%R.
+have hg_gal f : f \in 'Gal(<<E; r>>%VS / E)%g -> ((f r) ^+ m = 1)%R.
   move=> f_in; apply/prim_expr_order.
   have /and3P[subF _ NF] := galois_cyclotomic.
   rewrite  -(root_cyclotomic r_pth_root) -cyclotomic_minPoly.
   rewrite root_minPoly_gal // ?subF ?subvv ?memv_adjoin //.
 have := svalP (prim_rootP r_pth_root (hg_gal _ g_in)); set ig := sval _ => hg.
-have h1_in : (h^-1)%g \in 'Gal(<<k; r>>%VS / k)%g by rewrite ?groupV.
+have h1_in : (h^-1)%g \in 'Gal(<<E; r>>%VS / E)%g by rewrite ?groupV.
 have := svalP (prim_rootP r_pth_root (hg_gal _ h1_in)); set ih1 := sval _ => hh1.
 rewrite hh1 GRing.rmorphX /= hg GRing.exprAC -hh1 GRing.rmorphX /=.
 by rewrite -galM ?memv_adjoin // mulVg gal_id.
 Qed.
 
 
-(* direct *)
-Lemma solvable_nth_root : solvable 'Gal(<<k; r>>%VS / k).
+(*     - G0 is then solvable                                                  *)
+Lemma solvable_Fadjoin_cyclotomic : solvable 'Gal(<<E; r>>%VS / E).
 Proof.
+(* direct *)
 Admitted.
 
-Local Notation ki i := <<<<k; r>> & (take i (val tx))>>%VS. 
-Local Notation Gi i := ('Gal(ki i / k))%g.
+Local Notation Ei i := <<<<E; r>> & (take i (val tx))>>%VS. 
+Local Notation Gi i := ('Gal(Ei i / E))%g.
 
 
-(* - we proceed by recurrence on n, by proving that each extension k(x0,..,xn)*)
-(*   of k is Galois and its Galois group is solvable. *)
-(* - by Galois, k(x0,..,xn) is Galois over k (recurrence step) *)
+(* - we proceed by recurrence on n, by proving that each extension E(x0..xn)  *)
+(*   of E is Galois and its Galois group is solvable.                         *)
+Lemma galois_solvable_Fadjoin_seq : galois E (Ei n) && solvable (Gi n).
+Proof.
+(* - by Galois, E(x0,..,xn) is Galois over E (recurrence step on n) *)
 (* using the cyclotomic extension for the initial step *)
 (* using recurrence_step_galois and recurrence_step_solvable for the step *)
-Lemma whole_recurrence : galois k (ki n) && solvable (Gi n).
-Proof.
 Admitted.
 
-(* - Gal(K/k) = Gal(k(x0,..,xn)/k) / Gal(k(x0,..,xn)/K) *)
-(* - then, Gal(K/k) is also solvable (quotient_sol) *)
-Lemma solvable_Gal_Kk : solvable 'Gal(K / k).
+Lemma solvable_gal_Fadjoin_seq : solvable 'Gal(F / E).
 Proof.
+(* - Gal(F/E) is isomorphic to Gal(E(x0,..,xn)/E) / Gal(E(x0,..,xn)/F) *)
+(* - then, Gal(F/E) is also solvable (quotient_sol) *)
 Admitted.
 
-End MainPart.
+End Part2b.
 
 (* Main lemma of part 2 *)
 (* there is still the problem of the nth-root... but I don't know how to resolve it
 here, as I don't see how we can explicitly get an upper_bound (which would be
 enough) for the value of n *)
 (* a solution would be to explicitly give an upper bound in solvable_by_radicals *)
-Lemma part2 (k K : {subfield L}) (p : {poly L}) :
-  splittingFieldFor k p K -> solvable_by_radicals k K p -> solvable 'Gal(K / k).
+Lemma part2 (E F : {subfield L}) (p : {poly L}) :
+  splittingFieldFor E p F -> solvable_by radical E F -> solvable 'Gal(F / E).
 Proof.
 Admitted.
 
@@ -424,21 +563,16 @@ End Part2.
 
 
 
+(******************************************************************************)
+(*                                                                            *)
+(* Abel/Galois Theorem                                                        *)
+(*                                                                            *)
+(******************************************************************************)
 
-
-
-
-
-
-
-
-
-
-
-
-Lemma AbelGalois (k K : {subfield L}) (p : {poly L}) :
-  splittingFieldFor k p K ->
-  solvable_by_radicals k K p <-> solvable 'Gal (K / k).
+Lemma AbelGalois (E F : {subfield L}) (p : {poly L}) :
+  splittingFieldFor E p F -> 
+  exists (r : L), (#|'Gal(F / E)|%g).-primitive_root r ->
+  radical.-ext E F <-> solvable 'Gal (F / E).
 Proof.
 Admitted.
 
