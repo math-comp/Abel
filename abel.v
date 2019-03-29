@@ -52,8 +52,8 @@ Definition extension_pred (r : nat -> L -> rel {vspace L}) (U V : {vspace L}) :=
 Local Notation "r .-ext" := (extension_pred r) 
   (at level 2, format "r .-ext") : ring_scope.
 
-Definition solvable_by (r : nat -> L -> rel {vspace L}) (E F : {subfield L}) :=
-  (E <= F)%VS /\ exists2 K : {subfield L}, r.-ext E K & (F <= K)%VS.
+Definition solvable_by (r : nat -> L -> rel {vspace L}) (U V : {vspace L}) :=
+  (U <= V)%VS /\ exists2 E : {subfield L}, r.-ext U E & (V <= E)%VS.
 
 Definition solvable_by_radicals_poly (E F : {subfield L}) (p : {poly L}) :=
   splittingFieldFor E p F -> solvable_by radical E F.
@@ -163,6 +163,8 @@ Arguments tower {F0 L}.
 Arguments extension_pred {F0 L}.
 Arguments radical {F0 L}.
 
+
+
 (* splitting field properties *)
 Section Splitting.
 
@@ -207,6 +209,57 @@ Admitted.
 
 End Transitivity.
 
+(* cyclotomic extensions                                                      *)
+Section Cyclotomic.
+
+Variables (F0 : fieldType) (L : splittingFieldType F0).
+Variables (E : {subfield L}) (r : L) (n : nat).
+Hypothesis r_is_nth_root : n.-primitive_root r.
+Hypothesis r_notin_E : r \notin E.
+
+(*     - E(x) is cyclotomic                                                   *)
+Lemma minPoly_cyclotomic : minPoly E r = cyclotomic r n.
+Proof.
+(* minPoly %| cyclotomic *)
+(* then using a decomposition of minPoly in linear terms : its constant *)
+(* coefficient is a power of x, and in E : it can only be at power p, hence *)
+(* its size, and value *)
+Admitted.
+
+Lemma splitting_cyclotomic : splittingFieldFor E (cyclotomic r n) <<E; r>>%VS.
+Proof.
+Admitted.
+
+(*     - E(x) is Galois                                                       *)
+Lemma galois_cyclotomic : galois E <<E; r>>%VS.
+Proof.
+(* using separable (separable_Fadjoin_seq & separable_Xn_sub_1 *)
+(* & prod_cyclotomic) and probably normalFieldP *)
+(* or directly using splitting_cyclotomic *)
+Admitted.
+
+End Cyclotomic.
+
+Section Prodv.
+
+Variables (F0 : fieldType) (L : splittingFieldType F0).
+
+Lemma prodv_galois (E F K : {subfield L}) :
+  galois E K -> galois F (E * F).
+Proof.
+Admitted.
+
+Lemma prodv_galoisI (E F K : {subfield L}) :
+  galois E K -> galois (E :&: F) F.
+Proof.
+Admitted.
+
+Lemma prodv_gal (E F K : {subfield L}) :
+  galois E K -> ('Gal((E * F) / F) \isog 'Gal(F / (E :&: F)))%g.
+Proof.
+Admitted.
+
+End Prodv.
 
 (* Following the french wikipedia proof :
 https://fr.wikipedia.org/wiki/Th%C3%A9or%C3%A8me_d%27Abel_(alg%C3%A8bre)#D%C3%A9monstration_du_th%C3%A9or%C3%A8me_de_Galois
@@ -332,20 +385,33 @@ Hypothesis galois_EF : galois E F.
 Hypothesis subv_EF : (E <= F)%VS.
 Local Notation G := ('Gal(F / E)%g).
 Local Notation n := (\dim_E F).
+Variable (r : L).
+Hypothesis r_is_nth_root : (n.-primitive_root r)%R.
 
 (* Part 1c : *)
 (* If : *)
 (* - G is solvable *)
 Hypothesis solvable_G : solvable G.
-Variable (r : L).
-Hypothesis r_is_nth_root : (n.-primitive_root r)%R.
+
+Lemma galois_Fadjoin_cyclotomic : galois E <<E; r>>%VS.
+Proof.
+(* is r in E ? *)
+(* if yes, ok, if no, we use galois_cyclotomic *)
+Admitted.
+
+Lemma radicalext_Fadjoin_cyclotomic : solvable_by radical E <<E; r>>%VS.
+Proof.
+(* is r in E ? *)
+(* is yes, ok, if no, we use its minPoly *)
+Admitted.
+
+Local Notation F' := (<<E; r>>%VS * F)%AS.
+
 
 (* We want to prove that F is solvable by radicals on E                       *)
 Lemma part1c : solvable_by radical E F.
 Proof.	
 (* - Let E' = E(r) where r is an n-th root of the unity *)
-(* - E' is solvable by radicals on E *)
-(* - E' is a splitting field for X^n - 1 ***)
 (* - E'/E is then Galois *)
 (* - Let F' = E'F *)
 (* - F' is Galois over E' *)
@@ -408,7 +474,7 @@ Admitted.
 Lemma size_Fadjoin_prime : size (minPoly E x) = p.+1.
 Proof.
 (* using a decomposition of minPoly in linear terms : its constant *)
-(* coefficient is a power of x, and in K : it can only be at power p, hence *)
+(* coefficient is a power of x, and in E : it can only be at power p, hence *)
 (* its size *)
 Admitted.
 
