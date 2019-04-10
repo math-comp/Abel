@@ -84,6 +84,9 @@ Implicit Type r : nat -> L -> rel {vspace L}.
 (** Easy **)
 Lemma rext_refl r (E : {subfield L}) : r.-ext E E.
 Proof.
+(* seq {subfield L} does not coerce to seq {subspace L} *)
+exists [:: (E : {vspace L})] => //. 
+Fail exists (set1 1 : {fset L}).
 Admitted.
 
 (** Easy **)
