@@ -57,7 +57,7 @@ Local Notation "r .-tower" := (tower r)
 (* the quantification on n is useless as we directly have an upper bound      *)
 Definition extension_pred (r : nat -> L -> rel {vspace L}) (U V : {vspace L}) :=
   exists2 sU : seq {vspace L}, exists A : {fset L}, 
-  r.-tower (\dim_U V) A U sU & last U sU = V.
+  r.-tower (\dim_U V).+1 A U sU & last U sU = V.
 
 Local Notation "r .-ext" := (extension_pred r) 
   (at level 2, format "r .-ext") : ring_scope.
@@ -84,11 +84,13 @@ Implicit Type r : nat -> L -> rel {vspace L}.
 Lemma rext_refl r (E : {subfield L}) : r.-ext E E.
 Proof. by exists [::] => //; exists fset0. Qed.
 
-(** Easy **)
-Lemma rext_r r (n : nat) (x : L) (U V : {vspace L}) :
-  r n x U V -> r.-ext U V.
+(** We could generalize to an m >= dim_U V **)
+Lemma rext_r r (x : L) (U V : {vspace L}) :
+  r (\dim_U V) x U V -> r.-ext U V.
 Proof.
-Admitted.
+move=> rxUV; exists [:: V] => //; exists [fset x]%fset; rewrite /= andbT.
+by apply/existsP; exists [` fset11 _]%fset; apply/existsP; exists ord_max.
+Qed.
 
 (** Easy **)
 (* adding a field in the tower                                                *)
@@ -97,6 +99,7 @@ Lemma rext_r_trans r (x : L) (n : nat) (E F K : {subfield L}) :
   r.-ext E F -> r n x F K -> r.-ext E K.
 Proof.
 (* directly from the definition, small tweak for the dimensions *)
+
 Admitted.
 
 (** Easy **)
