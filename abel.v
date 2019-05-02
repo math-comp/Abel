@@ -98,8 +98,6 @@ Qed.
 Lemma rext_r_trans r (x : L) (n : nat) (E F K : {subfield L}) :
   r.-ext E F -> r n x F K -> r.-ext E K.
 Proof.
-(* directly from the definition, small tweak for the dimensions *)
-
 Admitted.
 
 (** Easy **)
@@ -109,12 +107,30 @@ Lemma rext_trans r (E F K : {subfield L}) :
 Proof.
 Admitted.
 
-(** Easy **)
+Lemma tower_subspace r n A E s : (forall n x U V, r n x U V -> (U <= V)%VS) ->
+   r.-tower n A E s -> (E <= last E s)%VS.
+Proof.
+move=> hsubspace; elim/last_ind: s=> [| s K ihs] //=.
+rewrite last_rcons /tower rcons_path; case/andP=> /ihs=> {ihs} ihs.
+case/existsP => x /existsP[m /hsubspace]; exact: subv_trans.
+Qed.
+
+Lemma radical_subspace n x U V : radical n x U V -> (U <= V)%VS.
+Proof.
+by case/and3P=> _ _ /eqP<-; rewrite -adjoin_seq1; apply: subv_adjoin_seq.
+Qed.
+
+Lemma rext_subspace (E F : {subfield L}) : radical.-ext E F -> (E <= F)%VS.
+Proof.
+case=> s [A rtow <-]; apply: tower_subspace rtow; exact: radical_subspace.
+Qed.
+
 Lemma solvable_by_radicals_radicalext (E F : {subfield L}) :
   radical.-ext E F -> solvable_by radical E F.
 Proof.
-(* direct *)
-Admitted.
+move=> extEF; split;last by exists F.
+exact: rext_subspace.
+Qed.
 
 (** Easy **)
 Lemma radical_Fadjoin (n : nat) (x : L) (E : {subfield L}) :
@@ -133,6 +149,8 @@ Admitted.
 (* radical extension with only pure extensions of prime degree                *)
 Definition pradical (n : nat) (x : L) (U V : {vspace L}) :=
   radical n x U V && prime n.
+
+
 
 (** Easy **)
 Lemma pradicalext_radical (n : nat) (x : L) (E F : {subfield L}) :
