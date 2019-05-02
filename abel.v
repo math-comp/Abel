@@ -132,12 +132,9 @@ move=> extEF; split;last by exists F.
 exact: rext_subspace.
 Qed.
 
-(** Easy **)
 Lemma radical_Fadjoin (n : nat) (x : L) (E : {subfield L}) :
   (0 < n)%N -> x ^+ n \in E -> radical n x E <<E; x>>%VS.
-Proof.
-(* direct *)
-Admitted.
+Proof. by rewrite /radical => -> -> /=. Qed.
 
 (** Easy **)
 Lemma rext_Fadjoin (n : nat) (x : L) (E : {subfield L}) :
