@@ -432,6 +432,7 @@ Admitted.
 (* - F is solvable by radicals on E *)
 Lemma part1a : radical.-ext E F.
 Proof.
+
 Admitted.
 
 End Part1a.
