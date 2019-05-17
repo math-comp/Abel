@@ -175,18 +175,18 @@ Admitted.
 (* Exposing the list of exponents, and elements                               *)
 Lemma radicalext_explicit_parameters E F :
   radical.-ext E F -> (exists n : nat, exists tn : nat ^ n, exists2 tx : L ^ n,
-  (\prod_(i < n) tn i = \dim_E F)%N & (F == <<E & (val tx)>>)%VS && 
-  [forall i : 'I_n, prime i && radical (tn i) (tx i) 
-  <<E & (take i (val tx))>> <<E & (take i.+1 (val tx))>>]).
+  (\prod_(i < n) tn i = \dim_E F)%N & (F == <<E & (fgraph tx)>>)%VS &&
+  [forall i : 'I_n, prime i && radical (tn i) (tx i)
+  <<E & (take i (fgraph tx))>> <<E & (take i.+1 (fgraph tx))>>]).
 Proof.
 Admitted.
 
 (** Easy **)
 Lemma solvable_by_radical_explicit_parameters E F :
-  solvable_by radical E F <-> (exists n : nat, exists tn : nat ^ n, 
-  exists2 tx : L ^ n, (F <= <<E & (val tx)>>)%VS & [forall i : 'I_n, prime i 
-  && radical (tn i) (tx i) <<E & (take i (val tx))>> 
-  <<E & (take i.+1 (val tx))>>]).
+  solvable_by radical E F <-> (exists n : nat, exists tn : nat ^ n,
+  exists2 tx : L ^ n, (F <= <<E & (fgraph tx)>>)%VS & [forall i : 'I_n, prime i
+  && radical (tn i) (tx i) <<E & (take i (fgraph tx))>>
+  <<E & (take i.+1 (fgraph tx))>>]).
 Proof.
 (* using solvable_by pradical <-> solvable_by radical and the lemma above *)
 Admitted.  
@@ -432,6 +432,7 @@ Admitted.
 (* - F is solvable by radicals on E *)
 Lemma part1a : radical.-ext E F.
 Proof.
+
 Admitted.
 
 End Part1a.
@@ -627,15 +628,15 @@ Variables (tn : nat ^ n) (tx : L ^ n) (r : L).
 Hypothesis galois_EF : galois E F.
 Hypothesis subv_EF : (E <= F)%VS.
 Hypothesis prime_tn : forall i, prime (tn i).
-Hypothesis subv_FEtx : (F <= <<E & (val tx)>>)%VS.
-Hypothesis radical_Ei : forall i, radical (tn i) (tx i) 
-  <<E & (take i (val tx))>> <<E & (take i.+1 (val tx))>>.
+Hypothesis subv_FEtx : (F <= <<E & (fgraph tx)>>)%VS.
+Hypothesis radical_Ei : forall i, radical (tn i) (tx i)
+  <<E & (take i (fgraph tx))>> <<E & (take i.+1 (fgraph tx))>>.
 
 (* - we can also add an m0 = (m1*..*mn)-th root of the unity at the beginning *)
 Local Notation m := (\prod_(i < n) tn i)%N.
 Hypothesis r_is_mth_root : (m.-primitive_root r)%R.
 
-Local Notation Ei i := <<<<E; r>> & (take i (val tx))>>%VS. 
+Local Notation Ei i := <<<<E; r>> & (take i (fgraph tx))>>%VS.
 Local Notation Gi i := ('Gal(Ei i / E))%g.
 
 (** Ok **)

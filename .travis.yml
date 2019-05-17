@@ -17,6 +17,8 @@ env:
   # - DOCKERIMAGE="mathcomp/mathcomp:1.7.0-coq-8.7"
   - DOCKERIMAGE="mathcomp/mathcomp:1.7.0-coq-8.8"
   - DOCKERIMAGE="mathcomp/mathcomp:1.7.0-coq-8.9"
+  - DOCKERIMAGE="mathcomp/mathcomp:1.8.0-coq-8.8"
+  - DOCKERIMAGE="mathcomp/mathcomp:1.8.0-coq-8.9"
   # - DOCKERIMAGE="mathcomp/mathcomp:1.7.0-coq-dev"
 
 install: |
@@ -30,11 +32,12 @@ install: |
     set -ex  # -e = exit on failure; -x = trace for debug
     # Using flambda makes sense here as we usually get ~10% faster
     # builds in math-comp.
-    eval $(opam env)
+    eval \$(opam env)
     opam update -y
     opam config list
     opam repo list
     opam list
+    opam install -y coq-mathcomp-finmap
     "
 script:
 - echo -e "${ANSI_YELLOW}Building ${CONTRIB_NAME}...${ANSI_RESET}" && echo -en 'travis_fold:start:script\\r'
@@ -43,7 +46,7 @@ script:
     export PS4='+ \e[33;1m(\$0 @ line \$LINENO) \$\e[0m '
     set -ex
     sudo chown -R coq:coq /home/coq/${CONTRIB_NAME}
-    eval $(opam env)
+    eval \$(opam env)
     make -j "$NJOBS"
     make install
     "
