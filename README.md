@@ -2,7 +2,7 @@
 
 ## With nix.
 
-1. Unless nix is installed, install nix (you may still do this several
+1. Unless nix is already installed, install nix (you may still do this several
    without suffering consequences).
    - To install it on a single-user unix system where you
      have `sudo` rights, just type:
