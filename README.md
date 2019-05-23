@@ -3,25 +3,16 @@
 ## With nix.
 
 1. Install nix:
-   - To install it on a single-user unix system where you
-     have `sudo` rights, just type:
+ - To install it on a single-user unix system where you have admin rights, just type:
      > sh <(curl https://nixos.org/nix/install)
      
       You should run this under your usual user account, not as root. The script will invoke `sudo` as needed.
       
-      For other  configurations or for nix uninstallation, go to the [appropriate section of the nix manual](https://nixos.org/nix/manual/#ch-installing-binary).
+      For other configurations (in particluar if multiple users share the machine) or for nix uninstallation, go to the [appropriate section of the nix manual](https://nixos.org/nix/manual/#ch-installing-binary).
 
-   - Run the nix installer, which will set `nix` environment variables, by typing:
-     > . $HOME/.nix-profile/etc/profile.d/nix.sh
+  - You need to **log out of your desktop session and log in again** before you proceed to step 2.
 
-     The nix installer will automatically update your
-     `.profile`, but **you need to log out and in again** for your shell
-     to take this change into account. If you have an custom
-     shell startup sequence, make sure that this script is executed at
-     some point.
-
-
-Once you logged out and in again, go to step 2.
+  - Step 1. need never be repeated again on this machine.
 
 2. In order to open a shell with the right work environment, simply
    type in a **new terminal from the root of the repository**:
