@@ -29,6 +29,7 @@
 
 3. You are now in the correct work environment. You can do
    > make
+   
    and do whatever you are accustomed to do with Coq.
 
 4. You can edit files using:
@@ -39,4 +40,5 @@
    - If you do not have emacs installed, you can go back to
      step 2. and call `nix-shell` with the following option
      > nix-shell --arg withEmacs true
+     
      instead. Make sure you add `(require 'proof-site)` to your `.emacs`.
