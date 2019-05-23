@@ -6,10 +6,10 @@
    - To install it on a single-user unix system where you
      have `sudo` rights, just type:
      > sh <(curl https://nixos.org/nix/install)
-
-   For other configurations or for nix uninstallation,
-   go to the [appropriate section of the
-   nix manual](https://nixos.org/nix/manual/#ch-installing-binary).
+     
+      You should run this under your usual user account, not as root. The script will invoke `sudo` as needed.
+      
+      For other  configurations or for nix uninstallation, go to the [appropriate section of the nix manual](https://nixos.org/nix/manual/#ch-installing-binary).
 
    - Run the nix installer, which will set `nix` environment variables, by typing:
      > . $HOME/.nix-profile/etc/profile.d/nix.sh
