@@ -24,7 +24,7 @@
 Once you logged out and in again you may start from 2. next time:
 
 2. In order to open a shell with the right work environment, simply
-   type in a **new terminal**:
+   type in a **new terminal from the root of the repository**:
    > nix-shell
    - This will download and build the required packages, wait until
      you get a shell.
