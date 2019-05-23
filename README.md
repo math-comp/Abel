@@ -8,8 +8,9 @@
      have `sudo` rights, just type:
      > sh <(curl https://nixos.org/nix/install)
 
-   (for other configurations, refer to the [appropriate section of the
-   nix manual](https://nixos.org/nix/manual/#ch-installing-binary)
+   (for other configurations or for nix uninstallation,
+   go to the [appropriate section of the
+   nix manual](https://nixos.org/nix/manual/#ch-installing-binary))
 
    - In order to add `nix` environment variables right now, type:
      > . $HOME/.nix-profile/etc/profile.d/nix.sh
