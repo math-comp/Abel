@@ -25,9 +25,11 @@ stdenv.mkDerivation rec {
   buildInputs = [ coq ] ++ (with myCoqPackages;
     [mathcomp mathcomp-finmap mathcomp-bigenough])
                 ++ lib.optional withEmacs pgEmacs;
-  shellHook = if print-env then ''
-    echo "Here is your work environement:"
-    for x in $buildInputs; do printf "  "; echo $x | cut -d "-" -f "2-"; done
-    echo "you can use --argstr coq-version \"x.y\" to change coq versions"
-  '' else "";
+  shellHook = ''
+    nixEnv (){
+      echo "Here is your work environement:"
+      for x in $buildInputs; do printf "  "; echo $x | cut -d "-" -f "2-"; done
+      echo "you can use --argstr coq-version \"x.y\" to change coq versions"
+    }
+  '' + (if print-env then "nixEnv" else "");
 }
