@@ -20,9 +20,9 @@
    - This will download and build the required packages, wait until
      you get a shell.
    - You need to type this command every time you open a new terminal.
-   - You can call `nixEnv` after you start the nix shell to see your
-     work environment (or call `nix-shell` with option `--arg
-     print-env true`).
+   - You can call `nixEnv` after you start the nix shell to see your work environment
+     
+     (or call `nix-shell` with option `--arg print-env true`).
 
 3. You are now in the correct work environment. You can do
    > make
