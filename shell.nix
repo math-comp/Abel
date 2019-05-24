@@ -29,7 +29,7 @@ stdenv.mkDerivation rec {
     nixEnv (){
       echo "Here is your work environement:"
       for x in $buildInputs; do printf "  "; echo $x | cut -d "-" -f "2-"; done
-      echo "you can use --argstr coq-version \"x.y\" to change coq versions"
+      echo "you can pass option '--argstr coq-version \"x.y\"' to nix-shell to change coq versions"
     }
   '' + (if print-env then "nixEnv" else "");
 }
