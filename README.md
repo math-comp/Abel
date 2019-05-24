@@ -8,7 +8,7 @@
 
       You should run this under your usual user account, not as root. The script will invoke `sudo` as needed.
 
-      For other configurations (in particluar if multiple users share the machine) or for nix uninstallation, go to the [appropriate section of the nix manual](https://nixos.org/nix/manual/#ch-installing-binary).
+      For other configurations (in particular if multiple users share the machine) or for nix uninstallation, go to the [appropriate section of the nix manual](https://nixos.org/nix/manual/#ch-installing-binary).
 
   - You need to **log out of your desktop session and log in again** before you proceed to step 2.
 
@@ -21,7 +21,7 @@
      you get a shell.
    - You need to type this command every time you open a new terminal.
    - You can call `nixEnv` after you start the nix shell to see your
-     work environemnet (or call `nix-shell` with option `--arg
+     work environment (or call `nix-shell` with option `--arg
      print-env true`).
 
 3. You are now in the correct work environment. You can do
@@ -38,4 +38,4 @@
      step 2. and call `nix-shell` with the following option
      > nix-shell --arg withEmacs true
 
-     instead. Make sure you add `(require 'proof-site)` to your `.emacs`.
+     instead. Make sure you add the line `(require 'proof-site)` to `$HOME/.emacs`.
