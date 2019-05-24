@@ -3,7 +3,8 @@
   url = "https://github.com/NixOS/nixpkgs/archive/650a295621b27c4ebe0fa64a63fd25323e64deb3.tar.gz";
   sha256 = "0rxjkfiq53ibz0rzggvnp341b6kgzgfr9x6q07m2my7ijlirs2da";
 }),
-coq-version ? "default"
+coq-version ? "default",
+print-env ? false
 }:
 with import nixpkgs {};
 let
@@ -24,4 +25,9 @@ stdenv.mkDerivation rec {
   buildInputs = [ coq ] ++ (with myCoqPackages;
     [mathcomp mathcomp-finmap mathcomp-bigenough])
                 ++ lib.optional withEmacs pgEmacs;
+  shellHook = if print-env then ''
+    echo "Here is your work environement:"
+    for x in $buildInputs; do printf "  "; echo $x | cut -d "-" -f "2-"; done
+    echo "you can use --argstr coq-version \"x.y\" to change coq versions"
+  '' else "";
 }

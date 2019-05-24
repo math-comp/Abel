@@ -5,9 +5,9 @@
 1. Install nix:
  - To install it on a single-user unix system where you have admin rights, just type:
      > sh <(curl https://nixos.org/nix/install)
-     
+
       You should run this under your usual user account, not as root. The script will invoke `sudo` as needed.
-      
+
       For other configurations (in particluar if multiple users share the machine) or for nix uninstallation, go to the [appropriate section of the nix manual](https://nixos.org/nix/manual/#ch-installing-binary).
 
   - You need to **log out of your desktop session and log in again** before you proceed to step 2.
@@ -20,10 +20,12 @@
    - This will download and build the required packages, wait until
      you get a shell.
    - You need to type this command every time you open a new terminal.
+   - You can call `nix-shell` with option `--arg print-env true`
+     instead, to show which packages have been made available.
 
 3. You are now in the correct work environment. You can do
    > make
-   
+
    and do whatever you are accustomed to do with Coq.
 
 4. You can edit files using:
@@ -34,5 +36,5 @@
    - If you do not have emacs installed, you can go back to
      step 2. and call `nix-shell` with the following option
      > nix-shell --arg withEmacs true
-     
+
      instead. Make sure you add `(require 'proof-site)` to your `.emacs`.
