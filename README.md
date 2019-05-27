@@ -12,22 +12,24 @@
 
   - You need to **log out of your desktop session and log in again** before you proceed to step 2.
 
-  - Step 1. need never be repeated again on this machine.
+  - Step 1. only need to be done once on a same machine.
 
-2. In order to open a shell with the right work environment, simply
-   type in a **new terminal from the root of the repository**:
+2. Open a new terminal. Navigate to the root of the Abel repository. Then type:
    > nix-shell
-   - This will download and build the required packages, wait until
-     you get a shell.
-   - You need to type this command every time you open a new terminal.
-   - You can call `nixEnv` after you start the nix shell to see your work environment
+   
+   This will open a (nix) shell with the right work environment. It particular, nix
+   will download and build the required packages: wait until you get a shell.
+   
+   You need to type this command every time you work in a new terminal.
+   
+   You can call `nixEnv` after you start the nix shell to see your work environment
      
      (or call `nix-shell` with option `--arg print-env true`).
 
 3. You are now in the correct work environment. You can do
    > make
 
-   and do whatever you are accustomed to do with Coq.
+   and do whatever you are accustomed to do with Coq. 
 
 4. You can edit files using:
    > emacs
