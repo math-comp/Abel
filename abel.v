@@ -210,8 +210,7 @@ Hypothesis splitting_p : splittingFieldFor E p F.
 
 (** Easy **)
 Lemma subv_splittingFieldFor : (E <= F)%VS.
-Proof.
-Admitted.
+Proof. case: splitting_p => b pE <-; exact: subv_adjoin_seq. Qed.
 
 (** Ok **)
 Lemma root_make_separable x : root p x = root (p %/ gcdp p p^`()) x.
