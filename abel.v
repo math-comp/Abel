@@ -509,8 +509,12 @@ rewrite -[n]prednK//; exists r_.
 move=> i g gG; have /allP /(_ (mxof e g) (map_f _ _))/sim_diagP := dG.
 case=> // [|M pg]; first by rewrite mem_enum.
 exists (val (M 0 i)); [apply/andP; split|]; first by rewrite /= subvsP.
-  have := Gminpoly _ gG; rewrite (simP pg).
-  admit.
+  rewrite [X in _ ^+ X]prednK// -subr_eq0.
+  have := Gminpoly _ gG; rewrite (simP _ pg)//.
+  move => /dvdpP [q] /(congr1 (val \o horner^~ (M 0 i)))/=.
+  rewrite hornerM hornerD hornerN hornerXn hornerC/= rmorphX algid1 => ->.
+  suff -> : (mxminpoly (p^-1 * diag_mx M * p)).[M 0 i] = 0 by rewrite mulr0.
+  admit. (* commutation between conjucation and mxminpoly *)
 have /eqP/(congr1 (mulmx (@delta_mx _ 1 _ 0 i))) := pg; rewrite !mulmxA -!rowE.
 have -> : row i (diag_mx M) = M 0 i *: delta_mx 0 i.
   by apply/rowP => j; rewrite !mxE eqxx eq_sym/= mulr_natr.
