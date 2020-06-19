@@ -1,4 +1,7 @@
 Sn_solvable.v
 abel.v
+mxextra.v
+galmx.v
+diag.v
 
 -R . Abel
