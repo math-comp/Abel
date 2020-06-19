@@ -507,16 +507,24 @@ rewrite -[n]prednK//; exists r_.
     by apply/allP => _ /mapP[/=i _ ->]; rewrite vecof_in.
   admit. (* follows from p_unit, via missing lemma in galmx *)
 move=> i g gG; have /allP /(_ (mxof e g) (map_f _ _))/sim_diagP := dG.
-case=> // [|M pg]; first by rewrite mem_enum.
-exists (val (M 0 i)); [apply/andP; split|]; first by rewrite /= subvsP.
+case=> // [|d pg]; first by rewrite mem_enum.
+exists (val (d 0 i)); [apply/andP; split|]; first by rewrite /= subvsP.
   rewrite [X in _ ^+ X]prednK// -subr_eq0.
   have := Gminpoly _ gG; rewrite (simP _ pg)//.
-  move => /dvdpP [q] /(congr1 (val \o horner^~ (M 0 i)))/=.
+  move => /dvdpP [q] /(congr1 (val \o horner^~ (d 0 i)))/=.
   rewrite hornerM hornerD hornerN hornerXn hornerC/= rmorphX algid1 => ->.
-  suff -> : (mxminpoly (p^-1 * diag_mx M * p)).[M 0 i] = 0 by rewrite mulr0.
-  admit. (* commutation between conjucation and mxminpoly *)
+  suff -> : (mxminpoly (p^-1 * diag_mx d * p)).[d 0 i] = 0 by rewrite mulr0.
+  (* too long, we should have instead mxminpoly (p^-1 * M * p) = mxminpoly M *)
+  apply/eqP; rewrite -rootE -eigenvalue_root_min.
+  apply/eigenvalueP; exists (delta_mx 0 i *m p); last first.
+    rewrite mul_mx_rowfree_eq0 ?row_free_unit//.
+    apply/negP => /eqP/matrixP/(_ 0 i); rewrite !mxE ?eqxx.
+    by apply/eqP; rewrite oner_eq0.
+  rewrite !mulmxA mulmxK// -!rowE; apply/rowP => j; rewrite !mxE.
+  rewrite (bigD1 i)//= !mxE ?eqxx big1 ?addr0// => k /negPf kiF.
+  by rewrite !mxE eq_sym kiF mul0r.
 have /eqP/(congr1 (mulmx (@delta_mx _ 1 _ 0 i))) := pg; rewrite !mulmxA -!rowE.
-have -> : row i (diag_mx M) = M 0 i *: delta_mx 0 i.
+have -> : row i (diag_mx d) = d 0 i *: delta_mx 0 i.
   by apply/rowP => j; rewrite !mxE eqxx eq_sym/= mulr_natr.
 rewrite -scalemxAl -rowE => pg_eq.
 admit. (* transfer pg_eq via vecof, via missing lemma in galmx *)
