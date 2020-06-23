@@ -487,14 +487,14 @@ have e_free := basis_free e_basis.
 have Gminpoly g : g \in G -> mxminpoly (mxof e g) %| 'X ^+ n - 1.
   move=> gG; rewrite mxminpoly_min// rmorphB rmorph1 rmorphX/= horner_mx_X.
   by apply: (canLR (addrK _)); rewrite add0r -mxofX// order_galois// mxof1//.
-have /codiagonalisableP[p p_unit dG] : codiagonalisable [seq mxof e g | g in G].
-  split.
+have [p p_unit dG] : codiagonalisable [seq mxof e g | g in G].
+  apply/codiagonalisableP; split.
     apply/all_commP => _ _ /mapP[g gG ->] /mapP[g' g'G ->].
-    rewrite /GRing.comm -!mxofM//; congr mxof.
+    rewrite -![_ *m _]mxofM//; congr mxof.
     by rewrite !mem_enum in g'G gG; rewrite (centsP abelian_G).
   move=> _/mapP[g gG ->]; rewrite mem_enum in gG *.
   pose l := [seq Subvs r_in_E ^+ i | i <- index_iota 0 n].
-  exists l.
+  apply/diagonalisableP; exists l.
     rewrite map_inj_in_uniq ?iota_uniq//.
     move=> x y; rewrite !mem_index_iota !leq0n/= => x_n y_n.
     move=> /(congr1 val)/=/eqP; rewrite !rmorphX/=.
@@ -506,19 +506,20 @@ rewrite -[n]prednK//; exists r_.
   apply/andP; split; last first.
     by apply/allP => _ /mapP[/=i _ ->]; rewrite vecof_in.
   admit. (* follows from p_unit, via missing lemma in galmx *)
-move=> i g gG; have /allP /(_ (mxof e g) (map_f _ _))/sim_diagP := dG.
+move=> i g gG; have /allP /(_ (mxof e g) (map_f _ _))/sim_diagPex := dG.
 case=> // [|M pg]; first by rewrite mem_enum.
 exists (val (M 0 i)); [apply/andP; split|]; first by rewrite /= subvsP.
   rewrite [X in _ ^+ X]prednK// -subr_eq0.
-  have := Gminpoly _ gG; rewrite (simP _ pg)//.
+  have := Gminpoly _ gG; rewrite (simLR _ pg)//.
   move => /dvdpP [q] /(congr1 (val \o horner^~ (M 0 i)))/=.
   rewrite hornerM hornerD hornerN hornerXn hornerC/= rmorphX algid1 => ->.
-  suff -> : (mxminpoly (p^-1 * diag_mx M * p)).[M 0 i] = 0 by rewrite mulr0.
-  admit. (* commutation between conjucation and mxminpoly *)
-have /eqP/(congr1 (mulmx (@delta_mx _ 1 _ 0 i))) := pg; rewrite !mulmxA -!rowE.
-have -> : row i (diag_mx M) = M 0 i *: delta_mx 0 i.
-  by apply/rowP => j; rewrite !mxE eqxx eq_sym/= mulr_natr.
-rewrite -scalemxAl -rowE => pg_eq.
+  rewrite mxminpoly_uconj ?unitmx_inv// mxminpoly_diag/= horner_prod.
+  set u := undup _; under eq_bigr do rewrite hornerXsubC.
+  suff /eqP-> : \prod_(i0 <- u) (M 0 i - i0) == 0 by rewrite mulr0.
+  rewrite prodf_seq_eq0; apply/hasP; exists (M 0 i); rewrite ?subrr ?eqxx//.
+  by rewrite mem_undup map_f ?mem_enum.
+have /(simP p_unit)/(congr1 (mulmx (@delta_mx _ 1 _ 0 i))) := pg.
+rewrite !mulmxA -!rowE row_diag_mx -scalemxAl -rowE => pg_e.
 admit. (* transfer pg_eq via vecof, via missing lemma in galmx *)
 Admitted.
 
