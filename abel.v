@@ -380,34 +380,9 @@ Section Abel.
 
 Section Part1.
 
-(* Let F be a finite extension of E with degre n. *)
-(* Let G = Gal(F/E). *)
-(* - then the order of G is n *)
-
 Section Part1a.
-Variables (F0 : fieldType) (L : splittingFieldType F0).
-Variables (E F : {subfield L}).
-Hypothesis galois_EF : galois E F.
-Hypothesis subv_EF : (E <= F)%VS.
-Local Notation G := ('Gal(F / E)%g).
-Local Notation n := (\dim_E F).
 
-(* Part 1a : *)
-(* If : *)
-(* - G is abelian *)
-(* - E contains the n-th roots of the unity *)
-Hypothesis abelian_G : abelian G.
-
-(** Easy **)
-(* - with Lagrange, each element of G is canceled by X^n - 1                  *)
-Lemma order_galois g : g \in G -> (g ^+ n = 1)%g.
-Proof.
-Admitted.
-
-(** Easy/Useless == (centsP abelian_G) **)
-(* - the elements of G commutes because G is abelian *)
-(* Lemma commute_galois : {in G &, forall g h, commute g h}. *)
-(* Proof. by move=> *; apply/(centsP abelian_G). Qed. *)
+Import GRing.Theory.
 
 (* - each element of G is diagonalizable *)
 (* - the elements of G are simultaneously diagonalizable *)
@@ -422,14 +397,6 @@ Admitted.
 (*   - ri^n is unchanged by m *)
 (*   - then ri^n is in E *)
 (* - ri is a radical element on E *)
-
-(** Hard : Cyril **)
-(* - F is solvable by radicals on E *)
-
-End Part1a.
-
-Import GRing.Theory.
-
 
 Lemma part1a (F0 : fieldType) (L : splittingFieldType F0)
     (E F : {subfield L}) (G := 'Gal(F / E)%g) (n := \dim_E F) (r : L) :
@@ -486,7 +453,8 @@ have [e e_basis] : { e : n.-1.+1.-tuple _ | basis_of (aspaceOver E F) e}.
 have e_free := basis_free e_basis.
 have Gminpoly g : g \in G -> mxminpoly (mxof e g) %| 'X ^+ n - 1.
   move=> gG; rewrite mxminpoly_min// rmorphB rmorph1 rmorphX/= horner_mx_X.
-  by apply: (canLR (addrK _)); rewrite add0r -mxofX// order_galois// mxof1//.
+  apply: (canLR (addrK _)); rewrite add0r -mxofX//.
+  by rewrite [n]galois_dim// expg_cardG// mxof1.
 have [p p_unit dG] : codiagonalisable [seq mxof e g | g in G].
   apply/codiagonalisableP; split.
     apply/all_commP => _ _ /mapP[g gG ->] /mapP[g' g'G ->].
@@ -523,6 +491,7 @@ rewrite !mulmxA -!rowE row_diag_mx -scalemxAl -rowE => pg_e.
 admit. (* transfer pg_eq via vecof, via missing lemma in galmx *)
 Admitted.
 
+End Part1a.
 
 Section Part1b.
 Variables (F0 : fieldType) (L : splittingFieldType F0).
