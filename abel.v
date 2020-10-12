@@ -43,28 +43,43 @@ Variables (F0 : fieldType) (L : splittingFieldType F0).
 
 Section Defs.
 
+Implicit Types (U V : {subfield L}) (A : {fset L}).
+
 (* Giving the parameters n and x in the definition makes it a boolean         *)
 (* predicate which is useful as the tower property can be expressed as a path,*)
-Definition radical (n : nat) (x : L) (U V : {subfield L}) :=
-  [&& (n > 0)%N, x ^+ n \in U & (<<U; x>>%AS == V)].
+Definition radical A U V :=
+  [exists x : A, ((val x) ^+ (\dim_U V) \in U) && (<<U; val x>>%AS == V)].
+
+Lemma radicalP  (A : {fset L}) (U V : {subfield L}) :
+  reflect (exists2 x : L, x \in A &
+             exists n, [/\ (0 < n)%N, x ^+ n \in U & <<U; x>>%AS = V])
+          (radical A U V).
+Proof.
+apply: (iffP 'exists_andP) => [[x] [Uxd /eqP UxeqV] | [x Ax] [n [lt0n Uxn UxeqV]]].
+  exists (val x) => //=; exists (\dim_U V). 
+  by rewrite Uxd -UxeqV -dim_aspaceOver ?subv_adjoin // adim_gt0.
+exists [` Ax] => /=; rewrite UxeqV; split => //.
+(* Search _ minPoly. About GRing.subrXX. *)
+(* (x ^ a - l ^ a) | (x ^ (a * b) - l ^ (a * b)) *)
+(* pose P := 'X ^ n - x ^+ n.                               Search _ (0 < \dim _)%N. *)
+Admitted.
 
 (* n acts as an upper bound for the degree of the pure extension              *)
 (* and A as the set used to extend U                                          *)
-Definition tower (r : nat -> L -> rel {subfield L}) (n : nat) (A : {fset L}) :=
-  path (fun U V => [exists x : A, [exists m : 'I_n, r m (val x) U V]]).
+Definition tower (r : rel {subfield L}) := path r.
 
 Local Notation "r .-tower" := (tower r)
   (at level 2, format "r .-tower") : ring_scope.
 
 (* the quantification on n is useless as we directly have an upper bound      *)
-Definition extension_pred (r : nat -> L -> rel {subfield L}) (U V : {subfield L}) :=
-  exists2 sU : seq {subfield L}, exists A : {fset L},
-    r.-tower (\dim_U V).+1 A U sU & last U sU = V.
+Definition extension_pred (r : {fset L} -> rel {subfield L}) U V :=
+  exists2 sU : seq {subfield L}, exists A,
+    (r A).-tower U sU & last U sU = V.
 
 Local Notation "r .-ext" := (extension_pred r)
   (at level 2, format "r .-ext") : ring_scope.
 
-Definition solvable_by (r : nat -> L -> rel {subfield L}) (U V : {subfield L}) :=
+Definition solvable_by (r : {fset L} -> rel {subfield L}) (U V : {subfield L}) :=
   (U <= V)%VS /\ exists2 E : {subfield L}, r.-ext U E & (V <= E)%VS.
 
 Definition solvable_by_radicals_poly (E F : {subfield L}) (p : {poly L}) :=
@@ -81,12 +96,12 @@ Local Notation "r .-ext" := (extension_pred r)
 
 Section Properties.
 
-Implicit Type r : nat -> L -> rel {subfield L}.
+Implicit Type r : {fset L} -> rel {subfield L}.
+Implicit Types (U V : {subfield L}) (A : {fset L}).
 
 Lemma rext_refl r (E : {subfield L}) : r.-ext E E.
 Proof. by exists [::] => //; exists fset0. Qed.
 
-(** We could generalize to an m >= dim_U V **)
 Lemma rext_r r (x : L) (U V : {subfield L}) :
   r (\dim_U V) x U V -> r.-ext U V.
 Proof.
@@ -100,6 +115,16 @@ Qed.
 Lemma rext_r_trans r (x : L) (n : nat) (E F K : {subfield L}) :
   r.-ext E F -> r n x F K -> r.-ext E K.
 Proof.
+case=> [e [Ae he laste]] rFK.
+exists (rcons e K); last by rewrite last_rcons.
+exists (x |` Ae). rewrite /tower rcons_path; apply/andP; split; last first.
+  apply/existsP=> /=.
+  have x_xAe : x \in x |` Ae by rewrite !inE eqxx.
+  exists [` x_xAe]; apply/existsP. exists n.
+
+r n x F K := x \in K && x^n \in F
+si n <= m
+                                  
 Admitted.
 
 (** Easy **)
