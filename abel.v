@@ -34,6 +34,8 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Import GRing.Theory.
+
 Local Open Scope ring_scope.
 Local Open Scope fset_scope.
 
@@ -47,22 +49,56 @@ Implicit Types (U V : {subfield L}) (A : {fset L}).
 
 (* Giving the parameters n and x in the definition makes it a boolean         *)
 (* predicate which is useful as the tower property can be expressed as a path,*)
-Definition radical A U V :=
-  [exists x : A, ((val x) ^+ (\dim_U V) \in U) && (<<U; val x>>%AS == V)].
+Definition radical N A U V := [exists x : A, exists n : 'I_N,
+  [&& (n > 0)%N, val x ^+ n \in U & <<U; val x>>%AS == V]].
 
-Lemma radicalP  (A : {fset L}) (U V : {subfield L}) :
+Lemma radicalP (N : nat) A U V :
   reflect (exists2 x : L, x \in A &
-             exists n, [/\ (0 < n)%N, x ^+ n \in U & <<U; x>>%AS = V])
-          (radical A U V).
+             exists n, [/\ (0 < n < N)%N, x ^+ n \in U & <<U; x>>%AS = V])
+          (radical N A U V).
 Proof.
-apply: (iffP 'exists_andP) => [[x] [Uxd /eqP UxeqV] | [x Ax] [n [lt0n Uxn UxeqV]]].
-  exists (val x) => //=; exists (\dim_U V). 
-  by rewrite Uxd -UxeqV -dim_aspaceOver ?subv_adjoin // adim_gt0.
-exists [` Ax] => /=; rewrite UxeqV; split => //.
-(* Search _ minPoly. About GRing.subrXX. *)
-(* (x ^ a - l ^ a) | (x ^ (a * b) - l ^ (a * b)) *)
-(* pose P := 'X ^ n - x ^+ n.                               Search _ (0 < \dim _)%N. *)
-Admitted.
+apply: (iffP 'exists_'exists_and3P).
+  move=> [x [n [lt0n Uxn /eqP UxeqV]]].
+  by exists (val x) => //=; exists n; rewrite lt0n ltn_ord; split.
+move=> [x Ax [n [/andP[lt0n ltnN] Uxn /eqP UxeqV]]].
+by exists [` Ax], (Ordinal ltnN); split.
+Qed.
+
+Definition pradical N A U V := [exists x : A, exists p : 'I_N,
+  [&& prime p, val x ^+ p \in U & <<U; val x>>%AS == V]].
+
+Lemma pradicalP (N : nat) (A : {fset L}) (U V : {subfield L}) :
+  reflect (exists2 x : L, x \in A &
+             exists p, [/\ (p < N)%N, prime p, x ^+ p \in U & <<U; x>>%AS = V])
+          (pradical N A U V).
+Proof.
+apply: (iffP 'exists_'exists_and3P).
+  move=> [x [p [p_prime Uxp /eqP UxeqV]]].
+  by exists (val x) => //=; exists p; rewrite p_prime ltn_ord; split.
+move=> [x Ax [p [ltpN p_prime Uxp /eqP UxeqV]]].
+by exists [` Ax], (Ordinal ltpN); split.
+Qed.
+
+Definition upstable (r : nat -> {fset L} -> rel {subfield L}) :=
+  forall N N' A A', (N <= N')%N -> A `<=` A' -> subrel (r N A) (r N' A').
+
+Definition extension (r : rel {subfield L}) := subrel r subsetv.
+
+Lemma radical_upstable : upstable radical.
+Proof.
+move=> N N' A A' leNN' subAA' U V /radicalP.
+move=> [x Ax [n [/andP[lt0n ltNN Uxn UxV]]]].
+apply/radicalP; exists x; first exact: (fsubsetP subAA').
+by exists n; split=> //; rewrite lt0n (leq_trans _ leNN').
+Qed.
+
+Lemma pradical_upstable : upstable pradical.
+Proof.
+move=> N N' A A' leNN' subAA' U V /pradicalP.
+move=> [x Ax [p [ltpN p_prime Uxn UxV]]].
+apply/pradicalP; exists x; first exact: (fsubsetP subAA').
+by exists p; split=> //; rewrite (leq_trans _ leNN').
+Qed.
 
 (* n acts as an upper bound for the degree of the pure extension              *)
 (* and A as the set used to extend U                                          *)
@@ -72,14 +108,14 @@ Local Notation "r .-tower" := (tower r)
   (at level 2, format "r .-tower") : ring_scope.
 
 (* the quantification on n is useless as we directly have an upper bound      *)
-Definition extension_pred (r : {fset L} -> rel {subfield L}) U V :=
-  exists2 sU : seq {subfield L}, exists A,
-    (r A).-tower U sU & last U sU = V.
+Definition extension_pred (r : nat -> {fset L} -> rel {subfield L}) U V :=
+  exists sU : seq {subfield L}, exists N, exists2 A,
+    (r N A).-tower U sU & last U sU = V.
 
 Local Notation "r .-ext" := (extension_pred r)
   (at level 2, format "r .-ext") : ring_scope.
 
-Definition solvable_by (r : {fset L} -> rel {subfield L}) (U V : {subfield L}) :=
+Definition solvable_by (r : nat -> {fset L} -> rel {subfield L}) (U V : {subfield L}) :=
   (U <= V)%VS /\ exists2 E : {subfield L}, r.-ext U E & (V <= E)%VS.
 
 Definition solvable_by_radicals_poly (E F : {subfield L}) (p : {poly L}) :=
@@ -92,96 +128,116 @@ Local Notation "r .-tower" := (tower r)
 Local Notation "r .-ext" := (extension_pred r)
   (at level 2, format "r .-ext") : ring_scope.
 
-
+Hint Resolve radical_upstable pradical_upstable : core.
 
 Section Properties.
 
-Implicit Type r : {fset L} -> rel {subfield L}.
+Implicit Type r : nat -> {fset L} -> rel {subfield L}.
 Implicit Types (U V : {subfield L}) (A : {fset L}).
 
 Lemma rext_refl r (E : {subfield L}) : r.-ext E E.
-Proof. by exists [::] => //; exists fset0. Qed.
+Proof. by exists [::], 0%N, fset0. Qed.
 
-Lemma rext_r r (x : L) (U V : {subfield L}) :
-  r (\dim_U V) x U V -> r.-ext U V.
-Proof.
-move=> rxUV; exists [:: V] => //; exists [fset x]%fset; rewrite /= andbT.
-by apply/existsP; exists [` fset11 _]%fset; apply/existsP; exists ord_max.
-Qed.
+Lemma rext_r r N (A : {fset L}) (U V : {subfield L}) : r N A U V -> r.-ext U V.
+Proof. by move=> rNAUV; exists [:: V], N, A => //=; rewrite andbT. Qed.
 
-(** Easy **)
 (* adding a field in the tower                                                *)
 (* order of the variables E F K ?                                             *)
-Lemma rext_r_trans r (x : L) (n : nat) (E F K : {subfield L}) :
-  r.-ext E F -> r n x F K -> r.-ext E K.
+Lemma rext_r_trans r N A (E F K : {subfield L}) : upstable r ->
+  r.-ext E F -> r N A F K -> r.-ext E K.
 Proof.
-case=> [e [Ae he laste]] rFK.
-exists (rcons e K); last by rewrite last_rcons.
-exists (x |` Ae). rewrite /tower rcons_path; apply/andP; split; last first.
-  apply/existsP=> /=.
-  have x_xAe : x \in x |` Ae by rewrite !inE eqxx.
-  exists [` x_xAe]; apply/existsP. exists n.
+move=> up_r [Vs [M [A' rVs lastVsF]]] rFK.
+exists (rcons Vs K), (maxn N M), (A `|` A'); last by rewrite last_rcons.
+rewrite /tower rcons_path (sub_path _ rVs)/=; last first.
+  by apply: up_r; rewrite ?leq_maxr ?fsubsetUr.
+by rewrite lastVsF; apply: up_r rFK; rewrite ?leq_maxl ?fsubsetUl.
+Qed.
 
-r n x F K := x \in K && x^n \in F
-si n <= m
-                                  
-Admitted.
-
-(** Easy **)
 (* adding a tower                                                             *)
-Lemma rext_trans r (E F K : {subfield L}) :
+Lemma rext_trans r (E F K : {subfield L}) : upstable r ->
   r.-ext E F -> r.-ext F K -> r.-ext E K.
 Proof.
-Admitted.
+move=> up_r rEF [Vs]; elim: Vs => [|V Vs IHVs] in F rEF *.
+  by move=> [? [? _ <-]].
+move=> [N [A /= /andP[rFV rVVs VVsK]]]; apply: (IHVs V).
+  exact: rext_r_trans rFV.
+by exists N, A.
+Qed.
 
-Lemma tower_subspace r n A E s : (forall n x U V, r n x U V -> (U <= V)%VS) ->
-   r.-tower n A E s -> (E <= last E s)%VS.
+Lemma tower_subspace r N A E s : (forall N A, subrel (r N A) subsetv) ->
+   (r N A).-tower E s -> (E <= last E s)%VS.
 Proof.
 move=> hsubspace; elim/last_ind: s=> [| s K ihs] //=.
-rewrite last_rcons /tower rcons_path; case/andP=> /ihs=> {ihs} ihs.
-case/existsP => x /existsP[m /hsubspace]; exact: subv_trans.
+rewrite last_rcons /tower rcons_path; move=> /andP[/ihs {} ihs].
+by move=> /hsubspace; apply: subv_trans.
 Qed.
 
-Lemma radical_subspace n x U V : radical n x U V -> (U <= V)%VS.
+Lemma radical_subspace N A : subrel (radical N A) subsetv.
 Proof.
-by case/and3P=> _ _ /eqP<-; rewrite /= -adjoin_seq1; apply: subv_adjoin_seq.
+move=> U V /radicalP [x _ [n [_ _ <-]]].
+by rewrite /= -adjoin_seq1 subv_adjoin_seq.
 Qed.
+Hint Resolve radical_subspace.
 
-Lemma rext_subspace (E F : {subfield L}) : radical.-ext E F -> (E <= F)%VS.
+Lemma rext_subspace r : (forall N A, subrel (r N A) subsetv) ->
+  forall E F, r.-ext E F -> (E <= F)%VS.
 Proof.
-case=> s [A rtow <-]; apply: tower_subspace rtow; exact: radical_subspace.
+by move=> rsub E F [Vs [N [A /tower_subspace subEVs <-]]]; apply: subEVs.
 Qed.
 
 Lemma solvable_by_radicals_radicalext (E F : {subfield L}) :
   radical.-ext E F -> solvable_by radical E F.
 Proof.
-move=> extEF; split;last by exists F.
-exact: rext_subspace.
+move=> extEF; split; last by exists F.
+exact: (@rext_subspace radical).
 Qed.
 
 Lemma radical_Fadjoin (n : nat) (x : L) (E : {subfield L}) :
-  (0 < n)%N -> x ^+ n \in E -> radical n x E <<E; x>>%AS.
-Proof. by rewrite /radical => -> -> /=. Qed.
-
-(** Easy **)
-Lemma rext_Fadjoin (n : nat) (x : L) (E : {subfield L}) :
-  (0 < n)%N -> x ^+ n \in E -> radical.-ext E <<E; x>>%AS.
+  (0 < n)%N -> x ^+ n \in E -> radical n.+1 [fset x]%fset E <<E; x>>%AS.
 Proof.
-(* direct *)
+move=> n_gt0 Exn; apply/radicalP; exists x; rewrite ?inE//.
+by exists n; rewrite leqnn n_gt0; split.
+Qed.
+
+Lemma radical_ext_Fadjoin (n : nat) (x : L) (E : {subfield L}) :
+  (0 < n)%N -> x ^+ n \in E -> radical.-ext E <<E; x>>%AS.
+Proof. by move=> n_gt0 Exn; apply/rext_r/(radical_Fadjoin n_gt0 Exn). Qed.
+
+Lemma pradical_ext_Fadjoin (p : nat) (x : L) (E : {subfield L}) :
+  prime p -> x ^+ p \in E -> pradical.-ext E <<E; x>>%AS.
 Admitted.
 
-(* radical extension with only pure extensions of prime degree                *)
-Definition pradical (n : nat) (x : L) (U V : {subfield L}) :=
-  radical n x U V && prime n.
-
-
-
-(** Easy **)
-Lemma pradicalext_radical (n : nat) (x : L) (E F : {subfield L}) :
-  radical n x E F -> pradical.-ext E F.
+Lemma pradical_radical N A : subrel (pradical N A) (radical N A).
 Proof.
-(* factorization of the degree of the extension : if n = uv *)
-(* instead of adding x ^ (uv) in E, we can first add x^u and then x *)
+move=> U V /pradicalP[x Ax [p [ltpN p_prime Uxp UxV]]].
+apply/radicalP; exists x => //.
+Admitted.
+
+(** Super Easy to finish **)
+Lemma pradicalext_radical N A (E F : {subfield L}) :
+  radical N A E F -> pradical.-ext E F.
+Proof.
+move=> /radicalP[x Ax [n [/andP[n_gt0 ltnN Exn <-{F}]]]].
+have [k] := ubnP n; elim: k => // k IHk in n n_gt0 ltnN x A Ax E Exn *.
+rewrite ltnS => lenk.
+have [n_prime|/primePn] := boolP (prime n).
+  by apply: (@pradical_ext_Fadjoin n).
+case.
+  case: n {ltnN lenk} => [|[]]// in Exn n_gt0 * => _.
+  suff -> :  <<E; x>>%AS = E by apply: rext_refl.
+  by apply/val_inj => /=; rewrite (Fadjoin_idP _).
+move=> [d /andP[d_gt1 d_ltn /dvdnP[m n_eq_md]]].
+have m_gt0 : (m > 0)%N by admit.
+apply: (@rext_trans _ _ <<E; x ^+ d>>) => //.
+  apply: (@IHk m _ _ _ (x ^+ d |` A)) => //.
+  - admit.
+  - by rewrite !inE eqxx.
+  - by rewrite -exprM mulnC -n_eq_md//.
+  - by rewrite (leq_trans _ lenk)// n_eq_md ltn_Pmulr.
+suff -> : <<E; x>>%AS = <<<<E; x ^+ d>>; x>>%AS.
+  by apply: (IHk d _ _ _ A) => //; admit.
+apply/val_inj; rewrite /= adjoinC [<<_; x ^+ d>>%VS](Fadjoin_idP _)//.
+by rewrite rpredX// memv_adjoin.
 Admitted.
 
 (** Easy **)
