@@ -563,43 +563,39 @@ suff [/= r_ /andP[r_basis /allP r_F] m_r {abelian_G}] :
        basis_of (aspaceOver E F) (r_ : seq (fieldOver E)) && all (mem F) r_ &
          forall i m, m \in G -> exists2 l, (l \in E) && (l ^+ n == 1)
                                            & m (tnth r_ i) = l * tnth r_ i.
-  pose R := [fset x in val r_].
-  exists [seq <<E & (take i r_)>>%AS | i <- iota 1 n], n.+1, R.
-    pose f i := <<E & take i r_>>%AS.
+  pose R := [fset x in val r_]; pose f i := <<E & take i r_>>%AS.
+  have Er_eq_F : <<E & r_>>%AS = F :> {vspace _}.
+    apply/eqP; rewrite eqEsubv/=; apply/andP; split.
+      by apply/Fadjoin_seqP; split.
+    apply/subvP => x; rewrite -(mem_aspaceOver subv_EF).
+    move=> /(coord_basis r_basis)->; rewrite memv_suml// => i _.
+    rewrite fieldOver_scaleE/= rpredM//.
+      by rewrite (subvP (subv_adjoin_seq _ _))//; apply: valP.
+    have lt_ir : (i < size r_)%N by rewrite size_tuple.
+    by rewrite (subvP (seqv_sub_adjoin _ (mem_nth 0 lt_ir)))// memv_line.
+  pose fs := [seq f i | i <- iota 1 n]; exists fs, n.+1, R.
     have {1}<- : f 0%N = E by apply/val_inj; rewrite /f/= take0 Fadjoin_nil.
     rewrite last_map/= -(subnK n_gt0) iota_add/= cats1 last_rcons subnKC// /f.
-    rewrite take_oversize// ?size_tuple//.
-    apply/val_inj/eqP; rewrite eqEdim; apply/andP; split.
-      by apply/Fadjoin_seqP; split.
-    rewrite [X in (X <= _)%N](dim_sup_field subv_EF).
-    rewrite [X in (_ <= X)%N](dim_sup_field (subv_adjoin_seq _ _)).
-    rewrite leq_mul2r gtn_eqF ?adim_gt0//=.
-    rewrite -[X in (_ <= X)%N]dim_aspaceOver ?subv_adjoin_seq//=.
-    suff -> : vspaceOver E << E & r_ >>%AS = <<1 & r_ : seq (fieldOver E)>>%AS.
-      rewrite (span_basis r_basis) (addv_idPr _) ?sub1v//=.
-      by rewrite subfield_closed dim_aspaceOver.
-    (* extract commutation between vspaceOver and << _ & _ >> *)
-    apply/eqP; rewrite eqEsubv; apply/andP; split; last first.
-      apply/Fadjoin_seqP; split; rewrite ?sub1v// => x x_r_.
-      by rewrite ?asimp//= seqv_sub_adjoin.
-    have [K [r_K EK memK]] := aspaceOverP <<1 & r_ : seq (fieldOver E) >>%AS.
-    suff subErK: (<<E & r_>>%AS <= K)%VS.
-      by apply/subvP => x; rewrite ?asimp//= memK; apply/subvP.
-    by apply/Fadjoin_seqP; split => // x x_r_; rewrite -memK seqv_sub_adjoin.
+    by rewrite take_oversize ?size_tuple//; apply/val_inj.
   apply/(pathP F) => i; rewrite size_map size_iota => lti.
-  pose i_n := Ordinal lti.
-  apply/radicalP; exists (tnth r_ i_n); first by rewrite inE mem_tnth.
+  apply/radicalP; exists (r_`_i); first by rewrite inE mem_nth ?size_tuple.
   exists n; rewrite n_gt0 leqnn; split => //; last first.
-     admit. (* should be easy *)
-  suff: tnth r_ i_n ^+ n \in fixedField G.
+    have fsi j : nth F fs j = <<E & take j.+1 r_>>%VS :> {vspace _}.
+      have [lt_jn|ge_jn] := ltnP j n; last first.
+        by rewrite nth_default ?take_oversize ?size_tuple// leqW.
+      by rewrite (nth_map n) ?size_iota// nth_iota.
+    have -> : nth F (E :: fs) i = <<E & take i r_>>%VS :> {vspace _}.
+      by case: i {lti} => //=; rewrite take0 adjoin_nil subfield_closed.
+    by apply/val_inj; rewrite /= -adjoin_rcons -take_nth ?size_tuple.
+  suff: r_`_i ^+ n \in fixedField G.
     rewrite (galois_fixedField _)//; apply/subvP.
     apply: (@all_nthP _ (fun X : {aspace _} => subsetv E X)); last first.
       by rewrite /= size_map size_iota leqW.
     apply/allP => V; rewrite inE => /predU1P[->//|].
     by move=> /mapP[j _ ->]; rewrite subv_adjoin_seq.
-  apply/fixedFieldP; first by rewrite rpredX// [_ \in _]r_F// mem_tnth.
-  move=> g /(m_r i_n)[l /andP[lE /eqP lX1] gri].
-  by rewrite rmorphX/= gri exprMn lX1 mul1r.
+  apply/fixedFieldP; first by rewrite rpredX ?[_ \in _]r_F ?mem_nth ?size_tuple.
+  move=> g /(m_r (Ordinal lti))[l /andP[lE /eqP lX1]].
+  by rewrite (tnth_nth 0) rmorphX/= => ->; rewrite exprMn lX1 mul1r.
 pose LE := [fieldExtType subvs_of E of fieldOver E].
 have [e e_basis] : { e : n.-1.+1.-tuple _ | basis_of (aspaceOver E F) e}.
   rewrite prednK//; have := vbasisP (aspaceOver E F); move: (vbasis _).
