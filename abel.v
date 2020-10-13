@@ -479,16 +479,33 @@ Section Prodv.
 Variables (F0 : fieldType) (L : splittingFieldType F0).
 
 (** N/A **)
-Lemma prodv_galois (k K F : {subfield L}) :
+Lemma galois_prodv (k K F : {subfield L}) :
   galois k K -> (k <= F)%VS -> galois F (K * F).
 Proof.
-Admitted.
+move=> /splitting_galoisField [p [pk p_sep [rs p_eq krs]]] kF.
+apply/splitting_galoisField; exists p; split => //.
+  by apply: polyOverS pk => x; apply: subvP.
+exists rs => //; apply/eqP; rewrite eqEsubv; apply/andP; split.
+  apply/Fadjoin_seqP; rewrite field_subvMl; split => //= r rrs.
+  by apply: (subvP (field_subvMr _ _)); rewrite -krs seqv_sub_adjoin.
+apply/prodvP => x y xK yF; rewrite rpredM//; last first.
+  by rewrite (subvP (subv_adjoin_seq _ _))//.
+by rewrite -krs in xK; apply: subvP xK; apply: adjoin_seqSl.
+Qed.
 
 (** N/A **)
-Lemma prodv_galoisI (k K F : {subfield L}) :
+Lemma capv_galois (k K F : {subfield L}) :
   galois k K -> (k <= F)%VS -> galois (K :&: F) K.
 Proof.
-Admitted.
+move=> /splitting_galoisField [p [pk p_sep [rs p_eq krs]]] kF.
+have k_subKF: (k <= K :&: F)%VS.
+  apply/subvP => x xk.
+  by rewrite memv_cap (subvP kF)// -krs (subvP (subv_adjoin_seq _ _)).
+apply/splitting_galoisField; exists p; split => //.
+  by apply: polyOverS pk; apply/subvP.
+exists rs => //; apply/eqP; rewrite -krs eqEsubv andbC adjoin_seqSl//=.
+by apply/Fadjoin_seqP; split; [rewrite /= krs capvSl|apply: seqv_sub_adjoin].
+Qed.
 
 (** N/A **)
 (* Do we need to know that the iso is the restriction morphism? *)
