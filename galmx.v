@@ -113,5 +113,9 @@ Lemma galmxX M i : galmx (M ^+ i) = (galmx M ^+ i)%g.
 Proof.
 Admitted.
 
+Lemma vecofM v M : vecof (v *m M) = (galmx M) (vecof v).
+Proof.
+Admitted.
+
 End galmx.
 End galmx.

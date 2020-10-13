@@ -617,9 +617,14 @@ have [p p_unit dG] : codiagonalisable [seq mxof e g | g in G].
   by rewrite /= -(fmorph_primitive_root [rmorphism of vsval]).
 pose r_ := [tuple vecof e (row i p) | i < n.-1.+1].
 rewrite -[n]prednK//; exists r_.
-  apply/andP; split; last first.
-    by apply/allP => _ /mapP[/=i _ ->]; rewrite vecof_in.
-  admit. (* follows from p_unit, via missing lemma in galmx *)
+  apply/andP; split; last by apply/allP => _ /mapP[/=i _ ->]; rewrite vecof_in.
+  rewrite basisEdim; apply/andP; split; last first.
+    by rewrite size_tuple dim_aspaceOver// prednK.
+  apply/subvP => x /=; rewrite mem_aspaceOver// => xEF.
+  have [l ->] : exists l, x = vecof e (l *m p).
+    by exists (rowmxof e x *m invmx p); rewrite mulmxKV ?rowmxofK.
+  rewrite span_def big_map big_enum_cond/= mulmx_sum_row linear_sum/=.
+  by  apply: memv_sumr => i _; rewrite linearZ/= [_ \in _]memvZ// memv_line.
 move=> i g gG; have /allP /(_ (mxof e g) (map_f _ _))/sim_diagPex := dG.
 case=> // [|M pg]; first by rewrite mem_enum.
 exists (val (M 0 i)); [apply/andP; split|]; first by rewrite /= subvsP.
@@ -633,9 +638,9 @@ exists (val (M 0 i)); [apply/andP; split|]; first by rewrite /= subvsP.
   rewrite prodf_seq_eq0; apply/hasP; exists (M 0 i); rewrite ?subrr ?eqxx//.
   by rewrite mem_undup map_f ?mem_enum.
 have /(simP p_unit)/(congr1 (mulmx (@delta_mx _ 1 _ 0 i))) := pg.
-rewrite !mulmxA -!rowE row_diag_mx -scalemxAl -rowE => pg_e.
-admit. (* transfer pg_eq via vecof, via missing lemma in galmx *)
-Admitted.
+rewrite !mulmxA -!rowE row_diag_mx -scalemxAl -rowE => /(congr1 (vecof e)).
+by rewrite vecofM// mxofK// linearZ// tnth_map/= tnth_ord_tuple.
+Qed.
 
 End Part1a.
 
