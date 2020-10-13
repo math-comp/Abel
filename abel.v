@@ -563,7 +563,8 @@ suff [/= r_ /andP[r_basis /allP r_F] m_r {abelian_G}] :
        basis_of (aspaceOver E F) (r_ : seq (fieldOver E)) && all (mem F) r_ &
          forall i m, m \in G -> exists2 l, (l \in E) && (l ^+ n == 1)
                                            & m (tnth r_ i) = l * tnth r_ i.
-  exists [seq <<E & (take i r_)>>%AS | i <- iota 1 n]; last first.
+  pose R := [fset x in val r_].
+  exists [seq <<E & (take i r_)>>%AS | i <- iota 1 n], n.+1, R.
     pose f i := <<E & take i r_>>%AS.
     have {1}<- : f 0%N = E by apply/val_inj; rewrite /f/= take0 Fadjoin_nil.
     rewrite last_map/= -(subnK n_gt0) iota_add/= cats1 last_rcons subnKC// /f.
@@ -585,17 +586,19 @@ suff [/= r_ /andP[r_basis /allP r_F] m_r {abelian_G}] :
     suff subErK: (<<E & r_>>%AS <= K)%VS.
       by apply/subvP => x; rewrite ?asimp//= memK; apply/subvP.
     by apply/Fadjoin_seqP; split => // x x_r_; rewrite -memK seqv_sub_adjoin.
-  pose R := [fset x in val r_].
-  exists R; apply/(pathP F) => val_i; rewrite size_map size_iota => lt_in.
-  pose i := Ordinal lt_in; have riR: tnth r_ i \in R by rewrite inE mem_tnth.
-  apply/existsP => /=; exists [` riR]; apply/existsP => /=; exists ord_max.
-  rewrite /radical n_gt0//=; apply/andP; split; last first.
+  apply/(pathP F) => i; rewrite size_map size_iota => lti.
+  pose i_n := Ordinal lti.
+  apply/radicalP; exists (tnth r_ i_n); first by rewrite inE mem_tnth.
+  exists n; rewrite n_gt0 leqnn; split => //; last first.
      admit. (* should be easy *)
-  suff: tnth r_ i ^+ n \in fixedField G.
+  suff: tnth r_ i_n ^+ n \in fixedField G.
     rewrite (galois_fixedField _)//; apply/subvP.
-    admit. (* should be very easy *)
+    apply: (@all_nthP _ (fun X : {aspace _} => subsetv E X)); last first.
+      by rewrite /= size_map size_iota leqW.
+    apply/allP => V; rewrite inE => /predU1P[->//|].
+    by move=> /mapP[j _ ->]; rewrite subv_adjoin_seq.
   apply/fixedFieldP; first by rewrite rpredX// [_ \in _]r_F// mem_tnth.
-  move=> g /(m_r i)[l /andP[lE /eqP lX1] gri].
+  move=> g /(m_r i_n)[l /andP[lE /eqP lX1] gri].
   by rewrite rmorphX/= gri exprMn lX1 mul1r.
 pose LE := [fieldExtType subvs_of E of fieldOver E].
 have [e e_basis] : { e : n.-1.+1.-tuple _ | basis_of (aspaceOver E F) e}.
@@ -840,7 +843,7 @@ Hypothesis galois_EF : galois E F.
 Hypothesis subv_EF : (E <= F)%VS.
 Hypothesis prime_tn : forall i, prime (tn i).
 Hypothesis subv_FEtx : (F <= <<E & (fgraph tx)>>)%VS.
-Hypothesis radical_Ei : forall i, radical (tn i) (tx i)
+Hypothesis radical_Ei : forall i, radical (\max_i tn i) [fset tx i | i in 'I_n]
   <<E & (take i (fgraph tx))>> <<E & (take i.+1 (fgraph tx))>>.
 
 (* - we can also add an m0 = (m1*..*mn)-th root of the unity at the beginning *)
