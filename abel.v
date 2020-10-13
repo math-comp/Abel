@@ -110,7 +110,7 @@ Local Notation "r .-tower" := (tower r)
 (* the quantification on n is useless as we directly have an upper bound      *)
 Definition extension_pred (r : nat -> {fset L} -> rel {subfield L}) U V :=
   exists sU : seq {subfield L}, exists N, exists2 A,
-    (r N A).-tower U sU & last U sU = V.
+    last U sU = V & (r N A).-tower U sU.
 
 Local Notation "r .-ext" := (extension_pred r)
   (at level 2, format "r .-ext") : ring_scope.
@@ -146,8 +146,8 @@ Proof. by move=> rNAUV; exists [:: V], N, A => //=; rewrite andbT. Qed.
 Lemma rext_r_trans r N A (E F K : {subfield L}) : upstable r ->
   r.-ext E F -> r N A F K -> r.-ext E K.
 Proof.
-move=> up_r [Vs [M [A' rVs lastVsF]]] rFK.
-exists (rcons Vs K), (maxn N M), (A `|` A'); last by rewrite last_rcons.
+move=> up_r [Vs [M [A' lastVsF rVs]]] rFK.
+exists (rcons Vs K), (maxn N M), (A `|` A'); first by rewrite last_rcons.
 rewrite /tower rcons_path (sub_path _ rVs)/=; last first.
   by apply: up_r; rewrite ?leq_maxr ?fsubsetUr.
 by rewrite lastVsF; apply: up_r rFK; rewrite ?leq_maxl ?fsubsetUl.
@@ -158,8 +158,8 @@ Lemma rext_trans r (E F K : {subfield L}) : upstable r ->
   r.-ext E F -> r.-ext F K -> r.-ext E K.
 Proof.
 move=> up_r rEF [Vs]; elim: Vs => [|V Vs IHVs] in F rEF *.
-  by move=> [? [? _ <-]].
-move=> [N [A /= /andP[rFV rVVs VVsK]]]; apply: (IHVs V).
+  by move=> [? [? <-]].
+move=> [N [A /= VVsK /andP[rFV rVVs]]]; apply: (IHVs V).
   exact: rext_r_trans rFV.
 by exists N, A.
 Qed.
@@ -182,7 +182,7 @@ Hint Resolve radical_subspace.
 Lemma rext_subspace r : (forall N A, subrel (r N A) subsetv) ->
   forall E F, r.-ext E F -> (E <= F)%VS.
 Proof.
-by move=> rsub E F [Vs [N [A /tower_subspace subEVs <-]]]; apply: subEVs.
+by move=> rsub E F [Vs [N [A  <- /tower_subspace subEVs]]]; apply: subEVs.
 Qed.
 
 Lemma solvable_by_radicals_radicalext (E F : {subfield L}) :
@@ -199,79 +199,97 @@ move=> n_gt0 Exn; apply/radicalP; exists x; rewrite ?inE//.
 by exists n; rewrite leqnn n_gt0; split.
 Qed.
 
+Lemma pradical_Fadjoin (p : nat) (x : L) (E : {subfield L}) :
+  prime p -> x ^+ p \in E -> pradical p.+1 [fset x]%fset E <<E; x>>%AS.
+Proof.
+move=> prime_p Exn; apply/pradicalP; exists x; rewrite ?inE//.
+by exists p; rewrite leqnn; split.
+Qed.
+
 Lemma radical_ext_Fadjoin (n : nat) (x : L) (E : {subfield L}) :
   (0 < n)%N -> x ^+ n \in E -> radical.-ext E <<E; x>>%AS.
 Proof. by move=> n_gt0 Exn; apply/rext_r/(radical_Fadjoin n_gt0 Exn). Qed.
 
 Lemma pradical_ext_Fadjoin (p : nat) (x : L) (E : {subfield L}) :
   prime p -> x ^+ p \in E -> pradical.-ext E <<E; x>>%AS.
-Admitted.
+Proof. by move=> p_prime Exn; apply/rext_r/(pradical_Fadjoin p_prime Exn). Qed.
 
 Lemma pradical_radical N A : subrel (pradical N A) (radical N A).
 Proof.
 move=> U V /pradicalP[x Ax [p [ltpN p_prime Uxp UxV]]].
-apply/radicalP; exists x => //.
-Admitted.
+by apply/radicalP; exists x => //; exists p; rewrite prime_gt0//.
+Qed.
 
-(** Super Easy to finish **)
 Lemma pradicalext_radical N A (E F : {subfield L}) :
   radical N A E F -> pradical.-ext E F.
 Proof.
 move=> /radicalP[x Ax [n [/andP[n_gt0 ltnN Exn <-{F}]]]].
 have [k] := ubnP n; elim: k => // k IHk in n n_gt0 ltnN x A Ax E Exn *.
 rewrite ltnS => lenk.
-have [n_prime|/primePn] := boolP (prime n).
-  by apply: (@pradical_ext_Fadjoin n).
-case.
-  case: n {ltnN lenk} => [|[]]// in Exn n_gt0 * => _.
+have [n_prime|/primePn[]] := boolP (prime n).
+- by apply: (@pradical_ext_Fadjoin n).
+- case: n {ltnN lenk} => [|[]]// in Exn n_gt0 * => _.
   suff -> :  <<E; x>>%AS = E by apply: rext_refl.
   by apply/val_inj => /=; rewrite (Fadjoin_idP _).
 move=> [d /andP[d_gt1 d_ltn /dvdnP[m n_eq_md]]].
-have m_gt0 : (m > 0)%N by admit.
+have m_gt0 : (m > 0)%N.
+  by move: n_gt0; rewrite !lt0n n_eq_md; apply: contra_neq => ->.
 apply: (@rext_trans _ _ <<E; x ^+ d>>) => //.
   apply: (@IHk m _ _ _ (x ^+ d |` A)) => //.
-  - admit.
+  - by rewrite (leq_trans _ ltnN)// ltnS n_eq_md leq_pmulr ?(leq_trans _ d_gt1).
   - by rewrite !inE eqxx.
   - by rewrite -exprM mulnC -n_eq_md//.
   - by rewrite (leq_trans _ lenk)// n_eq_md ltn_Pmulr.
 suff -> : <<E; x>>%AS = <<<<E; x ^+ d>>; x>>%AS.
-  by apply: (IHk d _ _ _ A) => //; admit.
+  apply: (IHk d _ _ _ A) => //.
+  - by rewrite (leq_trans _ d_gt1)//.
+  - by rewrite (leq_trans _ ltnN)// ltnS n_eq_md leq_pmull.
+  - by rewrite memv_adjoin.
+  - by rewrite (leq_trans _ lenk).
 apply/val_inj; rewrite /= adjoinC [<<_; x ^+ d>>%VS](Fadjoin_idP _)//.
 by rewrite rpredX// memv_adjoin.
-Admitted.
+Qed.
 
-(** Easy **)
 Lemma radicalext_pradicalext (E F : {subfield L}) :
   radical.-ext E F <-> pradical.-ext E F.
 Proof.
-(* first implication : using pradicalext_radical *)
-(* second implication : direct *)
-Admitted.
+split=> [] [Vs [N [A EVsF pVs]]]; last first.
+  by exists Vs, N, A => //; apply: sub_path pVs; apply: pradical_radical.
+elim: Vs E EVsF pVs => [|V Vs IHVs/= E EVsF /andP[EVs pVs]].
+  by move=> ? <- *; exact: rext_refl.
+by apply: rext_trans (IHVs V _ _) => //; apply: pradicalext_radical EVs.
+Qed.
 
-(** Easy **)
 Lemma solvable_by_radical_pradical (E F : {subfield L}) :
   solvable_by pradical E F <-> solvable_by radical E F.
-Proof.
-Admitted.
+Proof. by split=> -[EF [R /radicalext_pradicalext]]; split => //; exists R. Qed.
 
 (** Ok **) (* but painful *)
 (* Exposing the list of exponents, and elements                               *)
-Lemma radicalext_explicit_parameters E F :
-  radical.-ext E F -> (exists n : nat, exists tn : nat ^ n, exists2 tx : L ^ n,
-  (\prod_(i < n) tn i = \dim_E F)%N & (F == <<E & (fgraph tx)>>)%AS &&
-  [forall i : 'I_n, prime i && radical (tn i) (tx i)
-  <<E & (take i (fgraph tx))>> <<E & (take i.+1 (fgraph tx))>>]).
+Lemma radicalext_explicit_parameters E F : radical.-ext E F ->
+  exists n : nat, exists tn : nat ^ n, exists2 tx : L ^ n,
+    (\prod_(i < n) tn i = \dim_E F)%N
+    & (F == <<E & codom tx >>)%AS &&
+      [forall i : 'I_n, prime i && radical (\max_i (tn i).+1) [fset tx i | i in 'I_n]
+      <<E & (take i (codom tx))>> <<E & (take i.+1 (codom tx))>>].
 Proof.
+move=> [Vs [N [A ]]]; elim: Vs => [|V Vs IHVs] in E F N A * => [<-|].
+  exists 0%N, [ffun=> 0%N], [ffun=> 0]; rewrite ?divnn ?adim_gt0 ?big_ord0//.
+  apply/andP; split; [apply/eqP/val_inj => /=|apply/forallP => -[]//].
+  rewrite [codom _]size0nil ?size_codom ?card_ord//.
+  by rewrite adjoin_nil ?subfield_closed.
+move=> /= VVsF /andP[/radicalP[x Ax [n [/andP[n_gt0 ltnN Exn ExV]]]]].
+move=> /(IHVs _ F N A VVsF)[k [tn [tx prod_tn /andP[/eqP F_eq]]]].
 Admitted.
 
 (** Easy **)
 Lemma solvable_by_radical_explicit_parameters E F :
   solvable_by radical E F <-> (exists n : nat, exists tn : nat ^ n,
   exists2 tx : L ^ n, (F <= <<E & (fgraph tx)>>)%VS & [forall i : 'I_n, prime i
-  && radical (tn i) (tx i) <<E & (take i (fgraph tx))>>
-  <<E & (take i.+1 (fgraph tx))>>]).
+  && radical (\max_i tn i) [fset tx i | i in 'I_n]
+             <<E & (take i (fgraph tx))>>
+             <<E & (take i.+1 (fgraph tx))>>]).
 Proof.
-(* using solvable_by pradical <-> solvable_by radical and the lemma above *)
 Admitted.
 
 End Properties.
@@ -281,8 +299,6 @@ End RadicalExtension.
 Arguments tower {F0 L}.
 Arguments extension_pred {F0 L}.
 Arguments radical {F0 L}.
-
-
 
 (* splitting field properties *)
 Section Splitting.
@@ -298,39 +314,72 @@ Proof. case: splitting_p => b pE <-; exact: subv_adjoin_seq. Qed.
 (** Ok **)
 Lemma root_make_separable x : root p x = root (p %/ gcdp p p^`()) x.
 Proof.
+have := dvdp_gcdl p p^`(); rewrite dvdp_eq => /eqP p_eq_pDgMg.
+apply/idP/idP => [rpx|]; last first.
+  move=> dx_eq0; rewrite p_eq_pDgMg.
+  by rewrite /root hornerM mulf_eq0 (eqP dx_eq0) eqxx.
+pose m := [arg max_(i > 0 : 'I_(size p).+1 | ('X - x%:P) ^+ i.+1 %| p) i].
+have /dvdpP[q ->] : ('X - x%:P) ^+ m.+1 %| p.
+  admit.
+have rNqx : ~~ (('X - x%:P) %| q) by admit.
+set f := ('X - _).
+rewrite -dvdp_XsubCl.
+rewrite derivM.
+rewrite deriv_exp/=.
+rewrite derivXsubC mul1r.
+rewrite -mulr_natl exprS !mulrA -mulrDl.
+set r := (_ * f + _)%R.
+have Nrx : ~~ root r x.
+  rewrite /root !hornerE subrr mulr0 add0r mulf_neq0//.
+  admit.
+  admit.
+have f_neq0 : f != 0 by rewrite -?size_poly_eq0 ?size_XsubC.
+have q_neq0 : q != 0 by admit.
+rewrite (eqp_dvdr _ (eqp_divr _ (gcdp_mul2r _ _ _))).
+rewrite divp_pmul2r//; last 2 first.
+- by rewrite ?expf_eq0 (negPf f_neq0) ?andbF.
+- by rewrite ?gcdp_eq0 negb_and ?mulf_neq0.
+rewrite mulrC -divp_mulA ?dvdp_mulr//.
+have := dvdp_gcdl (f * q) r; rewrite Gauss_dvdpr//.
+by rewrite coprimep_XsubC root_gcd (negPf Nrx) andbF.
 Admitted.
 
-(** Ok **)
-Lemma galois_splittingFieldFor : galois E F.
-Proof.
+(** looks wrong! **)
+(* Lemma galois_splittingFieldFor : galois E F. *)
+(* Proof. *)
+(* apply/splitting_galoisField. *)
+(* exists p. *)
+(* rewrite /galois. *)
+
 (* from definition : *)
 (* for the separable part : with minPoly_dvdp, dvdp_separable,*)
 (* root_make_separable and make_separable, minPoly is separable so every root *)
 (* of p is a separable_element *)
 (* for the normal part : directly splitting_normalField *)
-Admitted.
+(* Admitted. *)
 
 End Splitting.
 
-(* transitivity *)
-Section Transitivity.
-Variables (F0 : fieldType) (L : splittingFieldType F0).
-Variables (E F K : {subfield L}). (* should this be E K and M ? *)
-Hypothesis subvs_EFK : (E <= F <= K)%VS.
+(* (* transitivity *) *)
+(* (* Looks wrong, but useless *) *)
+(* Section Transitivity. *)
+(* Variables (F0 : fieldType) (L : splittingFieldType F0). *)
+(* Variables (E F K : {subfield L}). (* should this be E K and M ? *) *)
+(* Hypothesis subvs_EFK : (E <= F <= K)%VS. *)
 
-(** Easy **)
-Lemma normalField_trans : normalField E F -> normalField F K -> normalField E K.
-Proof.
-(* using, for example, splitting_normalField *)
-Admitted.
+(* (** Completely wrong **) *)
+(* Lemma normalField_trans : normalField E F -> normalField F K -> normalField E K. *)
+(* Proof. *)
+(* (* using, for example, splitting_normalField *) *)
+(* Admitted. *)
 
-(** Easy **)
-Lemma galois_trans : galois E F -> galois F K -> galois E K.
-Proof.
-(* using the lemma above and the transitivity of separable *)
-Admitted.
+(* (** Wrong too **) *)
+(* Lemma galois_trans : galois E F -> galois F K -> galois E K. *)
+(* Proof. *)
+(* (* using the lemma above and the transitivity of separable *) *)
+(* Admitted. *)
 
-End Transitivity.
+(* End Transitivity. *)
 
 (* cyclotomic extensions                                                      *)
 Section Cyclotomic.
@@ -339,10 +388,13 @@ Variables (F0 : fieldType) (L : splittingFieldType F0).
 Variables (E : {subfield L}) (r : L) (n : nat).
 Hypothesis r_is_nth_root : n.-primitive_root r.
 
-(** Hard **)
+(** Very Hard **)
 (*     - E(x) is cyclotomic                                                   *)
 Lemma minPoly_cyclotomic : r \notin E -> minPoly E r = cyclotomic r n.
 Proof.
+move=> Er; apply/eqP; rewrite -eqp_monic ?monic_minPoly ?cyclotomic_monic//.
+rewrite /eqp minPoly_dvdp ?root_cyclotomic//=; last first.
+   rewrite /cyclotomic.
 (* minPoly %| cyclotomic *)
 (* then using a decomposition of minPoly in linear terms : its constant *)
 (* coefficient is a power of x, and in E : it can only be at power p, hence *)
