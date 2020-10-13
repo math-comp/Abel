@@ -312,37 +312,42 @@ Lemma subv_splittingFieldFor : (E <= F)%VS.
 Proof. case: splitting_p => b pE <-; exact: subv_adjoin_seq. Qed.
 
 (** Ok **)
-Lemma root_make_separable x : root p x = root (p %/ gcdp p p^`()) x.
+Lemma root_make_separable x : [char L] =i pred0 -> root p x = root (p %/ gcdp p p^`()) x.
 Proof.
+move=> charL; have [->|p_neq0] := eqVneq p 0; first by rewrite div0p root0.
 have := dvdp_gcdl p p^`(); rewrite dvdp_eq => /eqP p_eq_pDgMg.
 apply/idP/idP => [rpx|]; last first.
   move=> dx_eq0; rewrite p_eq_pDgMg.
   by rewrite /root hornerM mulf_eq0 (eqP dx_eq0) eqxx.
-pose m := [arg max_(i > 0 : 'I_(size p).+1 | ('X - x%:P) ^+ i.+1 %| p) i].
-have /dvdpP[q ->] : ('X - x%:P) ^+ m.+1 %| p.
-  admit.
-have rNqx : ~~ (('X - x%:P) %| q) by admit.
-set f := ('X - _).
-rewrite -dvdp_XsubCl.
-rewrite derivM.
-rewrite deriv_exp/=.
-rewrite derivXsubC mul1r.
+have [|/= m /dvdpP[q p_eq /(_ (Ordinal _))/= m_max]] := @arg_maxP _
+    (0 : 'I_(size p).+1) [pred i : 'I__ | ('X - x%:P) ^+ i.+1 %| p] id.
+  by rewrite /= dvdp_XsubCl.
+have q_neq0 : q != 0; first by apply: contra_eq_neq p_eq => ->; rewrite mul0r.
+have rNqx : ~~ root q x.
+  rewrite -dvdp_XsubCl -(@dvdp_mul2r _ (('X - x%:P) ^+ m.+1)); last first.
+    by rewrite expf_neq0// polyXsubC_eq0.
+  rewrite -exprS -p_eq; apply: (contraNN (m_max _ _)); rewrite ?ltnn//.
+  rewrite ltnS/= [in X in (_ < X)%N]p_eq.
+  rewrite size_mul ?expf_neq0 ?polyXsubC_eq0//.
+  by rewrite size_exp_XsubC !addnS/= ltnS leq_addl.
+rewrite p_eq; set f := ('X - _).
+have f_neq0 : f != 0 by rewrite polyXsubC_eq0.
+rewrite -dvdp_XsubCl derivM deriv_exp/= derivXsubC mul1r.
 rewrite -mulr_natl exprS !mulrA -mulrDl.
 set r := (_ * f + _)%R.
 have Nrx : ~~ root r x.
   rewrite /root !hornerE subrr mulr0 add0r mulf_neq0//.
-  admit.
-  admit.
-have f_neq0 : f != 0 by rewrite -?size_poly_eq0 ?size_XsubC.
-have q_neq0 : q != 0 by admit.
+  have -> : m.+1%:R = m.+1%:R%:P :> {poly L} by rewrite !raddfMn.
+  rewrite hornerC natf_neq0/= (eq_pnat _ (eq_negn charL))/=.
+  by apply/andP; split => //; apply/allP.
 rewrite (eqp_dvdr _ (eqp_divr _ (gcdp_mul2r _ _ _))).
 rewrite divp_pmul2r//; last 2 first.
-- by rewrite ?expf_eq0 (negPf f_neq0) ?andbF.
+- by rewrite ?expf_neq0 ?polyXsubC_eq0.
 - by rewrite ?gcdp_eq0 negb_and ?mulf_neq0.
 rewrite mulrC -divp_mulA ?dvdp_mulr//.
 have := dvdp_gcdl (f * q) r; rewrite Gauss_dvdpr//.
 by rewrite coprimep_XsubC root_gcd (negPf Nrx) andbF.
-Admitted.
+Qed.
 
 (** looks wrong! **)
 (* Lemma galois_splittingFieldFor : galois E F. *)
@@ -388,6 +393,10 @@ Variables (F0 : fieldType) (L : splittingFieldType F0).
 Variables (E : {subfield L}) (r : L) (n : nat).
 Hypothesis r_is_nth_root : n.-primitive_root r.
 
+Lemma cyclotomic_over : cyclotomic r n \is a polyOver E.
+Proof. Admitted.
+Hint Resolve cyclotomic_over : core.
+
 (** Very Hard **)
 (*     - E(x) is cyclotomic                                                   *)
 Lemma minPoly_cyclotomic : r \notin E -> minPoly E r = cyclotomic r n.
@@ -401,28 +410,37 @@ rewrite /eqp minPoly_dvdp ?root_cyclotomic//=; last first.
 (* its size, and value *)
 Admitted.
 
-(** Ok **)
+(** Ok, easy to finish CHECK whether r \notin E is needed **)
 Lemma splitting_Fadjoin_cyclotomic :
-  r \notin E -> splittingFieldFor E (cyclotomic r n) <<E; r>>.
+  (* r \notin E -> *) splittingFieldFor E (cyclotomic r n) <<E; r>>.
 Proof.
+(* move=> Er;  *)exists [seq r ^+ val k | k <- enum 'I_n & coprime (val k) n].
+  by rewrite /cyclotomic big_map big_filter big_enum_cond/= eqpxx.
+have foo i :  <<<<E; r>>; r ^+ i>>%VS = <<E; r>>%VS.
+  by rewrite (Fadjoin_idP _)// rpredX// memv_adjoin.
 Admitted.
 
 (** Easy **)
 (*     - E(x) is Galois                                                       *)
 Lemma galois_Fadjoin_cyclotomic : galois E <<E; r>>.
 Proof.
-(* if yes, ok, if no, we use splitting_cyclotomic *)
+have [rE|rNE] := boolP (r \in E).
+  admit.
+apply/splitting_galoisField; exists (cyclotomic r n).
+split => //; last exact: splitting_Fadjoin_cyclotomic.
+rewrite /cyclotomic -(big_image _ _ _ (fun x => 'X - x%:P))/=.
+rewrite separable_prod_XsubC.
 Admitted.
 
 Local Notation "r .-ext" := (extension_pred r)
   (at level 2, format "r .-ext") : ring_scope.
 
-(** Easy **)
 Lemma radicalext_Fadjoin_cyclotomic : radical.-ext E <<E; r>>%AS.
 Proof.
-(* is r in E ? *)
-(* is yes, ok, if no, we use its minPoly *)
-Admitted.
+apply: (@radical_ext_Fadjoin _ _ n r).
+  exact: prim_order_gt0 r_is_nth_root.
+by rewrite (prim_expr_order r_is_nth_root) mem1v.
+Qed.
 
 Lemma abelian_cyclotomic : abelian 'Gal(<<E; r>> / E)%g.
 Proof.
@@ -441,7 +459,7 @@ have hg_gal f : f \in 'Gal(<<E; r>> / E)%g -> ((f r) ^+ n = 1)%R.
   move=> f_in; apply/prim_expr_order.
   have /and3P[subF _ NF] := galois_Fadjoin_cyclotomic.
   rewrite -(root_cyclotomic r_is_nth_root) -(minPoly_cyclotomic r_notin_E) //.
-  rewrite root_minPoly_gal // ?subF ?subvv ?memv_adjoin //.
+  by rewrite root_minPoly_gal // ?subF ?subvv ?memv_adjoin.
 have := svalP (prim_rootP r_is_nth_root (hg_gal _ g_in)).
 have h1_in : (h^-1)%g \in 'Gal(<<E; r>> / E)%g by rewrite ?groupV.
 have := svalP (prim_rootP r_is_nth_root (hg_gal _ h1_in)).
@@ -450,12 +468,9 @@ rewrite hh1 GRing.rmorphX /= hg GRing.exprAC -hh1 GRing.rmorphX /=.
 by rewrite -galM ?memv_adjoin // mulVg gal_id.
 Qed.
 
-(** Easy **)
 (*     - Gal(E(x) / E) is then solvable                                       *)
 Lemma solvable_Fadjoin_cyclotomic : solvable 'Gal(<<E; r>> / E).
-Proof.
-(* direct *)
-Admitted.
+Proof. exact/abelian_sol/abelian_cyclotomic. Qed.
 
 End Cyclotomic.
 
@@ -464,20 +479,23 @@ Section Prodv.
 Variables (F0 : fieldType) (L : splittingFieldType F0).
 
 (** N/A **)
-Lemma prodv_galois (E F K : {subfield L}) :
-  galois E K -> galois F (E * F).
+Lemma prodv_galois (k K F : {subfield L}) :
+  galois k K -> (k <= F)%VS -> galois F (K * F).
 Proof.
 Admitted.
 
 (** N/A **)
-Lemma prodv_galoisI (E F K : {subfield L}) :
-  galois E K -> galois (E :&: F) F.
+Lemma prodv_galoisI (k K F : {subfield L}) :
+  galois k K -> (k <= F)%VS -> galois (K :&: F) K.
 Proof.
 Admitted.
 
 (** N/A **)
-Lemma prodv_gal (E F K : {subfield L}) :
-  galois E K -> ('Gal((E * F) / F) \isog 'Gal(F / (E :&: F)))%g.
+(* Do we need to know that the iso is the restriction morphism? *)
+Lemma prodv_gal(k K F : {subfield L})
+  (H := 'Gal((K * F) / F)%g) (G := 'Gal(K / k)%g):
+  galois k K -> (k <= F)%VS ->
+  (H \isog 'Gal ((K :&: F) / K))%g.
 Proof.
 Admitted.
 
