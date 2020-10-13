@@ -588,7 +588,7 @@ suff [/= r_ /andP[r_basis /allP r_F] m_r {abelian_G}] :
   exists n; rewrite n_gt0 leqnn fsEi; split => //; last first.
     by apply/val_inj; rewrite /= -adjoin_rcons -take_nth ?size_tuple.
   suff: r_`_i ^+ n \in fixedField G.
-    rewrite (galois_fixedField _)//; apply/subvP; rewrite ?subv_adjoin_seq//.
+    by rewrite (galois_fixedField _)//; apply/(subvP (subv_adjoin_seq _ _)).
   apply/fixedFieldP; first by rewrite rpredX ?[_ \in _]r_F ?mem_nth ?size_tuple.
   move=> g /(m_r (Ordinal lti))[l /andP[lE /eqP lX1]].
   by rewrite (tnth_nth 0) rmorphX/= => ->; rewrite exprMn lX1 mul1r.
