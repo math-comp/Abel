@@ -684,30 +684,27 @@ move=> solEF Er rn; have [n_le1|n_gt1] := leqP n 1%N.
   have /eqP : n = 1%N by case: {+}n n_gt0 n_le1 => [|[]].
   rewrite -eqn_mul ?adim_gt0 ?field_dimS// mul1n eq_sym dimv_leqif_eq//.
   by rewrite val_eqE => /eqP<-; apply: rext_refl.
-have := solEF => /sol_prime_factor_exists[|H].
+have /sol_prime_factor_exists[|H Hnormal] := solEF.
   by rewrite -cardG_gt1 -galois_dim.
-move=> Hnormal; have [<-|H_neq] := eqVneq H ('Gal(F / E))%G.
-  by rewrite indexgg.
+have [<-|H_neq] := eqVneq H ('Gal(F / E))%G; first by rewrite indexgg.
 have galEH := normal_fixedField_galois galEF Hnormal.
 have subEH : (E <= fixedField H)%VS by case/andP: galEH.
 rewrite -dim_fixed_galois ?normal_sub// galois_dim//=.
 pose d := \dim_E (fixedField H); pose p := \dim_(fixedField H) F.
 have p_gt0 : (p > 0)%N by rewrite divn_gt0 ?adim_gt0 ?dimvS ?fixedField_bound.
-have n_eq : n = (p * d)%N.
-  by rewrite /p /d -dim_fixedField dim_fixed_galois;
-     rewrite ?Lagrange ?normal_sub -?galois_dim.
+have n_eq : n = (p * d)%N by rewrite /p /d -dim_fixedField dim_fixed_galois;
+                             rewrite ?Lagrange ?normal_sub -?galois_dim.
 have Erm : r ^+ (n %/ d) \in E by rewrite rpredX.
 move=> /prime_cyclic/cyclic_abelian/part1a/(_ Erm)-/(_ galEH)/=.
 rewrite dvdn_prim_root// => [/(_ isT)|]; last by rewrite n_eq dvdn_mull.
 move=> /rext_trans; apply; first exact: radical_upstable.
-apply: (IHk (r ^+ d)) => /=.
+apply: (IHk (r ^+ (n %/ p))) => /=.
 - exact: fixedField_galois.
 - rewrite (leq_trans _ le_nk)// -dim_fixedField /n galois_dim// proper_card//.
   by rewrite properEneq H_neq normal_sub.
 - by rewrite gal_fixedField (solvableS (normal_sub Hnormal)).
 - by rewrite rpredX//; apply: subvP Er.
-- have -> : d = (n %/ p)%N by rewrite n_eq mulKn.
-  by rewrite dvdn_prim_root// n_eq dvdn_mulr.
+- by rewrite dvdn_prim_root// n_eq dvdn_mulr.
 Qed.
 
 End Part1b.
