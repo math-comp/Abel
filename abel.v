@@ -568,11 +568,12 @@ Import GRing.Theory.
 
 Lemma part1a (F0 : fieldType) (L : splittingFieldType F0)
     (E F : {subfield L}) (G := 'Gal(F / E)%g) (n := \dim_E F) (r : L) :
-      (E <= F)%VS -> galois E F -> abelian G ->
+      galois E F -> abelian G ->
       r \in E -> (n.-primitive_root r)%R ->
   radical.-ext E F.
 Proof.
-move=> subv_EF galois_EF abelian_G r_in_E r_is_nth_root.
+move=> galois_EF abelian_G r_in_E r_is_nth_root.
+have subv_EF : (E <= F)%VS by case/andP: galois_EF.
 have n_gt0 : (n > 0)%N by rewrite /n -dim_aspaceOver ?adim_gt0.
 have asimp := (mem_aspaceOver, subv_adjoin_seq).
 suff [/= r_ /andP[r_basis /allP r_F] m_r {abelian_G}] :
@@ -663,34 +664,44 @@ End Part1a.
 
 Section Part1b.
 Variables (F0 : fieldType) (L : splittingFieldType F0).
-Variable (E : {subfield L}).
 
-(** Hard **) (* but only because it is long *)
-Lemma part1b (F : {subfield L}) (r : L) :
-  let n := \dim_F E in
+Lemma part1b (E : {subfield L}) (F : {subfield L}) (r : L) :
+  let n := \dim_E F in
   galois E F -> solvable 'Gal(F / E)%g -> r \in E -> n.-primitive_root r ->
   radical.-ext E F.
 Proof.
-(* we have n > 0 (order of the group, or dim) *)
-(* either by generalized recurrence on n, (or on the chain of solvability) : *)
-(*   (E or F or both need to be generalize for the induction hypothesis) *)
-(* if n = 1 : we have \dim_E F = 1 so E = F*)
-(* if n > 1 : *)
-(*   we use sol_prime_factor_exists to get a distinguished subgroup H of *)
-(*     Gal(F/E) *)
-(*   we also get that the order of G/H is prime *)
-(*   we directly have that F/F^H is galois and its galois group is H *)
-(*   by normal_fixedField_galois, F^H/E is galois *)
-(*   by normalField_isog, its galois group is isomorphic to G/H *)
-(*   G/H is abelian, as its order is prime (p.-abelem) *)
-(*   by part1a, F^H is radical over E *)
-(*   to use the induction hypothesis we need to show that : *)
-(*     - H is solvable as a subgroup of G *)
-(*     - F^H contains a #|H| primitive root of the unity (#|H| divides n) *)
-(*     - F/F^H is galois (already said before) *)
-(*   so F is radical over F^H *)
-(*   finally, by transitivity, F is radical over E *)
-Admitted.
+move=> n galEF; have [k] := ubnP n; elim: k => // k IHk in r E F n galEF *.
+rewrite ltnS => le_nk; have subEF : (E <= F)%VS by case/andP: galEF.
+have n_gt0 : (0 < n)%N by rewrite ltn_divRL ?field_dimS// mul0n adim_gt0.
+move=> solEF Er rn; have [n_le1|n_gt1] := leqP n 1%N.
+  have /eqP : n = 1%N by case: {+}n n_gt0 n_le1 => [|[]].
+  rewrite -eqn_mul ?adim_gt0 ?field_dimS// mul1n eq_sym dimv_leqif_eq//.
+  by rewrite val_eqE => /eqP<-; apply: rext_refl.
+have := solEF => /sol_prime_factor_exists[|H].
+  by rewrite -cardG_gt1 -galois_dim.
+move=> Hnormal; have [<-|H_neq] := eqVneq H ('Gal(F / E))%G.
+  by rewrite indexgg.
+have galEH := normal_fixedField_galois galEF Hnormal.
+have subEH : (E <= fixedField H)%VS by case/andP: galEH.
+rewrite -dim_fixed_galois ?normal_sub// galois_dim//=.
+pose d := \dim_E (fixedField H); pose p := \dim_(fixedField H) F.
+have p_gt0 : (p > 0)%N by rewrite divn_gt0 ?adim_gt0 ?dimvS ?fixedField_bound.
+have n_eq : n = (p * d)%N.
+  by rewrite /p /d -dim_fixedField dim_fixed_galois;
+     rewrite ?Lagrange ?normal_sub -?galois_dim.
+have Erm : r ^+ (n %/ d) \in E by rewrite rpredX.
+move=> /prime_cyclic/cyclic_abelian/part1a/(_ Erm)-/(_ galEH)/=.
+rewrite dvdn_prim_root// => [/(_ isT)|]; last by rewrite n_eq dvdn_mull.
+move=> /rext_trans; apply; first exact: radical_upstable.
+apply: (IHk (r ^+ d)) => /=.
+- exact: fixedField_galois.
+- rewrite (leq_trans _ le_nk)// -dim_fixedField /n galois_dim// proper_card//.
+  by rewrite properEneq H_neq normal_sub.
+- by rewrite gal_fixedField (solvableS (normal_sub Hnormal)).
+- by rewrite rpredX//; apply: subvP Er.
+- have -> : d = (n %/ p)%N by rewrite n_eq mulKn.
+  by rewrite dvdn_prim_root// n_eq dvdn_mulr.
+Qed.
 
 End Part1b.
 
