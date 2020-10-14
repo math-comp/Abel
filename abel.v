@@ -509,11 +509,18 @@ Qed.
 
 (** N/A **)
 (* Do we need to know that the iso is the restriction morphism? *)
-Lemma prodv_gal(k K F : {subfield L})
-  (H := 'Gal((K * F) / F)%g) (G := 'Gal(K / k)%g):
-  galois k K -> (k <= F)%VS ->
-  (H \isog 'Gal ((K :&: F) / K))%g.
+Import AEnd_FinGroup.
+Lemma galois_iso (k K F : {subfield L})
+  (H := 'Gal((K * F) / F)%g) (G := 'Gal(K / k)%g) (H' := 'Gal ((K :&: F) / K)%g) :
+  galois k K -> (k <= F)%VS -> H \isog H'.
 Proof.
+move=> K_galois sub_k_F.
+pose r (g : gal_of (K * F)) : gal_of (K :&: F) := gal _ (gal_repr g).
+have r_H_morphic : morphic H r.
+  apply/morphicP => u v uH vH.
+  admit.
+apply/(@misom_isog _ _ _ _ r)/misomP; exists r_H_morphic.
+admit.
 Admitted.
 
 End Prodv.
