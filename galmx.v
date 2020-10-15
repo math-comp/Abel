@@ -18,9 +18,9 @@ Local Notation n := (\dim_E F).-1.+1.
 Variables (e : n.-tuple (fieldOver E)).
 
 Definition rowmxof (v : fieldOver E) := \row_i coord e i v.
-Lemma rowmxof_linear : linear rowmxof.
+Lemma rowmxof_is_linear : linear rowmxof.
 Proof. by move=> x v1 v2; apply/rowP=> i; rewrite !mxE linearP. Qed.
-Canonical rowmxof_is_linear := Linear rowmxof_linear.
+Canonical rowmxof_linear := Linear rowmxof_is_linear.
 
 Lemma coord_rowof i v : coord e i v = rowmxof v 0 i.
 Proof. by rewrite !mxE. Qed.
@@ -33,12 +33,12 @@ rewrite /vecof (bigD1 i)//= mxE !eqxx scale1r big1 ?addr0// => j neq_ji.
 by rewrite mxE (negPf neq_ji) andbF scale0r.
 Qed.
 
-Lemma vecof_linear : linear vecof.
+Lemma vecof_is_linear : linear vecof.
 Proof.
 move=> x v1 v2; rewrite linear_sum -big_split/=.
 by apply: eq_bigr => i _/=; rewrite !mxE scalerDl scalerA.
 Qed.
-Canonical vecof_is_linear := Linear vecof_linear.
+Canonical vecof_linear := Linear vecof_is_linear.
 
 Variable e_basis : basis_of (aspaceOver E F) e.
 
@@ -80,42 +80,38 @@ by rewrite vecofK linear0.
 Qed.
 
 Definition mxof (h : gal_of F) := lin1_mx (rowmxof \o h \o vecof).
-Definition galmx (M : 'M_n) :=
-  gal F (insubd (\1%AF) (linfun (fun u : L => vecof (rowmxof u *m M)))).
 
-Lemma mxofK : cancel mxof galmx.
-Admitted.
+Lemma mul_mxof (h : gal_of F) M : h \in 'Gal(F / E)%g -> M *m mxof h = rowmxof (h (vecof M)).
+Proof.
+move=> Gh; rewrite /mxof; set g := (X in lin1_mx X).
+suff g_is_linear : linear g by rewrite (mul_rV_lin1 (Linear g_is_linear)).
+move=> k y z; rewrite /g/= -[RHS]linearP [in LHS]linearP rmorphD rmorphM/=.
+by rewrite [h (vsval k)](fixed_gal _ Gh)// subvsP.
+Qed.
 
-Lemma galmxK : cancel galmx mxof.
-Admitted.
+(* rename and port to mathcomp *)
+(* Lemma aE a : a%:A \in E. Proof. by rewrite rpredZ ?mem1v. Qed. *)
+
+(* Lemma SubvsZ (a : K) (x : L) :  Subvs (aE a) *: (x : fieldOver E) = a *: x. *)
+(* Proof. by rewrite -[LHS]scalerAl mul1r. Qed. *)
 
 Lemma mxof1 : mxof 1%g = 1%:M.
-Proof.
-Admitted.
+Proof. by apply/row_matrixP => i; rewrite !rowE mulmx1 mul_mxof// gal_id vecofK. Qed.
 
-Lemma mxofM g g' : mxof (g * g')%g = (mxof g * mxof g').
+Lemma mxofM : {in 'Gal(F / E)%g &, forall g g', mxof (g * g')%g = (mxof g * mxof g')}.
 Proof.
-apply/matrixP=> i j; rewrite !mxE galM ?vecof_in//.
-Admitted.
+move=> g g' gG g'G; apply/row_matrixP => i; rewrite !rowE mulmxA.
+by rewrite !mul_mxof ?groupM// galM ?vecof_in// rowmxofK// memv_gal ?vecof_in.
+Qed.
 
-Lemma mxofX g i : mxof (g ^+ i)%g = mxof g ^+ i.
+Lemma mxofX g i : g \in 'Gal(F / E)%g -> mxof (g ^+ i)%g = mxof g ^+ i.
 Proof.
-Admitted.
+move=> gG; elim: i => [|i IHi]; first by rewrite mxof1.
+by rewrite expgS exprS mxofM ?groupX// IHi.
+Qed.
 
-Lemma galmx1 : galmx 1%:M = 1%g.
-Proof.
-Admitted.
-
-Lemma galmxM M M' : galmx (M * M') = (galmx M * galmx M')%g.
-Proof. by apply: (can_inj mxofK); rewrite mxofM 3!galmxK. Qed.
-
-Lemma galmxX M i : galmx (M ^+ i) = (galmx M ^+ i)%g.
-Proof.
-Admitted.
-
-Lemma vecofM v M : vecof (v *m M) = (galmx M) (vecof v).
-Proof.
-Admitted.
+Lemma vecofM v g : g \in 'Gal(F / E)%g -> vecof (v *m mxof g) = g (vecof v).
+Proof. by move=> gG; rewrite mul_mxof// rowmxofK ?memv_gal ?vecof_in. Qed.
 
 End galmx.
 End galmx.

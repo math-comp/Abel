@@ -629,8 +629,8 @@ have Gminpoly g : g \in G -> mxminpoly (mxof e g) %| 'X ^+ n - 1.
 have [p p_unit dG] : codiagonalisable [seq mxof e g | g in G].
   apply/codiagonalisableP; split.
     apply/all_commP => _ _ /mapP[g gG ->] /mapP[g' g'G ->].
-    rewrite -![_ *m _]mxofM//; congr mxof.
-    by rewrite !mem_enum in g'G gG; rewrite (centsP abelian_G).
+    rewrite ?mem_enum in gG g'G.
+    by rewrite -![_ *m _]mxofM// (centsP abelian_G).
   move=> _/mapP[g gG ->]; rewrite mem_enum in gG *.
   pose l := [seq Subvs r_in_E ^+ i | i <- index_iota 0 n].
   apply/diagonalisableP; exists l.
@@ -664,7 +664,7 @@ exists (val (M 0 i)); [apply/andP; split|]; first by rewrite /= subvsP.
   by rewrite mem_undup map_f ?mem_enum.
 have /(simP p_unit)/(congr1 (mulmx (@delta_mx _ 1 _ 0 i))) := pg.
 rewrite !mulmxA -!rowE row_diag_mx -scalemxAl -rowE => /(congr1 (vecof e)).
-by rewrite vecofM// mxofK// linearZ// tnth_map/= tnth_ord_tuple.
+by rewrite vecofM// linearZ/= tnth_map tnth_ord_tuple.
 Qed.
 
 End Part1a.
