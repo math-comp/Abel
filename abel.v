@@ -39,6 +39,84 @@ Import GRing.Theory.
 Local Open Scope ring_scope.
 Local Open Scope fset_scope.
 
+Section missing_from_mathcomp.
+
+Lemma dvdz_charf (R : ringType) (p : nat) :
+  p \in [char R] -> forall n : int, (p %| n)%Z = (n%:~R == 0 :> R).
+Proof.
+move=> charRp [] n; rewrite [LHS](dvdn_charf charRp)//.
+by rewrite NegzE abszN rmorphN// oppr_eq0.
+Qed.
+
+Lemma dvdp_ZXsubCX (R : idomainType) (p : {poly R}) (c : R) n :
+  reflect (exists2 k, (k <= n)%N & p %= ('X - c%:P) ^+ k)
+          (p %| ('X - c%:P) ^+ n).
+Proof.
+apply: (iffP idP) => [|[k lkn /eqp_dvdl->]]; last by rewrite dvdp_exp2l.
+move=> /Pdiv.WeakIdomain.dvdpP[[/= a q] a_neq0].
+have [m [r]] := multiplicity_XsubC p c; have [->|pN0]/= := eqVneq p 0.
+  rewrite mulr0 => _ _ /eqP;  rewrite scale_poly_eq0 (negPf a_neq0)/=.
+  by rewrite expf_eq0/= andbC polyXsubC_eq0.
+move=> rNc ->; rewrite mulrA => eq_qrm; exists m.
+  have: ('X - c%:P) ^+ m %| a *: ('X - c%:P) ^+ n by rewrite eq_qrm dvdp_mull.
+  by rewrite (eqp_dvdr _ (eqp_scale _ _))// dvdp_Pexp2l// size_XsubC.
+suff /eqP : size r = 1%N.
+  by rewrite size_poly_eq1 => /eqp_mulr/eqp_trans->//; rewrite mul1r eqpxx.
+have : r %| a *: ('X - c%:P) ^+ n by rewrite eq_qrm mulrAC dvdp_mull.
+rewrite (eqp_dvdr _ (eqp_scale _ _))//.
+move: rNc; rewrite -coprimep_XsubC => /(coprimep_expr n) /coprimepP.
+by move=> /(_ _ (dvdpp _)); rewrite -size_poly_eq1 => /(_ _)/eqP.
+Qed.
+
+Lemma eisenstein (p : nat) (q : {poly int}) : prime p -> (size q != 1)%N ->
+  (~~ (p %| lead_coef q))%Z -> (~~ ((p : int) ^+ 2 %| q`_0))%Z ->
+  (forall i, (i < (size q).-1)%N -> p %| q`_i)%Z ->
+  irreducible_poly (map_poly (intr : int -> rat) q).
+Proof.
+move=> p_prime qN1 Ndvd_pql Ndvd_pq0 dvd_pq.
+have qN0 : q != 0 by rewrite -lead_coef_eq0; apply: contraNneq Ndvd_pql => ->.
+split.
+   rewrite size_map_poly_id0 ?intr_eq0 ?lead_coef_eq0//.
+   by rewrite ltn_neqAle eq_sym qN1 size_poly_gt0.
+move=> f' +/dvdpP_rat_int[f [d dN0 feq]]; rewrite {f'}feq size_scale// => fN1.
+move=> /= [g q_eq]; rewrite q_eq (eqp_trans (eqp_scale _ _))//.
+have fN0 : f != 0 by apply: contra_neq qN0; rewrite q_eq => ->; rewrite mul0r.
+have gN0 : g != 0 by apply: contra_neq qN0; rewrite q_eq => ->; rewrite mulr0.
+rewrite size_map_poly_id0 ?intr_eq0 ?lead_coef_eq0// in fN1.
+have [/eqP[/size_poly1P[c cN0 ->]]|gN1] := eqVneq (size g) 1%N.
+  by rewrite mulrC mul_polyC map_polyZ/= eqp_sym eqp_scale// intr_eq0.
+have c_neq0 : (lead_coef q)%:~R != 0 :> 'F_p
+   by rewrite -(dvdz_charf (char_Fp _)).
+have : map_poly (intr : int -> 'F_p) q = (lead_coef q)%:~R *: 'X^(size q).-1.
+  apply/val_inj/(@eq_from_nth _ 0) => [|i]; rewrite size_map_poly_id0//.
+    by rewrite size_scale// size_polyXn -polySpred.
+  move=> i_small; rewrite coef_poly i_small coefZ coefXn lead_coefE.
+  move: i_small; rewrite polySpred// ltnS/=.
+  case: ltngtP => // [i_lt|->]; rewrite (mulr1, mulr0)//= => _.
+  by apply/eqP; rewrite -(dvdz_charf (char_Fp _))// dvd_pq.
+rewrite [in LHS]q_eq rmorphM/=.
+set c := (X in X *: _); set n := (_.-1).
+set pf := map_poly _ f; set pg := map_poly _ g => pfMpg.
+have dvdXn (r : {poly _}) : size r != 1%N -> r %| c *: 'X^n -> r`_0 = 0.
+  move=> rN1; rewrite (eqp_dvdr _ (eqp_scale _ _))//.
+  rewrite -['X]subr0; move=> /dvdp_ZXsubCX[k lekn]; rewrite subr0.
+  move=> /eqpP[u /andP[u1N0 u2N0]]; have [->|k_gt0] := posnP k.
+    move=> /(congr1 (size \o val))/eqP.
+    by rewrite /= !size_scale// size_polyXn (negPf rN1).
+  move=> /(congr1 (fun p : {poly _} => p`_0))/eqP.
+  by rewrite !coefZ coefXn ltn_eqF// mulr0 mulf_eq0 (negPf u1N0) => /eqP.
+suff : ((p : int) ^+ 2 %| q`_0)%Z by rewrite (negPf Ndvd_pq0).
+have := c_neq0; rewrite q_eq coefM big_ord1.
+rewrite lead_coefM rmorphM mulf_eq0 negb_or => /andP[lpfN0 qfN0].
+have pfN1 : size pf != 1%N by rewrite size_map_poly_id0.
+have pgN1 : size pg != 1%N by rewrite size_map_poly_id0.
+have /(dvdXn _ pgN1) /eqP : pg %| c *: 'X^n by rewrite -pfMpg dvdp_mull.
+have /(dvdXn _ pfN1) /eqP : pf %| c *: 'X^n by rewrite -pfMpg dvdp_mulr.
+by rewrite !coef_map// -!(dvdz_charf (char_Fp _))//; apply: dvdz_mul.
+Qed.
+
+End missing_from_mathcomp.
+
 Section RadicalExtension.
 
 Variables (F0 : fieldType) (L : splittingFieldType F0).
@@ -319,17 +397,9 @@ have := dvdp_gcdl p p^`(); rewrite dvdp_eq => /eqP p_eq_pDgMg.
 apply/idP/idP => [rpx|]; last first.
   move=> dx_eq0; rewrite p_eq_pDgMg.
   by rewrite /root hornerM mulf_eq0 (eqP dx_eq0) eqxx.
-have [|/= m /dvdpP[q p_eq /(_ (Ordinal _))/= m_max]] := @arg_maxP _
-    (0 : 'I_(size p).+1) [pred i : 'I__ | ('X - x%:P) ^+ i.+1 %| p] id.
-  by rewrite /= dvdp_XsubCl.
+have [[|m] [q]] := multiplicity_XsubC p x; rewrite p_neq0/= => rNqx p_eq.
+  by rewrite p_eq mulr1 (negPf rNqx) in rpx.
 have q_neq0 : q != 0; first by apply: contra_eq_neq p_eq => ->; rewrite mul0r.
-have rNqx : ~~ root q x.
-  rewrite -dvdp_XsubCl -(@dvdp_mul2r _ (('X - x%:P) ^+ m.+1)); last first.
-    by rewrite expf_neq0// polyXsubC_eq0.
-  rewrite -exprS -p_eq; apply: (contraNN (m_max _ _)); rewrite ?ltnn//.
-  rewrite ltnS/= [in X in (_ < X)%N]p_eq.
-  rewrite size_mul ?expf_neq0 ?polyXsubC_eq0//.
-  by rewrite size_exp_XsubC !addnS/= ltnS leq_addl.
 rewrite p_eq; set f := ('X - _).
 have f_neq0 : f != 0 by rewrite polyXsubC_eq0.
 rewrite -dvdp_XsubCl derivM deriv_exp/= derivXsubC mul1r.
@@ -1096,13 +1166,30 @@ Proof.
 (* See Section Example1 just above for a first draft of the steps             *)
 Admitted.
 
+Definition poly_example_int : {poly int} := 'X^5 - 4%:R *: 'X + 2%:R%:P.
 Definition poly_example : {poly rat} := 'X^5 - 4%:R *: 'X + 2%:R%:P.
+
+Lemma poly_exampleEint : poly_example = map_poly intr poly_example_int.
+Proof.
+pose simp := (rmorphB, rmorphD, rmorphN, map_polyZ,
+              map_polyXn, map_polyX, map_polyC).
+by do !rewrite [map_poly _ _]simp/= ?natz.
+Qed.
+
+Lemma size_poly_ex_int : size poly_example_int = 6.
+Proof.
+rewrite /poly_example_int -addrA size_addl ?size_polyXn//.
+by rewrite size_addl ?size_opp ?size_scale ?size_polyX ?size_polyC.
+Qed.
 
 Lemma size_poly_ex : size poly_example = 6.
 Proof.
-rewrite /poly_example -addrA size_addl ?size_polyXn//.
-by rewrite size_addl ?size_opp ?size_scale ?size_polyX ?size_polyC.
+rewrite poly_exampleEint size_map_poly_id0 ?size_poly_ex_int//.
+by rewrite intr_eq0 lead_coef_eq0 -size_poly_eq0 size_poly_ex_int.
 Qed.
+
+Lemma poly_ex_int_neq0 : poly_example_int != 0.
+Proof. by rewrite -size_poly_eq0 size_poly_ex_int. Qed.
 
 Lemma poly_example_neq0 : poly_example != 0.
 Proof. by rewrite -size_poly_eq0 size_poly_ex. Qed.
@@ -1112,8 +1199,11 @@ Proof. by rewrite -size_poly_eq0 size_poly_ex. Qed.
 (* already formalized in mathcomp                                             *)
 Lemma irreducible_ex : irreducible_poly poly_example.
 Proof.
-Admitted.
-
+pose coefE := (coefB, coefD, coefZ, coefC, coefX, coefXn).
+rewrite poly_exampleEint; apply: (@eisenstein 2) => // [|||i];
+  rewrite ?lead_coefE ?size_poly_ex_int ?coefE//.
+by move: i; do 6!case=> //.
+Qed.
 
 Lemma separable_ex : separable_poly poly_example.
 Proof.
