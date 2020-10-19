@@ -378,21 +378,21 @@ Arguments tower {F0 L}.
 Arguments extension_pred {F0 L}.
 Arguments radical {F0 L}.
 
-(* splitting field properties *)
-Section Splitting.
+(* Field extensions in characteristic 0 are always separable *)
+Section FieldExtChar0.
 
 Variables (F0 : fieldType) (L : splittingFieldType F0).
-Variables (E F : {subfield L}) (p : {poly L}).
-Hypothesis splitting_p : splittingFieldFor E p F.
+Variables (charL : [char L] =i pred0).
+Implicit Types (E F : {subfield L}) (p : {poly L}) (x : L).
 
-(** Easy **)
-Lemma subv_splittingFieldFor : (E <= F)%VS.
-Proof. case: splitting_p => b pE <-; exact: subv_adjoin_seq. Qed.
+(* (** Easy **) *)
+(* Lemma subv_splittingFieldFor : (E <= F)%VS. *)
+(* Proof. case: splitting_p => b pE <-; exact: subv_adjoin_seq. Qed. *)
 
 (** Ok **)
-Lemma root_make_separable x : [char L] =i pred0 -> root p x = root (p %/ gcdp p p^`()) x.
+Lemma root_make_separable p x : root p x = root (p %/ gcdp p p^`()) x.
 Proof.
-move=> charL; have [->|p_neq0] := eqVneq p 0; first by rewrite div0p root0.
+have [->|p_neq0] := eqVneq p 0; first by rewrite div0p root0.
 have := dvdp_gcdl p p^`(); rewrite dvdp_eq => /eqP p_eq_pDgMg.
 apply/idP/idP => [rpx|]; last first.
   move=> dx_eq0; rewrite p_eq_pDgMg.
@@ -419,21 +419,26 @@ have := dvdp_gcdl (f * q) r; rewrite Gauss_dvdpr//.
 by rewrite coprimep_XsubC root_gcd (negPf Nrx) andbF.
 Qed.
 
-(** looks wrong! **)
-(* Lemma galois_splittingFieldFor : galois E F. *)
-(* Proof. *)
-(* apply/splitting_galoisField. *)
-(* exists p. *)
-(* rewrite /galois. *)
+Lemma char0_minPoly_separable x E : separable_poly (minPoly E x).
+Proof.
+have pE := minPolyOver E x; set p := minPoly E x.
+suff /eqp_separable-> : p %= p %/ gcdp p p^`().
+  by rewrite make_separable ?monic_neq0 ?monic_minPoly.
+rewrite /eqp divp_dvd ?dvdp_gcdl// andbT.
+rewrite minPoly_dvdp ?divp_polyOver ?gcdp_polyOver ?polyOver_deriv//.
+by rewrite -root_make_separable// root_minPoly.
+Qed.
 
-(* from definition : *)
-(* for the separable part : with minPoly_dvdp, dvdp_separable,*)
-(* root_make_separable and make_separable, minPoly is separable so every root *)
-(* of p is a separable_element *)
-(* for the normal part : directly splitting_normalField *)
-(* Admitted. *)
+Lemma char0_separable_element x E : separable_element E x.
+Proof. exact: char0_minPoly_separable. Qed.
 
-End Splitting.
+Lemma char0_separable E F : separable E F.
+Proof. by apply/separableP => y _; apply: char0_separable_element. Qed.
+
+Lemma char0_galois E F : (E <= F)%VS -> normalField E F -> galois E F.
+Proof. by move=> sEF nEF; apply/and3P; split=> //; apply: char0_separable. Qed.
+
+End FieldExtChar0.
 
 (* (* transitivity *) *)
 (* (* Looks wrong, but useless *) *)
