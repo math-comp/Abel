@@ -604,12 +604,12 @@ Qed.
 (** N/A **)
 (* Do we need to know that the iso is the restriction morphism? *)
 Import AEnd_FinGroup.
-Lemma galois_iso (k K F : {subfield L})
-  (H := 'Gal((K * F) / F)%g) (G := 'Gal(K / k)%g) (H' := 'Gal ((K :&: F) / K)%g) :
+Lemma galois_iso (k K F : {subfield L}) (G := 'Gal(K / k)%g)
+  (H := 'Gal((K * F) / F)%g) (H' := 'Gal (K / (K :&: F))%g) :
   galois k K -> (k <= F)%VS -> H \isog H'.
 Proof.
 move=> K_galois sub_k_F.
-pose r (g : gal_of (K * F)) : gal_of (K :&: F) := gal _ (gal_repr g).
+pose r (g : gal_of (K * F)) : gal_of K := gal _ (gal_repr g).
 have r_H_morphic : morphic H r.
   apply/morphicP => u v uH vH.
   admit.
@@ -798,7 +798,6 @@ Section Part1c.
 Variables (F0 : fieldType) (L : splittingFieldType F0).
 Variables (E F : {subfield L}).
 Hypothesis galois_EF : galois E F.
-Hypothesis subv_EF : (E <= F)%VS.
 Local Notation G := ('Gal(F / E)%g).
 Local Notation n := (\dim_E F).
 Variable (r : L).
@@ -809,23 +808,29 @@ Hypothesis r_is_nth_root : (n.-primitive_root r)%R.
 (* - G is solvable *)
 Hypothesis solvable_G : solvable G.
 
-Local Notation F' := (<<E; r>> * F)%AS.
+Let subEF : (E <= F)%VS. Proof. by case/and3P: galois_EF. Qed.
 
-(** N/A **)
+
 (*** the prodv part must be proven/modified before attempting this ***)
 (* We want to prove that F is solvable by radicals on E                       *)
 Lemma part1c : solvable_by radical E F.
 Proof.
-(* - Let E' = E(r) where r is an n-th root of the unity *)
-(* - E'/E is then Galois (galois_Fadjoin_cyclotomic) *)
-(* - Let F' = E'F *)
-(* - F' is Galois over E' *)
-(* - Gal(F'/E') is isomorphic to a subgroup of G *)
-(* - Gal(F'/E') is thus solvable *)
-(* - F' is solvable by radicals on E' (Part1b) *)
-(* - F' is solvable by radicals on E (transitivity) *)
-(* - F <= F' so F is solvable by radicals *)
-Admitted.
+pose G : {group gal_of F} := 'Gal(F / F :&: <<E; r>>%AS)%G.
+have EEr := subv_adjoin E r.
+rewrite /solvable_by; split=> //; exists (F * <<E; r>>)%AS.
+rewrite field_subvMr; split=> //.
+apply: rext_trans (radicalext_Fadjoin_cyclotomic _ r_is_nth_root) _.
+have galErFEr: galois <<E; r>>%AS (F * <<E; r>>)%AS.
+  by rewrite (@galois_prodv _ _ E).
+pose r' := r ^+ (n %/ #|G|).
+have r'prim : #|G|.-primitive_root r'.
+  by apply: dvdn_prim_root; rewrite // galois_dim ?cardSg ?galS ?subv_cap ?subEF.
+have r'Er : r' \in <<E; r>>%VS by rewrite rpredX ?memv_adjoin.
+apply: part1b r'Er _ => //=.
+  rewrite (isog_sol (galois_iso galois_EF _))//.
+  by apply: solvableS solvable_G; apply: galS; rewrite subv_cap subEF.
+by rewrite galois_dim// (card_isog (galois_iso galois_EF _)).
+Qed.
 
 End Part1c.
 
@@ -836,10 +841,9 @@ to resolve here, but here is a first suggestion *)
 Lemma part1 (F0 : fieldType) (L : splittingFieldType F0)
       (E F : {subfield L}) (p : {poly L}) :
   let n := (\dim_E F) in
-  (exists r : L, (n.-primitive_root r)%R) -> splittingFieldFor E p F ->
+  (exists r : L, (n.-primitive_root r)%R) -> galois E F ->
   solvable 'Gal(F / E) -> solvable_by radical E F.
-Proof.
-Admitted.
+Proof. by move=> /= /sigW [r r_prim] EF /(part1c EF r_prim); apply. Qed.
 
 End Part1.
 
