@@ -162,6 +162,13 @@ elim: rs1 => /= [|r rs1 ih] in V *.
 - by rewrite !adjoin_cons ih.
 Qed.
 
+Lemma eq_adjoin (K : fieldType) (aT : FalgType K) (U : {vspace aT})
+    (rs1 rs2 : seq aT) :
+  rs1 =i rs2 -> (<<U & rs1>> = <<U & rs2>>)%VS.
+Proof.
+by move=> rs12; apply/eqP; rewrite eqEsubv !adjoin_seqSr// => x; rewrite rs12.
+Qed.
+
 (* turn into a reflect before adding to mathcomp? *)
 Lemma Fadjoin_seq_idP
     (F0 : fieldType) (L : fieldExtType F0) (K : {subfield L}) (xs : seq L)
@@ -242,7 +249,7 @@ Definition ep_pw r U V (h : r.-ext U V) : (ep_size h).-tuple nat :=
   let: Extension _ _ pw _ _ := h in pw.
 
 Definition solvable_by r (U V : {subfield L}) : Type :=
-  (U <= V)%VS * { E : {subfield L} & ((r.-ext U E) * (V <= E)%VS)%type }.
+  { E : {subfield L} & ((r.-ext U E) * (V <= E)%VS)%type }.
 
 Definition solvable_by_radicals_poly (E F : {subfield L}) (p : {poly L}) :=
   splittingFieldFor E p F -> solvable_by radical E F.
@@ -260,7 +267,7 @@ Implicit Types r : {vspace L} -> L -> nat -> bool.
 Implicit Types (U V : {subfield L}) (A : {fset L}).
 
 Lemma rext_refl r (E : {subfield L}) : r.-ext E E.
-Proof. 
+Proof.
 exists _ [tuple] [tuple] => /=.
 - by rewrite Fadjoin_nil.
 - by apply/forallP; case.
@@ -295,10 +302,7 @@ Proof. by case=> [n e pw] <- _; apply: subv_adjoin_seq. Qed.
 
 Lemma solvable_by_radicals_radicalext (E F : {subfield L}) :
   radical.-ext E F -> solvable_by radical E F.
-Proof.
-move=> extEF; split; last by exists F.
-exact: (@rext_subspace radical).
-Qed.
+Proof. by move=> extEF; exists F. Qed.
 
 Lemma radical_Fadjoin (n : nat) (x : L) (E : {subfield L}) :
   (0 < n)%N -> x ^+ n \in E -> radical E x n.
@@ -380,15 +384,12 @@ Qed.
 
 Lemma solvable_by_radical_pradical (E F : {subfield L}) :
   solvable_by pradical E F -> solvable_by radical E F.
-Proof.
-by case=> [EF [R [/radicalext_pradicalext ERe FR]]]; split=> //; exists R.
-Qed.
+Proof. by case=> [R [/radicalext_pradicalext ERe FR]]; exists R. Qed.
 
 Lemma solvable_by_pradical_radical (E F : {subfield L}) :
   solvable_by radical E F -> solvable_by pradical E F.
-Proof.
-by case=> [EF [R [/pradicalext_radicalext ERe FR]]]; split=> //; exists R.
-Qed.
+Proof. by case=> [R [/pradicalext_radicalext ERe FR]]; exists R. Qed.
+
 End Properties.
 
 End RadicalExtension.
@@ -817,7 +818,7 @@ Lemma part1c : solvable_by radical E F.
 Proof.
 pose G : {group gal_of F} := 'Gal(F / F :&: <<E; r>>%AS)%G.
 have EEr := subv_adjoin E r.
-rewrite /solvable_by; split=> //; exists (F * <<E; r>>)%AS.
+rewrite /solvable_by; exists (F * <<E; r>>)%AS.
 rewrite field_subvMr; split=> //.
 apply: rext_trans (radicalext_Fadjoin_cyclotomic _ r_is_nth_root) _.
 have galErFEr: galois <<E; r>>%AS (F * <<E; r>>)%AS.
@@ -1009,7 +1010,7 @@ End Part2a.
 (*     - Gi+1 = Gi x| H                                                       *)
 (*     - Gi+1 is solvable                                                     *)
 Lemma solvable_gal_Fadjoin_prime (F : {subfield L}) :
-  r \in F -> galois F E -> solvable 'Gal(E / F) ->
+  r \in E -> galois F E -> solvable 'Gal(E / F) ->
   galois F <<E; x>> /\ solvable 'Gal(<<E; x>> / F).
 Proof.
 (* E(x) is galois over E (galois_Fadjoin_prime) *)
@@ -1023,59 +1024,43 @@ Admitted.
 
 End IntermediateLemmas.
 
-Section Part2b.
-
-(* Let F be a finite extension of E                                           *)
-Variables (E F : {subfield L}) (P : {poly L}) (n : nat).
-Variables (tn : nat ^ n) (tx : L ^ n) (r : L).
-Hypothesis galois_EF : galois E F.
-Hypothesis subv_EF : (E <= F)%VS.
-Hypothesis prime_tn : forall i, prime (tn i).
-Hypothesis subv_FEtx : (F <= <<E & (fgraph tx)>>)%VS.
-(*
-Hypothesis radical_Ei : forall i, radical (\max_i tn i) [fset tx i | i in 'I_n]
-  <<E & (take i (fgraph tx))>> <<E & (take i.+1 (fgraph tx))>>.
-*)
-
-(* - we can also add an m0 = (m1*..*mn)-th root of the unity at the beginning *)
-Local Notation m := (\prod_(i < n) tn i)%N.
-Hypothesis r_is_mth_root : (m.-primitive_root r)%R.
-
-Local Notation Ei i := <<<<E; r>> & (take i (fgraph tx))>>%VS.
-Local Notation Gi i := ('Gal(Ei i / E))%g.
-
-(** Ok **)
-(* - we proceed by recurrence on n, by proving that each extension E(x0..xn)  *)
-(*   of E is Galois and its Galois group is solvable.                         *)
-Lemma galois_solvable_Fadjoin_seq : galois E (Ei n) && solvable (Gi n).
+Lemma part2 (E F : {subfield L}) (p : {poly L}) : [char L] =i pred0 ->
+  galois E F -> solvable_by radical E F ->
+  {n : nat | forall r : L, n.-primitive_root r -> solvable 'Gal(F / E)}.
 Proof.
-(* - by Galois, E(x0,..,xn) is Galois over E (recurrence step on n) *)
-(* using the cyclotomic extension for the initial step *)
-(* using solvable_gal_Fadjoin_prime_galois for the step *)
-Admitted.
-
-(** Ok **)
-Lemma solvable_gal_Fadjoin_seq : solvable 'Gal(F / E).
-Proof.
-(* - Gal(F/E) is isomorphic to Gal(E(x0,..,xn)/E) / Gal(E(x0,..,xn)/F) *)
-(* - then, Gal(F/E) is also solvable (quotient_sol) *)
-Admitted.
-
-End Part2b.
-
-(** No **)
-(* Main lemma of part 2 *)
-(* there is still the problem of the nth-root... but I don't know how to resolve it
-here, as I don't see how we can explicitly get an upper_bound (which would be
-enough) for the value of n *)
-(* a solution would be to explicitly give an upper bound in solvable_by_radicals *)
-Lemma part2 (E F : {subfield L}) (p : {poly L}) :
-  splittingFieldFor E p F -> solvable_by radical E F -> solvable 'Gal(F / E).
-Proof.
-Admitted.
+move=> charL galEF [K [/pradicalext_radicalext [n e pw {K}<- /towerP epwP FK]]].
+pose K := <<E & e>>%VS; pose d := (\prod_(i < n) tnth pw i)%N.
+exists d => r r_root.
+have EF: (E <= F)%VS by case/andP: galEF.
+have EK: (E <= K)%VS by apply: subv_trans FK.
+suff [galEKr solEKr] : galois E <<K; r>>%VS /\ solvable ('Gal(<<K; r>> / E))%G.
+  rewrite -(isog_sol (normalField_isog galEKr _ _)); last 2 first.
+  - by rewrite EF (subv_trans FK)// subv_adjoin.
+  - by case/and3P: galEF.
+  - exact: quotient_sol.
+pose k := n; have eq_Kr : <<K ; r>>%AS = <<E & r :: take k e>>%AS.
+  rewrite take_oversize ?size_tuple//.
+  apply/val_inj; rewrite /= -adjoin_rcons.
+  by rewrite (@eq_adjoin _ _ _ (rcons _ _) (r :: e))// => x; rewrite mem_rcons.
+rewrite eq_Kr [<<K; r>>%VS](congr1 val eq_Kr) {eq_Kr}.
+elim: k => /= [|k [IHgal IHsol]]; rewrite ?take0 ?adjoin_seq1.
+  split; first exact: galois_Fadjoin_cyclotomic r_root.
+  exact: solvable_Fadjoin_cyclotomic r_root.
+have [ltnk|lenk] := ltnP k n; last first.
+  by rewrite !take_oversize ?size_tuple// leqW in IHgal IHsol *.
+rewrite (take_nth r) ?size_tuple// -rcons_cons adjoin_rcons.
+pose ko := Ordinal ltnk; have /pradicalP[pwk_prime ekP] := epwP ko.
+have [ekE|ekNE] := boolP (nth r e k \in <<E & r :: take k e>>%VS).
+  by rewrite (Fadjoin_idP _).
+have prim : (tnth pw ko).-primitive_root (r ^+ (d %/ tnth pw ko)).
+  by rewrite dvdn_prim_root// /d (bigD1 ko)//= dvdn_mulr.
+apply: (solvable_gal_Fadjoin_prime charL pwk_prime prim) => //=.
+  rewrite -[k]/(val ko) -tnth_nth; apply: subvP ekP.
+  by apply: adjoin_seqSr => x xe; rewrite in_cons xe orbT.
+by rewrite adjoin_cons rpredX// (subvP (subv_adjoin_seq _ _))// memv_adjoin.
+Qed.
 
 End Part2.
-
 
 
 (******************************************************************************)
