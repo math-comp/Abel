@@ -4,6 +4,7 @@
   config ? (if builtins.pathExists ./config.nix then import ./config.nix else {}),
   withEmacs ? false,
   print-env ? false,
+  do-nothing ? false,
   package ? (if builtins.pathExists ./package.nix then import ./package.nix else "mathcomp-fast"),
   src ? (if builtins.pathExists ./package.nix then ./. else false)
 }:
@@ -20,6 +21,7 @@ let
         "8.9" = coqPackages_8_9;
         "8.10" = coqPackages_8_10;
         "8.11" = coqPackages_8_11;
+        "8.12" = coqPackages_8_12;
         "default" = coqPackages_8_10;
       }.${(cfg-fun pkgs).coq or "default"}.overrideScope'
         (coqPackages: super-coqPackages:
@@ -39,6 +41,15 @@ let
             mathcomp-extra-config =
               let mec = super-coqPackages.mathcomp-extra-config; in
               lib.recursiveUpdate mec {
+                initial = {
+                  # fixing mathcomp analysis to depend on real-closed
+                  mathcomp-analysis = {version, coqPackages} @ args:
+                    let mca = mec.initial.mathcomp-analysis args; in
+                    mca // {
+                      propagatedBuildInputs = mca.propagatedBuildInputs ++
+                                              (if builtins.elem coq.version ["8.10" "8.11" "8.12"] then (with coqPackages; [ coq-elpi hierarchy-builder ]) else []);
+                    };
+                };
                 for-coq-and-mc.${coqPackages.coq.coq-version}.${coqPackages.mathcomp.version} =
                   (super-coqPackages.mathcomp-extra-config.${coqPackages.coq.coq-version}.${coqPackages.mathcomp.version} or {}) //
                   (removeAttrs cfg [ "mathcomp" "coq" "mathcomp-fast" "mathcomp-full" ]);
@@ -77,16 +88,38 @@ let
       for x in $propagatedBuildInputs; do printf "  "; echo $x | cut -d "-" -f "2-"; done
       echo "you can pass option --arg config '{coq = \"x.y\"; math-comp = \"x.y.z\";}' to nix-shell to change coq and/or math-comp versions"
     }
+
     printEnv () {
       for x in $buildInputs; do echo $x; done
       for x in $propagatedBuildInputs; do echo $x; done
     }
+
     cachixEnv () {
       echo "Pushing environement to cachix"
       printEnv | cachix push math-comp
     }
+
     nixDefault () {
       cat $mathcompnix/default.nix
+    } > default.nix
+
+    updateNixPkgs (){
+      HASH=$(git ls-remote https://github.com/NixOS/nixpkgs-channels refs/heads/nixpkgs-unstable | cut -f1);
+      URL=https://github.com/NixOS/nixpkgs-channels/archive/$HASH.tar.gz
+      SHA256=$(nix-prefetch-url --unpack $URL)
+      echo "fetchTarball {
+        url = $URL;
+        sha256 = \"$SHA256\";
+      }" > nixpkgs.nix
+    }
+    updateNixPkgsMaster (){
+      HASH=$(git ls-remote https://github.com/NixOS/nixpkgs refs/heads/master | cut -f1);
+      URL=https://github.com/NixOS/nixpkgs/archive/$HASH.tar.gz
+      SHA256=$(nix-prefetch-url --unpack $URL)
+      echo "fetchTarball {
+        url = $URL;
+        sha256 = \"$SHA256\";
+      }" > nixpkgs.nix
     }
   ''
   + pkgs.lib.optionalString print-env "nixEnv";
@@ -100,5 +133,12 @@ let
 in
 if pkgs.lib.trivial.inNixShell then pkg.overrideAttrs (old: {
   inherit shellHook mathcompnix;
-  buildInputs = (old.buildInputs or []) ++ pkgs.lib.optional withEmacs emacs;
+  
+  buildInputs = if do-nothing then []
+                else (old.buildInputs ++
+                (if pkgs.lib.trivial.inNixShell then pkgs.lib.optional withEmacs pkgs.emacs
+                 else []));
+
+  propagatedBuildInputs = if do-nothing then [] else old.propagatedBuildInputs;
+
 }) else pkg
