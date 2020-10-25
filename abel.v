@@ -1,7 +1,6 @@
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra all_solvable.
 From mathcomp Require Import all_field finmap.
 From Abel Require Import Sn_solvable galmx diag.
-Import galmx.
 
 (******************************************************************************)
 (* Tags for the difficulty :                                                  *)
@@ -784,15 +783,15 @@ have [e e_basis] : { e : n.-1.+1.-tuple _ | basis_of (aspaceOver E F) e}.
   rewrite prednK//; have := vbasisP (aspaceOver E F); move: (vbasis _).
   by rewrite dim_aspaceOver// => e; exists e.
 have e_free := basis_free e_basis.
-have Gminpoly g : g \in G -> mxminpoly (mxof e g) %| 'X ^+ n - 1.
+have Gminpoly g : g \in G -> mxminpoly (galmx e g) %| 'X ^+ n - 1.
   move=> gG; rewrite mxminpoly_min// rmorphB rmorph1 rmorphX/= horner_mx_X.
-  apply: (canLR (addrK _)); rewrite add0r -mxofX//.
-  by rewrite [n]galois_dim// expg_cardG// mxof1.
-have /sig2W [p p_unit dG] : codiagonalisable [seq mxof e g | g in G].
+  apply: (canLR (addrK _)); rewrite add0r -galmxX//.
+  by rewrite [n]galois_dim// expg_cardG// galmx1.
+have /sig2W [p p_unit dG] : codiagonalisable [seq galmx e g | g in G].
   apply/codiagonalisableP; split.
     apply/all_commP => _ _ /mapP[g gG ->] /mapP[g' g'G ->].
     rewrite ?mem_enum in gG g'G.
-    by rewrite -![_ *m _]mxofM// (centsP abelian_G).
+    by rewrite -![_ *m _]galmxM// (centsP abelian_G).
   move=> _/mapP[g gG ->]; rewrite mem_enum in gG *.
   pose l := [seq Subvs r_in_E ^+ i | i <- index_iota 0 n].
   apply/diagonalisableP; exists l.
@@ -802,17 +801,17 @@ have /sig2W [p p_unit dG] : codiagonalisable [seq mxof e g | g in G].
     by rewrite (eq_prim_root_expr r_is_nth_root) !modn_small// => /eqP.
   rewrite big_map (@factor_Xn_sub_1 _ _ (Subvs r_in_E)) ?Gminpoly//.
   by rewrite /= -(fmorph_primitive_root [rmorphism of vsval]).
-pose r_ := [tuple vecof e (row i p) | i < n.-1.+1].
+pose r_ := [tuple galvec e (row i p) | i < n.-1.+1].
 rewrite -[n]prednK//; exists r_.
-  apply/andP; split; last by apply/allP => _ /mapP[/=i _ ->]; rewrite vecof_in.
+  apply/andP; split; last by apply/allP => _ /mapP[/=i _ ->]; rewrite galvec_in.
   rewrite basisEdim; apply/andP; split; last first.
     by rewrite size_tuple dim_aspaceOver// prednK.
   apply/subvP => x /=; rewrite mem_aspaceOver// => xEF.
-  have [l ->] : exists l, x = vecof e (l *m p).
-    by exists (rowmxof e x *m invmx p); rewrite mulmxKV ?rowmxofK.
+  have [l ->] : exists l, x = galvec e (l *m p).
+    by exists (galrow e x *m invmx p); rewrite mulmxKV ?galrowK.
   rewrite span_def big_map big_enum_cond/= mulmx_sum_row linear_sum/=.
   by  apply: memv_sumr => i _; rewrite linearZ/= [_ \in _]memvZ// memv_line.
-move=> i g gG; have /allP /(_ (mxof e g) (map_f _ _))/sim_diagPex := dG.
+move=> i g gG; have /allP /(_ (galmx e g) (map_f _ _))/sim_diagPex := dG.
 case=> // [|M pg]; first by rewrite mem_enum.
 exists (val (M 0 i)); [apply/andP; split|]; first by rewrite /= subvsP.
   rewrite [X in _ ^+ X]prednK// -subr_eq0.
@@ -825,8 +824,8 @@ exists (val (M 0 i)); [apply/andP; split|]; first by rewrite /= subvsP.
   rewrite prodf_seq_eq0; apply/hasP; exists (M 0 i); rewrite ?subrr ?eqxx//.
   by rewrite mem_undup map_f ?mem_enum.
 have /(simP p_unit)/(congr1 (mulmx (@delta_mx _ 1 _ 0 i))) := pg.
-rewrite !mulmxA -!rowE row_diag_mx -scalemxAl -rowE => /(congr1 (vecof e)).
-by rewrite vecofM// linearZ/= tnth_map tnth_ord_tuple.
+rewrite !mulmxA -!rowE row_diag_mx -scalemxAl -rowE => /(congr1 (galvec e)).
+by rewrite galvecM// linearZ/= tnth_map tnth_ord_tuple.
 Qed.
 
 End Part1a.
