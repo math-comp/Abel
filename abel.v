@@ -602,21 +602,99 @@ exists rs => //; apply/eqP; rewrite -krs eqEsubv andbC adjoin_seqSl//=.
 by apply/Fadjoin_seqP; split; [rewrite /= krs capvSl|apply: seqv_sub_adjoin].
 Qed.
 
-(** N/A **)
-(* Do we need to know that the iso is the restriction morphism? *)
+Lemma kAutEnormal (K E : {subfield L}) (f : 'End(L)) :
+  (K <= E)%VS -> normalField K E -> kAut K E f = kHom K E f.
+Proof.
+move=> KE normalKE; rewrite kAutE; have [f_hom|]//= := boolP (kHom _ _ _).
+apply/subvP => _/memv_imgP[x Ex ->].
+have := kHom_to_gal _ normalKE f_hom; rewrite subvv KE => -[//|g gK ->//].
+by rewrite memv_gal.
+Qed.
+
 Import AEnd_FinGroup.
-Lemma galois_iso (k K F : {subfield L}) (G := 'Gal(K / k)%g)
+Lemma normalField_refl (K : {subfield L}) : normalField K K.
+Proof.
+apply/forallP => /= u; apply/implyP; rewrite in_set.
+by move=> /andP[/andP[_ /fixedSpace_limg->]].
+Qed.
+Hint Resolve normalField_refl.
+
+Lemma memv_mulP (K : fieldType) (aT : FalgType K) (U V : {vspace aT}) w :
+  reflect (exists n (us vs : n.-tuple aT),
+            [/\ all (mem U) us, all (mem V) vs & w = \sum_(i < n) tnth us i * tnth vs i])
+          (w \in (U * V)%VS).
+Proof.
+apply: (iffP idP) => [|[b [us [vs [usU vsV ->]]]]]; last first.
+  by rewrite rpred_sum// => i _; rewrite memv_mul//; apply/all_tnthP.
+rewrite unlock span_def big_tuple => /memv_sumP[/= w_ w_mem ->].
+have wP_ i : exists2 uv, (uv.1 \in U) && (uv.2 \in V) & w_ i = uv.1 * uv.2.
+  have /vlineP[k ->] := w_mem i isT; set UV := (X in tnth X _).
+  have /allpairsP[[u v] [uP vP ->]] := mem_tnth i UV.
+  by exists (k *: u, v); rewrite /= ?rpredZ ?vbasis_mem// scalerAl.
+pose uv i := (projT1 (sig2_eqW (wP_ i))).
+exists _, [tuple (uv i).1 | i < _], [tuple (uv i).2 | i < _]; rewrite /uv.
+split; do ?by apply/allP => _/mapP[i _ ->]; case: sig2_eqW => /= ? /andP[].
+by apply: eq_bigr => i; rewrite !tnth_map/= tnth_ord_tuple; case: sig2_eqW.
+Qed.
+
+Lemma fixedField_sub  (K E : {subfield L}) (A : {set gal_of E}) :
+  galois K E -> (('Gal(E / K))%g \subset A) -> (fixedField A <= K)%VS.
+Proof. by move=> /galois_fixedField{2}<- subA; apply: fixedFieldS. Qed.
+
+Lemma galois_sub  (K E : {subfield L}) (A : {group gal_of E}) :
+  galois K E -> (('Gal(E / K))%g \subset A) = (fixedField A <= K)%VS.
+Proof.
+move=> galKE; apply/idP/idP; first exact: fixedField_sub.
+move=> /galS-/(_ E)/=/subset_trans->//.
+by apply/subsetP => u; rewrite gal_fixedField.
+Qed.
+
+Lemma galois_eq  (K E : {subfield L}) (A : {group gal_of E}) :
+  galois K E -> ('Gal(E / K)%g == A) = (fixedField A == K)%VS.
+Proof.
+move=> galKE; have KE : (K <= E)%VS by case/andP: galKE.
+by rewrite eqEsubset eqEsubv galois_sub// galois_connection.
+Qed.
+
+Lemma galois_misom (k K F : {subfield L})
+  (H := 'Gal((K * F) / F)%g) (H' := 'Gal (K / (K :&: F))%g) :
+  galois k K -> (k <= F)%VS -> misom H H' (normalField_cast K).
+Proof.
+move=> gal_kK kF; have kK : (k <= K)%VS by case/andP: gal_kK.
+have normal_kK : normalField k K by case/and3P: gal_kK.
+have KF u : u \in H -> (u @: K <= K)%VS.
+  move=> Hu; suff : kHom k K u by rewrite -kAutEnormal// kAutE => /andP[].
+  by apply/kAHomP => x kx; rewrite (fixed_gal _ Hu) ?field_subvMl ?(subvP kF).
+have r_H_morphic : morphic H (normalField_cast K).
+  apply/morphicP => u v uH vH; apply/eqP/gal_eqP => x Kx.
+  rewrite galM// [LHS]galK ?KF ?groupM//.
+  rewrite 2?galK ?KF//; last by apply/(subvP (KF u uH)); rewrite memv_img.
+  by rewrite galM//; apply: subvP Kx; apply: field_subvMr.
+apply/misomP; exists r_H_morphic; apply/isomP; split.
+  apply/subsetP => /= u ker_u; have Hu := dom_ker ker_u.
+  apply/set1gP/eqP/gal_eqP => _ /memv_mulP[n [xs [ys [xsP ysP ->]]]].
+  rewrite rmorph_sum/= gal_id; apply: eq_bigr => i _; rewrite rmorphM/=.
+  have [xiK yiK] := (allP xsP _ (mem_tnth i _), allP ysP _ (mem_tnth i _)).
+  have /eqP/gal_eqP/(_ _ xiK) := mker ker_u.
+  rewrite /normalField_cast galK ?KF// => ->; rewrite gal_id.
+  by rewrite (fixed_gal _ Hu)// field_subvMl.
+apply/eqP; rewrite eq_sym galois_eq ?(capv_galois gal_kK kF)//.
+rewrite eqEsubv; apply/andP; split; apply/subvP => x; last first.
+  rewrite memv_cap => /andP[Kx Fx].
+  apply/fixedFieldP => // _ /morphimP[/= v Hv _ ->].
+  rewrite morphmE /normalField_cast galK// ?KF//.
+  by rewrite (fixed_gal _ Hv)// field_subvMl.
+move=> /mem_fixedFieldP[Kx xP]; rewrite memv_cap Kx/=.
+rewrite -(galois_fixedField (galois_prodv gal_kK kF)).
+apply/fixedFieldP; first by rewrite -[x]mulr1 memv_mul// rpred1.
+move=> u Hu; have := xP (normalField_cast _ u).
+by rewrite /normalField_cast galK ?KF//; apply; apply/morphimP; exists u.
+Qed.
+
+Lemma galois_isog (k K F : {subfield L})
   (H := 'Gal((K * F) / F)%g) (H' := 'Gal (K / (K :&: F))%g) :
   galois k K -> (k <= F)%VS -> H \isog H'.
-Proof.
-move=> K_galois sub_k_F.
-pose r (g : gal_of (K * F)) : gal_of K := gal _ (gal_repr g).
-have r_H_morphic : morphic H r.
-  apply/morphicP => u v uH vH.
-  admit.
-apply/(@misom_isog _ _ _ _ r)/misomP; exists r_H_morphic.
-admit.
-Admitted.
+Proof. by move=> galkK /(galois_misom galkK) /misom_isog. Qed.
 
 End Prodv.
 
@@ -828,9 +906,9 @@ have r'prim : #|G|.-primitive_root r'.
   by apply: dvdn_prim_root; rewrite // galois_dim ?cardSg ?galS ?subv_cap ?subEF.
 have r'Er : r' \in <<E; r>>%VS by rewrite rpredX ?memv_adjoin.
 apply: part1b r'Er _ => //=.
-  rewrite (isog_sol (galois_iso galois_EF _))//.
+  rewrite (isog_sol (galois_isog galois_EF _))//.
   by apply: solvableS solvable_G; apply: galS; rewrite subv_cap subEF.
-by rewrite galois_dim// (card_isog (galois_iso galois_EF _)).
+by rewrite galois_dim// (card_isog (galois_isog galois_EF _)).
 Qed.
 
 End Part1c.
