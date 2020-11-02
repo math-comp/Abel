@@ -779,7 +779,52 @@ End FieldExtChar0.
 
 (* End Transitivity. *)
 
-(* cyclotomic extensions                                                      *)
+(* cyclotomic extensions      
+
+ *)
+
+
+
+
+Section PhiCyclotomic.
+
+Variable (F : fieldType).
+
+Local Notation ZtoF := (intr : int -> F).
+Local Notation pZtoF := (map_poly ZtoF).
+
+Lemma Phi_cyclotomic (n : nat) (z : F) : n.-primitive_root z -> 
+   pZtoF 'Phi_n = cyclotomic z n.
+Proof.
+elim/ltn_ind: n z => n ihn z prim_z. 
+have n_gt0 := prim_order_gt0 prim_z.
+pose P k := pZtoF 'Phi_k.
+pose Q k := cyclotomic (z ^+ (n %/ k)) k.
+have eP : \prod_(d <- divisors n) P d = 'X^n - 1.
+  by rewrite -rmorph_prod /= prod_Cyclotomic // rmorphB /= map_polyC map_polyXn.
+have eQ : \prod_(d <- divisors n) Q d = 'X^n - 1 by rewrite -prod_cyclotomic.
+have fact (u : nat -> {poly F}) : \prod_(d <- divisors n) u d =
+              u n * \prod_(d <- rem n (divisors n)) u d.
+  by rewrite [LHS](big_rem n) ?divisors_id.
+pose p := \prod_(d <- rem n (divisors n)) P d.
+pose q := \prod_(d <- rem n (divisors n)) Q d.
+have ePp : P n * p = 'X^n - 1 by rewrite -eP fact.
+have eQq : Q n * q = 'X^n - 1 by rewrite -eQ fact.
+have Xnsub1N0 : 'X^n - 1 != 0 :> {poly F}.
+  by rewrite -size_poly_gt0 size_Xn_sub_1.
+have pN0 : p != 0 by apply: dvdpN0 Xnsub1N0; rewrite -ePp dvdp_mulIr.
+have epq : p = q. 
+  case: (divisors_correct n_gt0) => uniqd sortedd dP.
+  apply: eq_big_seq=> i; rewrite mem_rem_uniq ?divisors_uniq // inE.
+  case/andP=> NiSn di; apply: ihn; last by apply: dvdn_prim_root; rewrite -?dP.
+  suff: (i <= n)%N by rewrite leq_eqVlt (negPf NiSn). 
+  by apply: dvdn_leq => //; rewrite -dP. 
+have {epq} : P n * p = Q n * p by rewrite [in RHS]epq ePp eQq.
+by move/(mulIf pN0); rewrite /Q divnn n_gt0.
+Qed.
+
+End PhiCyclotomic.
+
 Section Cyclotomic.
 
 Variables (F0 : fieldType) (L : splittingFieldType F0).
