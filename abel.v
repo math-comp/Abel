@@ -191,7 +191,7 @@ Lemma gen_tperm_step n (k : 'I_n.+2) : coprime n.+2 k ->
 Proof.
 rewrite -unitZpE// natr_Zp => k_unit.
 apply/eqP; rewrite eqEsubset subsetT/= -(gen_tperm 0)/= gen_subG.
-apply/subsetP => s /imsetP[/= i _ ->]; set G := <<_>>%g.
+apply/subsetP => s /imsetP[/= i _ ->].
 rewrite -[i](mulVKr k_unit) -[_ * i]natr_Zp mulr_natr.
 elim: (val _) => //= {i} [|[|i] IHi]; first by rewrite tperm1 group1.
   by rewrite mulrSr mem_gen//; apply/imsetP; exists 0.
@@ -229,62 +229,47 @@ Lemma gen_tperm01_cycle n (c := perm (addrI 1)) :
   <<[set tperm 0 1%R ; c]>>%g = [set: 'S_n.+2].
 Proof. by rewrite gen_tpermn_cycle// subr0 coprimen1. Qed.
 
-
-Lemma prime_orbit (X : finType) x c (to := << idm_morphism <[c]>%g >>%act) :
-  prime #|X| -> #[c]%g = #|X| -> orbit to <[c]>%g x = [set: X].
+Lemma prime_orbit (X : finType) x c :
+  prime #|X| -> #[c]%g = #|X| -> orbit 'P <[c]> x = [set: X].
 Proof.
-move=> X_prime ord_c.
-have to1 :  to^~ 1%g =1 id by move=> y; rewrite mactE/= perm1.
-have to_morph y : act_morph to y by move=> z t; rewrite !mactE permM.
-have dvd_orbit y : (#|orbit to <[c]> y| %| #|X|)%N.
-  rewrite (dvdn_trans (dvdn_orbit (TotalAction to1 to_morph) _ _))//.
-  by rewrite [#|<[_]>%g|]ord_c.
-have [] := boolP [forall y, #|orbit to <[c]>%g y| == 1%N].
-  move=> /'forall_eqP-/(_ _)/card_orbit1 orbit1.
-  suff c_eq_1 : c = 1%g.
+move=> X_prime ord_c; have dvd_orbit y : (#|orbit 'P <[c]> y| %| #|X|)%N.
+  by rewrite (dvdn_trans (dvdn_orbit _ _ _))// [#|<[_]>%g|]ord_c.
+have [] := boolP [forall y, #|orbit 'P <[c]> y| == 1%N].
+  move=> /'forall_eqP-/(_ _)/card_orbit1 orbit1; suff c_eq_1 : c = 1%g.
     by rewrite c_eq_1 ?order1 in ord_c; rewrite -ord_c in X_prime.
   apply/permP => y; rewrite perm1.
-  suff: c y \in orbit to <[c]>%g y by rewrite orbit1 inE => /eqP->.
+  suff: c y \in orbit 'P <[c]> y by rewrite orbit1 inE => /eqP->.
   by apply/orbitP; exists c => //; rewrite mem_gen ?inE.
-move=> /forallPn[y orbit_y_neq0].
-have orbit_y : orbit to <[c]> y = [set: X].
+move=> /forallPn[y orbit_y_neq0]; have orbit_y : orbit 'P <[c]> y = [set: X].
   apply/eqP; rewrite eqEcard subsetT cardsT.
   by have /(prime_nt_dvdP X_prime orbit_y_neq0)<-/= := dvd_orbit y.
-have /orbit_in_eqP->// : x \in orbit to <[c]> y.
-by rewrite orbit_y.
+by have /orbit_in_eqP-> : x \in orbit 'P <[c]> y; rewrite ?subsetT ?orbit_y.
 Qed.
 
-Lemma prime_astab (X : finType) (x : X) c (to := << idm_morphism <[c]>%g >>%act) :
-  prime #|X| -> #[c]%g = #|X| -> 'C[x | to]%g = 1%g.
+Lemma prime_astab (X : finType) (x : X) (c : {perm X}) :
+  prime #|X| -> #[c]%g = #|X| -> 'C_<[c]>[x | 'P]%g = 1%g.
 Proof.
-move=> X_prime ord_c.
-have to1 :  to^~ 1%g =1 id by move=> y; rewrite mactE/= perm1.
-have to_morph y : act_morph to y by move=> z t; rewrite !mactE permM.
-have /= := card_orbit_stab (TotalAction to1 to_morph) [group of <[c]>%g] x.
-rewrite [orbit _ _ _]prime_orbit// cardsT [#|<[_]>%g|]ord_c => /eqP.
-rewrite -[X in _ == X]muln1 eqn_mul2l gtn_eqF ?prime_gt0//= -trivg_card1.
-by move=> /eqP/= <-; apply/setP => /= s; rewrite !inE.
+move=> X_prime ord_c; have /= := card_orbit_stab 'P [group of <[c]>%g] x.
+rewrite prime_orbit// cardsT [#|<[_]>%g|]ord_c -[RHS]muln1 => /eqP.
+by rewrite eqn_mul2l gtn_eqF ?prime_gt0//= -trivg_card1 => /eqP.
 Qed.
 
-Lemma expgDz (gT : finGroupType) (x : gT) d (n m : 'Z_d) : (d > 0)%N ->
+Lemma expgDzmod (gT : finGroupType) (x : gT) d (n m : 'Z_d) : (d > 0)%N ->
   (#[x]%g %| d)%N -> (x ^+ (n + m)%R)%g = (x ^+ n * x ^+ m)%g.
 Proof.
-move=> d_gt0 xdvd; rewrite -expgD; apply/eqP.
-rewrite eq_expg_mod_order/= modn_dvdm//.
-case: d d_gt0 {m n} xdvd => [|[|[]]]//= _.
-by rewrite dvdn1 => /eqP->//.
+move=> d_gt0 xdvd; apply/eqP; rewrite -expgD eq_expg_mod_order/= modn_dvdm//.
+by case: d d_gt0 {m n} xdvd => [|[|[]]]//= _; rewrite dvdn1 => /eqP->.
 Qed.
 
-Lemma eq_expg (gT : finGroupType) (x : gT) d (n m : 'I_d) :
+Lemma eq_expg_ord (gT : finGroupType) (x : gT) d (n m : 'I_d) :
   (d <= #[x]%g)%N -> ((x ^+ m)%g == (x ^+ n)%g) = (m == n).
 Proof.
-move=> d_leq; rewrite eq_expg_mod_order.
-by rewrite !modn_small// (leq_trans _ d_leq).
+by move=> d_leq; rewrite eq_expg_mod_order !modn_small// (leq_trans _ d_leq).
 Qed.
 
 Lemma gen_tperm_cycle (X : finType) x y c : prime #|X| ->
   x != y -> #[c]%g = #|X| ->
-  <<[set tperm x y ; c]>>%g = ('Sym_X)%g.
+  <<[set tperm x y; c]>>%g = ('Sym_X)%g.
 Proof.
 move=> Xprime neq_xy ord_c; apply/eqP; rewrite eqEsubset subsetT/=.
 have c_gt1 : (1 < #[c]%g)%N by rewrite ord_c prime_gt1.
@@ -292,14 +277,14 @@ have cppSS : #[c]%g.-2.+2 = #|X| by rewrite ?prednK ?ltn_predRL.
 pose f (i : 'Z_#[c]%g) : X := Zpm i x.
 have [g fK gK] : bijective f.
   apply: inj_card_bij; rewrite ?cppSS ?card_ord// /f /Zpm => i j cijx.
-  pose stabx := ('C[x | << idm_morphism <[c]>%g >>])%g.
+  pose stabx := ('C_<[c]>[x | 'P])%g.
   have cjix : (c ^+ (j - i)%R)%g x = x.
-    by apply: (@perm_inj _ (c ^+ i)%g); rewrite -permM -expgDz// addrNK.
+    by apply: (@perm_inj _ (c ^+ i)%g); rewrite -permM -expgDzmod// addrNK.
   have : (c ^+ (j - i)%R)%g \in stabx.
-    by rewrite !inE ?groupX ?mem_gen ?inE// sub1set inE mactE cjix eqxx.
+    by rewrite !inE ?groupX ?mem_gen ?sub1set ?inE// ['P%act _ _]cjix eqxx.
   rewrite [stabx]prime_astab// => /set1gP.
-  move=> /(congr1 (mulg (c ^+ i))); rewrite -expgDz// addrC addrNK mulg1.
-  by move=> /eqP; rewrite eq_expg// ?cppSS ?ord_c// => /eqP.
+  move=> /(congr1 (mulg (c ^+ i))); rewrite -expgDzmod// addrC addrNK mulg1.
+  by move=> /eqP; rewrite eq_expg_ord// ?cppSS ?ord_c// => /eqP->.
 pose gsf s := g \o s \o f.
 have gsf_inj (s : {perm X}) : injective (gsf s).
   apply: inj_comp; last exact: can_inj fK.
@@ -321,18 +306,14 @@ have phiT : (phi @* 'Sym_X)%g = [set: {perm 'Z_#[c]%g}].
   apply/morphimP; exists (perm (fsg_inj u)); rewrite ?in_setT//.
   by apply/permP => /= i; rewrite morphmE permE /gsf/fsg/= permE/= !fK.
 have f0 : f 0 = x by rewrite /f /Zpm permX.
-have gx : g x = 0 by apply: (can_inj fK); rewrite f0.
 pose k := g y; have k_gt0 : (k > 0)%N.
-  by rewrite lt0n (val_eqE k 0) -gx (can_eq gK) eq_sym.
-have fk : f k = y by rewrite gK.
+  by rewrite lt0n (val_eqE k 0) -(can_eq fK) eq_sym gK f0.
 have phixy : phi (tperm x y) = tperm 0 k.
   apply/permP => i; rewrite permE/= /gsf/=; apply: (canLR fK).
-  by rewrite !permE/= -f0 -fk !(can_eq fK) -!fun_if.
+  by rewrite !permE/= -f0 -[y]gK !(can_eq fK) -!fun_if.
 have phic : phi c = perm (addrI 1%R).
   apply/permP => i; rewrite permE /gsf/=; apply: (canLR fK).
-  rewrite !permE /f /Zpm -permM -expgSr; congr ((_ _) x).
-  apply/eqP; rewrite eq_expg_mod_order/= (@modn_small 1)//.
-  by rewrite ?cppSS ?ord_c in i *; rewrite modn_mod.
+  by rewrite !permE /f /Zpm -permM addrC expgDzmod.
 rewrite -(injmSK phi_inj)//= morphim_gen/= ?subsetT//= -/phi.
 rewrite phiT /morphim !setTI/= -/phi imsetU1 imset_set1/= phixy phic.
 suff /gen_tpermn_cycle<- : coprime #[c]%g.-2.+2 (k - 0)%R by [].
@@ -348,7 +329,7 @@ move=> charRp [] n; rewrite [LHS](dvdn_charf charRp)//.
 by rewrite NegzE abszN rmorphN// oppr_eq0.
 Qed.
 
-Lemma dvdp_ZXsubCX (R : idomainType) (p : {poly R}) (c : R) n :
+Lemma dvdp_exp_XsubC (R : idomainType) (p : {poly R}) (c : R) n :
   reflect (exists2 k, (k <= n)%N & p %= ('X - c%:P) ^+ k)
           (p %| ('X - c%:P) ^+ n).
 Proof.
@@ -399,7 +380,7 @@ set c := (X in X *: _); set n := (_.-1).
 set pf := map_poly _ f; set pg := map_poly _ g => pfMpg.
 have dvdXn (r : {poly _}) : size r != 1%N -> r %| c *: 'X^n -> r`_0 = 0.
   move=> rN1; rewrite (eqp_dvdr _ (eqp_scale _ _))//.
-  rewrite -['X]subr0; move=> /dvdp_ZXsubCX[k lekn]; rewrite subr0.
+  rewrite -['X]subr0; move=> /dvdp_exp_XsubC[k lekn]; rewrite subr0.
   move=> /eqpP[u /andP[u1N0 u2N0]]; have [->|k_gt0] := posnP k.
     move=> /(congr1 (size \o val))/eqP.
     by rewrite /= !size_scale// size_polyXn (negPf rN1).
@@ -425,7 +406,6 @@ Qed.
 Lemma lead_coef_XsubC {R : ringType} (c : R) :
   lead_coef ('X - c%:P) = 1.
 Proof. by apply: (@lead_coef_XnsubC _ 1%N). Qed.
-
 
 Lemma lead_coef_prod {R : idomainType} (ps : seq {poly R}) :
   lead_coef (\prod_(p <- ps) p) = \prod_(p <- ps) lead_coef p.
