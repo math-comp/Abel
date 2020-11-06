@@ -396,6 +396,17 @@ have /(dvdXn _ pfN1) /eqP : pf %| c *: 'X^n by rewrite -pfMpg dvdp_mulr.
 by rewrite !coef_map// -!(dvdz_charf (char_Fp _))//; apply: dvdz_mul.
 Qed.
 
+Lemma prodrMl {R : comRingType} {I : finType} (A : pred I) (x : R) F :
+  \prod_(i in A) (x * F i) = x ^+ #|A| * \prod_(i in A) F i.
+Proof.
+rewrite -sum1_card; elim/big_rec3: _; first by rewrite expr0 mulr1.
+by move=> i y p z iA ->; rewrite mulrACA exprS.
+Qed.
+
+Lemma expr_sum {R : ringType} {T : Type} (x : R) (F : T -> nat) P s :
+  x ^+ (\sum_(i <- s | P i) F i) = \prod_(i <- s | P i) x ^+ (F i).
+Proof. by apply: big_morph; [exact: exprD | exact: expr0]. Qed.
+
 Lemma lead_coef_XnsubC {R : ringType} n (c : R) : (0 < n)%N ->
   lead_coef ('X^n - c%:P) = 1.
 Proof.
@@ -407,6 +418,18 @@ Lemma lead_coef_XsubC {R : ringType} (c : R) :
   lead_coef ('X - c%:P) = 1.
 Proof. by apply: (@lead_coef_XnsubC _ 1%N). Qed.
 
+Lemma monic_XsubC {R : ringType} (c : R) : 'X - c%:P \is monic.
+Proof. by rewrite monicE lead_coef_XsubC. Qed.
+
+Lemma monic_XnsubC {R : ringType} n (c : R) : (0 < n)%N -> 'X^n - c%:P \is monic.
+Proof. by move=> gt0_n; rewrite monicE lead_coef_XnsubC. Qed.
+
+Lemma size_XnsubC {R : ringType} n (c : R) : (0 < n)%N -> size ('X^n - c%:P) = n.+1.
+Proof.
+move=> gt0_n; rewrite size_addl ?size_polyXn //.
+by rewrite size_opp size_polyC; case: (c =P 0).
+Qed.
+
 Lemma lead_coef_prod {R : idomainType} (ps : seq {poly R}) :
   lead_coef (\prod_(p <- ps) p) = \prod_(p <- ps) lead_coef p.
 Proof. by apply/big_morph/lead_coef1; apply: lead_coefM. Qed.
@@ -417,6 +440,15 @@ Proof.
 rewrite -(big_map (fun c : R => 'X - c%:P) xpredT idfun) /=.
 rewrite lead_coef_prod big_seq (eq_bigr (fun=> 1)) ?big1 //=.
 by move=> i /mapP[c _ ->]; apply: lead_coef_XsubC.
+Qed.
+
+Lemma coef0M {R : ringType} (p q : {poly R}) : (p * q)`_0 = p`_0 * q`_0.
+Proof. by rewrite coefM big_ord1. Qed.
+
+Lemma coef0_prod {R : ringType} {T : Type} (ps : seq T) (F : T -> {poly R}) P :
+  (\prod_(p <- ps | P p) F p)`_0 = \prod_(p <- ps | P p) (F p)`_0.
+Proof.
+by apply: (big_morph (fun p : {poly R} => p`_0)); [apply: coef0M | rewrite coefC eqxx].
 Qed.
 
 (* rename primeNsig? *)
@@ -667,7 +699,6 @@ Proof. by case=> [R [/radicalext_pradicalext ERe FR]]; exists R. Qed.
 Lemma solvable_by_pradical_radical (E F : {subfield L}) :
   solvable_by radical E F -> solvable_by pradical E F.
 Proof. by case=> [R [/pradicalext_radicalext ERe FR]]; exists R. Qed.
-
 End Properties.
 
 End RadicalExtension.
@@ -1282,15 +1313,6 @@ Local Notation G := ('Gal(<<E; x>> / E))%g.
 Section Part2a.
 Hypothesis r_in_E : r \in E.
 
-(* We want to prove that E(x) is Galois and abelian                           *)
-
-(* - the roots of X^p - x^p are the x * a p-th root of the unity              *)
-Lemma root_Xp_sub_xp (i : 'I_p) : root ('X^p - (x ^+ p)%:P) (x * r ^+ i)%R.
-Proof.
-apply/rootP; rewrite !(hornerE, hornerXn) exprMn exprAC.
-by rewrite [r ^+ p]prim_expr_order // expr1n mulr1 subrr.
-Qed.
-
 Lemma uniq_roots_Xp_sub_xp : uniq [seq x * r ^+ (val i) | i : 'I_p].
 Proof.
 apply/(uniqP 0) => i j; rewrite !inE size_map size_enum_ord => ltip ltjp.
@@ -1301,78 +1323,82 @@ move/mulfI=> h{}/h /eqP; rewrite (eq_prim_root_expr r_is_pth_root).
 by rewrite !modn_small -1?size_rs // => /eqP.
 Qed.
 
-Lemma size_Xp_sub_xp : size ('X^p - (x ^+ p)%:P) = p.+1.
+Lemma Xp_sub_xpE : ('X^p - (x ^+ p)%:P)%R = \prod_(i < p) ('X - (x * r ^+ i)%:P).
 Proof.
-rewrite size_addl 1?size_polyXn // size_opp size_polyC.
-by rewrite (@ltn_trans 2) // ltnS ?leq_b1 // prime_gt1.
+have := uniq_roots_Xp_sub_xp; rewrite -uniq_rootsE.
+move/all_roots_prod_XsubC => eq; rewrite {}[LHS]eq; first last.
+- apply/allP=> z /mapP[/= i _ ->]; rewrite rootE !(hornerE, hornerXn) exprMn exprAC.
+  by rewrite [r ^+ p]prim_expr_order // expr1n mulr1 subrr.
+- by rewrite size_XnsubC ?prime_gt0 // size_map size_enum_ord.
+rewrite (monicP _) 1?scale1r; last by apply/monic_XnsubC/prime_gt0.
+by rewrite big_map /index_enum -enumT.
 Qed.
 
-Lemma monic_Xp_sub_xp : 'X^p - (x ^+ p)%:P \is monic.
+Lemma Fadjoin_primeE : minPoly E x = ('X^p - (x ^+ p)%:P)%R.
 Proof.
-rewrite monicE lead_coefE size_Xp_sub_xp // coefB.
-rewrite coefXn coefC eqxx /= gtn_eqF ?subr0 //.
-by rewrite (leq_trans _ (prime_gt1 _)).
-Qed.
-
-Lemma Xp_sub_xp_prod :
-  'X^p - (x ^+ p)%:P = \prod_(i < p) ('X - (x * r ^+ i)%:P).
-Proof.
-pose rs := [seq x * r ^+ (val i) | i : 'I_p].
-have [] := (@uniq_roots_prod_XsubC _ ('X^p - (x ^+ p)%:P) rs).
-- by apply/allP=> z /mapP[/= i _ ->]; apply: root_Xp_sub_xp.
-- by rewrite uniq_rootsE uniq_roots_Xp_sub_xp.
-move=> /= q eq; suff eq1_q: q = 1.
-  by rewrite eq eq1_q mul1r /rs big_map enumT.
-case/boolP: (q == 0) eq => [|nz_q eq].
-  by move/eqP=> -> /eqP; rewrite mul0r -size_poly_eq0 size_Xp_sub_xp.
-move/(congr1 (size \o polyseq)): (eq) => /=; rewrite size_Mmonic //; last first.
-  by apply: monic_prod => i _; apply: monicXsubC.
-rewrite size_prod_XsubC addnS /= size_map size_enum_ord size_Xp_sub_xp -add1n.
-move/addIn => /esym /eqP /size_poly1P [c nz_c qE] {nz_q}.
-move/(congr1 lead_coef): (eq); rewrite lead_coef_XnsubC 1?prime_gt0 //.
-by rewrite lead_coefM lead_coef_prod_XsubC mulr1 qE lead_coefC => <-.
-Qed.
-
-Lemma dvdp_Fadjoin_prime_Xp_sub_xp : minPoly E x %| ('X^p - (x ^+ p)%:P).
-Proof.
-apply: minPoly_dvdp.
+have dvd_mpEx: minPoly E x %| ('X^p - (x ^+ p)%:P); first apply: minPoly_dvdp.
 - by rewrite rpredB 1?polyOverC //; apply/rpredX/polyOverX.
 - by apply/rootP; rewrite !(hornerE, hornerXn) subrr.
+rewrite (rwP eqP) -eqp_monic ?(monic_minPoly, monic_XnsubC) ?prime_gt0 //.
+move: {+}dvd_mpEx; rewrite Xp_sub_xpE; pose F x (i : 'I_p) := x * r ^+ i.
+rewrite -(big_map (F x) predT (fun z => 'X - z%:P)) /=.
+rewrite /index_enum -enumT /=; set rs := map _ _.
+case/dvdp_prod_XsubC => [m mpEx].
+suff mrsE: mask m rs = rs by rewrite mrsE in mpEx.
+have: (minPoly E x)`_0 \in E by apply/polyOverP/minPolyOver.
+move: {+}mpEx; rewrite eqp_monic ?(monic_minPoly, monic_prod_XsubC) //.
+move/eqP=> ->; rewrite coef0_prod {1}mask_filter //; last first.
+  exact: uniq_roots_Xp_sub_xp.
+rewrite big_filter big_map (eq_bigr (F (-x))); last first.
+- by move=> i _; rewrite coefB coefX coefC eqxx /F mulNr sub0r.
+rewrite big_mkcond big_enum -big_mkcond prodrMl /= fpredMr; last first.
+- apply/prodf_neq0=> /= i _; have /eqP := prim_expr_order r_is_pth_root.
+  rewrite -{1}[p](@subnK i p) 1?ltnW // exprD; apply: contraL.
+  by move/eqP=> ->; rewrite mulr0 eq_sym oner_eq0.
+- by apply/rpred_prod=> i _; apply/rpredX.
+rewrite exprNn fpredMl; last first.
+- by rewrite signr_eq0.
+- by rewrite rpredX // rpredN rpred1.
+set S := (S in x ^+ #|S|); case/boolP: (#|S| == 0%N) => [/eqP/card0_eq z_S|nz_S].
+- move: {+}mpEx; rewrite mask_filter //; last first.
+    exact: uniq_roots_Xp_sub_xp.
+  rewrite big_filter big_map big_pred0.
+    by move/eqp_root/(_ x); rewrite root_minPoly rootC oner_eq0.
+  by move=> /= i; move: (z_S i).
+have: (#|S| <= p)%N by rewrite -[X in (_ <= X)%N]card_ord max_card.
+rewrite leq_eqVlt => /orP[Sfull _|lt_S_p].
+- rewrite mask_filter ?uniq_roots_Xp_sub_xp // (@eq_in_filter _ _ predT).
+    by rewrite filter_predT.
+  move=> _ /mapP[/= i _ ->]; apply: contraLR Sfull => xri_maskN.
+  rewrite -[X in _ != X]card_ord eqn_leq max_card /= -ltnNge.
+  by apply/proper_card/properP; split; [apply/subset_predT | exists i].
+move: #|S| nz_S lt_S_p => k nz_k lt_kp; apply/contraTeq => _ /=.
+have: coprime p k by rewrite prime_coprime // gtnNdvd // lt0n.
+case/(coprimeP _ (prime_gt0 prime_p)) => -[u v] /= bz.
+move: x_notin_E; rewrite -{1}[x]expr1 -bz expfB; last first.
+  by rewrite -subn_gt0 bz.
+apply: contra => xkE; apply: rpredM.
++ by rewrite mulnC exprM rpredX.
++ by rewrite rpredV mulnC exprM rpredX.
 Qed.
 
 Lemma size_Fadjoin_prime : size (minPoly E x) = p.+1.
 Proof.
-have le_Ex_Sp: (size (minPoly E x) <= p.+1)%N.
-  rewrite -size_Xp_sub_xp dvdp_leq //.
-  - by rewrite -size_poly_gt0 size_Xp_sub_xp.
-  - exact: dvdp_Fadjoin_prime_Xp_sub_xp.
-
-Admitted.
-
-(* - E(x) is the splitting field of X^p - x^p                                 *)
-Lemma minPoly_Fadjoin_prime : minPoly E x = ('X^p - (x ^+ p)%:P)%R.
-Proof.
-apply/eqP; rewrite -eqp_monic.
-- rewrite -dvdp_size_eqp; last exact dvdp_Fadjoin_prime_Xp_sub_xp.
-  by rewrite size_Fadjoin_prime size_Xp_sub_xp.
-- exact: monic_minPoly.
-- exact: monic_Xp_sub_xp.
+rewrite Fadjoin_primeE Xp_sub_xpE size_prod_XsubC.
+by rewrite /index_enum /= -enumT size_enum_ord.
 Qed.
 
-(* - E(x) is thus Galois                                                      *)
+(* - E(x) is Galois                                                           *)
 Lemma galois_Fadjoin_prime : galois E <<E; x>>.
 Proof.
-apply/and3P; split.
-- exact: subv_adjoin.
-- rewrite -adjoin_seq1; apply: separable_Fadjoin_seq.
-  by rewrite all_seq1; apply/charf0_separable/char_L.
-apply/splitting_normalField => /=; first exact: subv_adjoin.
-exists ('X^p - (x ^+ p)%:P).
-  by rewrite rpredB // 1?polyOverC //; apply/rpredX/polyOverX.
-pose rs := [seq x * r ^+ i | i : 'I_p].
-exists rs.
-  apply/eqpP; exists (1, 1); rewrite !(oner_neq0, scale1r) //.
-  by rewrite Xp_sub_xp_prod /rs big_map enumT.
+apply/splitting_galoisField => /=; exists ('X^p - (x ^+ p)%:P); split.
+- by rewrite rpredB // 1?polyOverC //; apply/rpredX/polyOverX.
+- rewrite Xp_sub_xpE /index_enum -enumT /=.
+  rewrite -(big_map _ predT (fun z => 'X - z%:P)) /=.
+  by rewrite separable_prod_XsubC uniq_roots_Xp_sub_xp.
+pose rs := [seq x * r ^+ i | i : 'I_p]; exists rs.
+- rewrite Xp_sub_xpE /index_enum -enumT /=.
+  by rewrite -(big_map _ predT (fun z => 'X - z%:P)) /eqp dvdpp. (* eqpp *)
 rewrite /rs /image_mem (map_comp (fun i => x * r ^+ i) _) val_enum_ord.
 rewrite -[X in iota 0 X]prednK ?prime_gt0 // -add1n iota_add.
 rewrite map_cat /= expr0 mulr1 adjoin_cons.
