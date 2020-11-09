@@ -843,7 +843,10 @@ Variables (E : {subfield L}) (r : L) (n : nat).
 Hypothesis r_is_nth_root : n.-primitive_root r.
 
 Lemma cyclotomic_over : cyclotomic r n \is a polyOver E.
-Proof. Admitted.
+Proof.
+by apply/polyOverP=> i; rewrite -Phi_cyclotomic // coef_map /= rpred_int.
+Qed.  
+
 Hint Resolve cyclotomic_over : core.
 
 (** Very Hard **)
