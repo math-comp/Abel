@@ -849,17 +849,44 @@ Qed.
 
 Hint Resolve cyclotomic_over : core.
 
-(** Very Hard **)
+(* MISSING *)
+Lemma root_dvdp (F : fieldType) (p q : {poly F}) (x : F) :
+  root p x -> p %| q -> root q x.
+Proof.
+case/factor_theorem=> u -> {p} /dvdpP [v] ->; apply/factor_theorem.
+by exists (v * u); rewrite !mulrA.
+Qed.
+
+
+
+  (** Very Hard **)
 (*     - E(x) is cyclotomic                                                   *)
 Lemma minPoly_cyclotomic : r \notin E -> minPoly E r = cyclotomic r n.
 Proof.
-move=> Er; apply/eqP; rewrite -eqp_monic ?monic_minPoly ?cyclotomic_monic//.
-rewrite /eqp minPoly_dvdp ?root_cyclotomic//=; last first.
-   rewrite /cyclotomic.
-(* minPoly %| cyclotomic *)
-(* then using a decomposition of minPoly in linear terms : its constant *)
-(* coefficient is a power of x, and in E : it can only be at power p, hence *)
-(* its size, and value *)
+move=> NEr.
+have n_gt0 := prim_order_gt0 r_is_nth_root.
+have Dpr := Phi_cyclotomic r_is_nth_root; set pr := cyclotomic r n in Dpr *.
+have mon_pr: pr \is monic by apply: cyclotomic_monic.
+have pr0: root pr r by rewrite root_cyclotomic.
+have /polyOver_subvs[pf Dpf] := minPolyOver E r.
+have mon_pf : pf \is monic.
+  suff : map_poly vsval pf \is monic by rewrite map_monic.
+  by rewrite -Dpf monic_minPoly.
+have dv_pf q : root (map_poly vsval q) r = (pf %| q).
+  set p := map_poly _ _.
+  have Ep : p \is a polyOver E by apply/polyOver_subvs; exists q.
+  apply/idP/idP=> [/(minPoly_dvdp Ep) | pfdvdq].
+  - by rewrite Dpf dvdp_map. 
+  - have: minPoly E r %| p by rewrite Dpf dvdp_map.
+    apply/root_dvdp; exact: root_minPoly.
+have pfdvdPhin : pf %| map_poly intr 'Phi_n.
+  rewrite -dv_pf; congr (root _ r): pr0; rewrite -Dpr -map_poly_comp.
+  by apply: eq_map_poly => b; rewrite /= rmorph_int.
+(* Then see, e.g., Theorem 4 of 
+http://www.lix.polytechnique.fr/~pilaud/enseignement/agreg/polynomes/polynomes.pdf 
+some proof patterns will be similar as in the proof of minCpoly_cyclotomic, and it
+will then generalize it, hopefully.
+*)
 Admitted.
 
 (** Ok, easy to finish CHECK whether r \notin E is needed **)
