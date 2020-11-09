@@ -101,7 +101,9 @@ by rewrite mem_filter mem_iota// coprime1n.
 Qed.
 
 Lemma cyclotomic_over : cyclotomic r n \is a polyOver E.
-Proof. Admitted.
+Proof.
+by apply/polyOverP=> i; rewrite -Phi_cyclotomic // coef_map /= rpred_int.
+Qed.
 
 Hint Resolve cyclotomic_over : core.
 
@@ -113,18 +115,127 @@ Variables (F0 : fieldType) (L : splittingFieldType F0).
 Variables (E : {subfield L}) (r : L) (n : nat).
 Hypothesis r_is_nth_root : n.-primitive_root r.
 
+(* MISSING *)
+Lemma root_dvdp (F : idomainType) (p q : {poly F}) (x : F) :
+  root p x -> p %| q -> root q x.
+Proof. rewrite -!dvdp_XsubCl; exact: dvdp_trans. Qed.
+
+(* MISSING *)
+Lemma primitive_root_pow (F : fieldType) (m : nat) (s z : F) :
+  m.-primitive_root s -> m.-primitive_root z -> exists2 k, coprime k m & z = s ^+ k.
+Proof.
+move/root_cyclotomic<-.
+rewrite /cyclotomic -big_filter; have [t et [uniqs tP /= perms]] := big_enumP.
+pose rs := [seq s ^+ (val i) | i <- t]; set p := (X in root X).
+have {p} -> :  p = \prod_(z <- rs) ('X - z%:P) by rewrite /p big_map.
+rewrite root_prod_XsubC; case/mapP=> [[i ltim]]; rewrite tP /= => copim ez.
+by exists i.
+Qed.
+
 (** Very Hard **)
 (*     - E(x) is cyclotomic                                                   *)
 Lemma minPoly_cyclotomic : r \notin E -> minPoly E r = cyclotomic r n.
 Proof.
-move=> Er; apply/eqP; rewrite -eqp_monic ?monic_minPoly ?cyclotomic_monic//.
-rewrite /eqp minPoly_dvdp ?root_cyclotomic//=; last first.
-  rewrite /cyclotomic.
-(* minPoly %| cyclotomic *)
-(* then using a decomposition of minPoly in linear terms : its constant *)
-(* coefficient is a power of x, and in E : it can only be at power p, hence *)
-(* its size, and value *)
+move=> NEr.
+have lt0n : (0 < n)%N by exact: prim_order_gt0 r_is_nth_root.
+suff dvd_cyclo_min : cyclotomic r n %| minPoly E r.
+  apply/eqP; rewrite -eqp_monic ?monic_minPoly ?cyclotomic_monic//.
+  by rewrite /eqp minPoly_dvdp ?root_cyclotomic ?cyclotomic_over.
+suff prim_roots z : n.-primitive_root z -> root (minPoly E r) z.
+  rewrite /cyclotomic -big_filter; have [s es [uniqs sP /= perms]] := big_enumP.
+  pose rs := [seq r ^+ (val i) | i <- s]; set p := (X in X %| _).
+  have {p} -> :  p = \prod_(z <- rs) ('X - z%:P) by rewrite /p big_map.
+  have uniq_rs : poly.uniq_roots rs.
+    rewrite uniq_rootsE /rs map_inj_in_uniq // => j k.
+    rewrite !sP => copjn copkn /eqP; rewrite (eq_prim_root_expr r_is_nth_root).
+    by rewrite !modn_small ?ltn_ord //; move/eqP; apply/val_inj.
+  apply: uniq_roots_dvdp=> //; apply/allP=> x /mapP[[y ltyn]]; rewrite sP /=.
+  by move=> copyn ->; apply: prim_roots=> //; rewrite prim_root_exp_coprime.
+suff prime_pow_root s p : root (minPoly E r) s ->
+     prime p -> ~~ (p %| n)%N -> root (minPoly E r) (s ^+ p).
+  case/(primitive_root_pow r_is_nth_root)=> m copmn ->.
+  have prime_pow_pow_root p k s : root (minPoly E r) s ->
+    prime p -> (0 < k)%N -> ~~(p %| n)%N ->  root (minPoly E r) (s ^+ (p ^ k)).
+    move=> primroots primp lt0k Ndvdpn; elim: k lt0k => [|k ihk _] //.
+    rewrite expnS mulnC exprM; apply: prime_pow_root=> //.
+    case: (posnP k) => [ek0 | lt0k]; last exact: ihk.
+    by rewrite ek0 expn0 expr1.
+  case: (posnP m)=> [em0 | lt0m].
+  move: copmn; rewrite em0 expr0 /coprime gcd0n => /eqP en1.
+  suff -> : r = 1 by rewrite root_minPoly.
+    by move/prim_expr_order: r_is_nth_root; rewrite en1 expr1.
+  move/prod_prime_decomp: lt0m->; move: (@mem_prime_decomp m).
+  elim: (prime_decomp m) => [_ | [p k] d ihd dP].
+    by rewrite big_nil expr1 root_minPoly.
+  rewrite big_cons /= mulnC exprM.
+  have /dP [prime_p lt0k pk_dvd_m] : (p, k) \in (p, k) :: d by rewrite inE eqxx.
+  have Npdvdn : ~~ (p %| n)%N.
+    suff /coprime_dvdl : (p %| m)%N by move/(_ _ copmn); rewrite prime_coprime.
+    apply: dvdn_trans pk_dvd_m; rewrite -{1}(expn1 p); exact: dvdn_exp2l.
+  apply: prime_pow_pow_root=> //; apply: ihd => q l dql; apply: dP.
+  by rewrite inE dql orbT.
+
+
+(* admit. (* todo: change block above into proof of this *) *)
+(* move=> lt0in cop_i_n.          *)
+(* have n_gt0 := prim_order_gt0 r_is_nth_root. *)
+(* have Dpr := Phi_cyclotomic r_is_nth_root; set pr := cyclotomic r n in Dpr *. *)
+
+(* have mon_pr: pr \is monic by apply: cyclotomic_monic. *)
+(* have pr0: root pr r by rewrite root_cyclotomic. *)
+(* have /polyOver_subvs[pf Dpf] := minPolyOver E r. *)
+(* have mon_pf : pf \is monic. *)
+(*   suff : map_poly vsval pf \is monic by rewrite map_monic. *)
+(*   by rewrite -Dpf monic_minPoly. *)
+(* have dv_pf Q : root (map_poly vsval Q) r = (pf %| Q). *)
+(*   set P := map_poly _ _. *)
+(*   have Ep : P \is a polyOver E by apply/polyOver_subvs; exists Q. *)
+(*   apply/idP/idP=> [/(minPoly_dvdp Ep) | pfdvdq]. *)
+(*   - by rewrite Dpf dvdp_map.  *)
+(*   - have: minPoly E r %| P by rewrite Dpf dvdp_map. *)
+(*     apply/root_dvdp; exact: root_minPoly. *)
+(* have pfdvdPhin : pf %| map_poly intr 'Phi_n. *)
+(*   rewrite -dv_pf; congr (root _ r): pr0; rewrite -Dpr -map_poly_comp. *)
+(*   by apply: eq_map_poly => b; rewrite /= rmorph_int. *)
+(* pose P : {poly subvs_of E} := 'X^n - 1. *)
+(* have /dvdpP[Q ePQpf]: pf %| P. *)
+(*   rewrite -dv_pf; apply/rootP. *)
+(*   rewrite /P rmorphB /= map_polyXn hornerD hornerN hornerXn map_polyC /= hornerC. *)
+(*   by rewrite algid1 prim_expr_order // subrr. *)
+(* suff min_root x q : prime q -> ~~ (q %| n)%N -> *)
+(*                       root (minPoly E r) x -> root (minPoly E r) (x ^+ q). *)
+(*   move=> {ePQpf Q P dv_pf pfdvdPhin Dpf mon_pf pf pr0 mon_pr Dpr pr NEr}. *)
+(*   have hpow q k t : prime q -> ~~ (q %| n)%N -> root (minPoly E r) t -> *)
+(*                     root (minPoly E r) (t ^+ (q ^ k)). *)
+(*     move=> pprime Npdvdn roots; elim: k => [| k ihk]. *)
+(*     - by rewrite expn0 expr1. *)
+(*     suff -> : t ^+ (q ^ k.+1) = (t ^+ (q ^ k)) ^+ q by exact: min_root. *)
+(*     by rewrite expnS mulnC exprM.  *)
+(*   have [a [-> prime_Ndiv]]: exists a : seq (nat * nat), *)
+(*         i =  (\prod_(f <- a) f.1 ^ f.2)%N /\ *)
+(*         (forall x, x \in a -> prime x.1 /\ (~~ (x.1 %| n))%N). *)
+(*     exists (prime_decomp i). *)
+(*     have lt0i : (0 < i)%N by case/andP: lt0in. *)
+(*     split; first exact: prod_prime_decomp. *)
+(*     move=> x; rewrite prime_decompE; case/mapP=> p primesp -> /=. *)
+(*     move: primesp; rewrite mem_primes; case/and3P=> pp _ dvdpi; split=> //. *)
+(*     rewrite -prime_coprime //; exact: (coprime_dvdl dvdpi). *)
+(*   elim: a prime_Ndiv => [_ | p a iha Ndiv]. *)
+(*   - by rewrite big_nil expr1 root_minPoly. *)
+(*   rewrite big_cons; set P := (\prod_(_ <- _) _)%N. *)
+(*   have -> : r ^+ (p.1 ^ p.2 * P)%N =  (r ^+  P) ^+  (p.1 ^ p.2)%N. *)
+(*     by rewrite mulnC exprM. *)
+(*   have /Ndiv [primep1 Ndvdp1n] : p \in p  :: a by rewrite inE eqxx. *)
+(*   by apply: hpow => //; apply: iha => x ax; apply: Ndiv; rewrite inE ax orbT. *)
+
+  (* todo: suff above is quite long... could probably shrink. *)
+(* Then see, e.g., Theorem 4 of
+http://www.lix.polytechnique.fr/~pilaud/enseignement/agreg/polynomes/polynomes.pdf
+some proof patterns will be similar as in the proof of minCpoly_cyclotomic, and it
+will then generalize it, hopefully.
+*)
 Admitted.
+
 
 (** Easy **)
 (*     - E(x) is Galois                                                       *)
