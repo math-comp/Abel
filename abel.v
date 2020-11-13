@@ -864,6 +864,27 @@ Qed.
 Lemma minPoly_cyclotomic : r \notin E -> minPoly E r = cyclotomic r n.
 Proof.
 move=> NEr.
+suff dvd_cyclo_min : cyclotomic r n %| minPoly E r.
+  apply/eqP; rewrite -eqp_monic ?monic_minPoly ?cyclotomic_monic//.
+  by rewrite /eqp minPoly_dvdp ?root_cyclotomic.
+(* This is a detour. Rather quantifier over coprime exponents of r directly *)
+  (* suff prim_roots z : n.-primitive_root z -> root (minPoly E r) z. *)
+  (*  pose exps := [seq i <- index_iota 0 n | coprime i n]. *)
+  (*  pose rs := [seq r ^+ i | i <- exps]. *)
+  (*  have -> : cyclotomic r n = \prod_(z <- rs) ('X - z%:P). *)
+  (*    by rewrite /cyclotomic /= big_map big_filter big_mkord.  *)
+  (*  apply: uniq_roots_dvdp. *)
+  (*  - rewrite all_map all_filter; apply/allP=> x. *)
+  (*    rewrite mem_index_iota /= -(prim_root_exp_coprime _ r_is_nth_root) => ltxn. *)
+  (*    by apply/implyP; apply: prim_roots. *)
+  (*  - rewrite  uniq_rootsE /rs map_inj_in_uniq. *)
+  (*    + by apply: filter_uniq; rewrite iota_uniq. *)
+  (*    + move=> k l; rewrite !mem_filter !mem_index_iota => /and3P [_ _ ltkn]. *)
+  (*      case/and3P=> _ _ ltln /eqP; rewrite (eq_prim_root_expr r_is_nth_root). *)
+  (*      by rewrite !modn_small //; apply/eqP. *)
+suff prim_roots i : (i < n)%N -> coprime i n -> root (minPoly E r) (r ^+ i).
+  admit.
+move=> ltin cop_i_n.         
 have n_gt0 := prim_order_gt0 r_is_nth_root.
 have Dpr := Phi_cyclotomic r_is_nth_root; set pr := cyclotomic r n in Dpr *.
 have mon_pr: pr \is monic by apply: cyclotomic_monic.
@@ -882,6 +903,49 @@ have dv_pf q : root (map_poly vsval q) r = (pf %| q).
 have pfdvdPhin : pf %| map_poly intr 'Phi_n.
   rewrite -dv_pf; congr (root _ r): pr0; rewrite -Dpr -map_poly_comp.
   by apply: eq_map_poly => b; rewrite /= rmorph_int.
+pose P : {poly subvs_of E} := 'X^n - 1.
+have /dvdpP[Q ePQpf]: pf %| P.
+  rewrite -dv_pf; apply/rootP.
+  rewrite /P rmorphB /= map_polyXn hornerD hornerN hornerXn map_polyC /= hornerC.
+  by rewrite algid1 prim_expr_order // subrr.
+
+(* suff prim_roots : (forall z,  n.-primitive_root z -> root (minPoly E r) z). *)
+(*   have /(minPoly_irr cyclotomic_over) :  %| minPoly E r. *)
+(*     have -> : \prod_(k < n | coprime k n) ('X - (r ^+ k)%:P) *)
+(*   rewrite /cyclotomic.  *)
+
+
+    
+(*   About big_filter. *)
+
+(*   have h := big_filter _ (fun k => coprime k n).  *)
+(* Search _ (_ %| _). *)
+
+(*   About uniq_roots_dvdp. *)
+
+(*   apply: uniq_roots_dvdp. *)
+
+
+
+
+(* minPoly_irr: *)
+(*   forall (F0 : fieldType) (L : fieldExtType F0) (K : {subfield L})  *)
+(*     (x : L) (p : {poly Falgebra.vect_ringType L}), *)
+(*   p \is a polyOver K -> p %| minPoly K x -> (p %= minPoly K x) || (p %= 1) *)
+
+
+(* Search _ (minPoly _ _). *)
+
+
+(* Search _ (root _ _) (_ = _). *)
+(* root_cyclotomic: *)
+(*   forall (F : fieldType) (n : nat) (z : F), *)
+(*   n.-primitive_root z -> *)
+(*   forall x : F, root (cyclotomic z n) x = n.-primitive_root x *)
+
+
+(*   Search _ (_.-primitive_root _). *)
+    
 (* Then see, e.g., Theorem 4 of 
 http://www.lix.polytechnique.fr/~pilaud/enseignement/agreg/polynomes/polynomes.pdf 
 some proof patterns will be similar as in the proof of minCpoly_cyclotomic, and it
@@ -972,6 +1036,7 @@ apply/prodvP => x y xK yF; rewrite rpredM//; last first.
 by rewrite -krs in xK; apply: subvP xK; apply: adjoin_seqSl.
 Qed.
 
+About normal_fixedField_galois.
 (** N/A **)
 Lemma capv_galois (k K F : {subfield L}) :
   galois k K -> (k <= F)%VS -> galois (K :&: F) K.
@@ -1468,7 +1533,7 @@ End Part2a.
 (*     - Gi+1 is solvable                                                     *)
 Lemma solvable_gal_Fadjoin_prime (F : {subfield L}) :
   r \in E -> galois F E -> solvable 'Gal(E / F) ->
-  galois F <<E; x>> /\ solvable 'Gal(<<E; x>> / F).
+        solvable 'Gal(<<E; x>> / F).
 Proof.
 (* E(x) is galois over E (galois_Fadjoin_prime) *)
 (* its galois group is abelian (abelian_Fadjoin_prime) *)
@@ -1489,7 +1554,7 @@ move=> charL galEF [K [/pradicalext_radicalext [n e pw {K}<- /towerP epwP FK]]].
 pose K := <<E & e>>%VS; pose d := (\prod_(i < n) tnth pw i)%N.
 exists d => r r_root.
 have EF: (E <= F)%VS by case/andP: galEF.
-have EK: (E <= K)%VS by apply: subv_trans FK.
+have EK: (E <= K)%VS by apply: subv_trans FK. 
 suff [galEKr solEKr] : galois E <<K; r>>%VS /\ solvable ('Gal(<<K; r>> / E))%G.
   rewrite -(isog_sol (normalField_isog galEKr _ _)); last 2 first.
   - by rewrite EF (subv_trans FK)// subv_adjoin.
@@ -1511,7 +1576,7 @@ have [ekE|ekNE] := boolP (nth r e k \in <<E & r :: take k e>>%VS).
   by rewrite (Fadjoin_idP _).
 have prim : (tnth pw ko).-primitive_root (r ^+ (d %/ tnth pw ko)).
   by rewrite dvdn_prim_root// /d (bigD1 ko)//= dvdn_mulr.
-apply: (solvable_gal_Fadjoin_prime charL pwk_prime prim) => //=.
+apply: (solvable_gal_Fadjoin_prime charL pwk_prime prim)=> //=.
   rewrite -[k]/(val ko) -tnth_nth; apply: subvP ekP.
   by apply: adjoin_seqSr => x xe; rewrite in_cons xe orbT.
 by rewrite adjoin_cons rpredX// (subvP (subv_adjoin_seq _ _))// memv_adjoin.
