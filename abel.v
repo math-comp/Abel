@@ -1815,14 +1815,12 @@ Section RadicalRoots.
 Variables (F0 : fieldType) (L : fieldExtType F0).
 Variables (E : {subfield L}) (n : nat) (x : L) (r : L).
 Hypothesis r_root : (n.-primitive_root r)%R.
-Hypothesis xNE : x \notin E.
 Hypothesis xnE : (x ^+ n)%R \in E.
-Let rs := [seq x * r ^+ val i | i : 'I_n].
+Notation rs := [seq x * r ^+ val i | i : 'I_n].
 
-Lemma uniq_roots_Xn_sub_xn : uniq rs.
-Proof using r_root xNE.
-have xN0: x != 0 by apply/contra: xNE => /eqP->; rewrite rpred0.
-rewrite /rs /image_mem (map_comp (fun i => x * r ^+ i)) val_enum_ord.
+Lemma uniq_roots_Xn_sub_xn : x != 0 -> uniq rs.
+Proof using r_root.
+move=> xN0; rewrite /image_mem (map_comp (fun i => x * r ^+ i)) val_enum_ord.
 apply/(uniqP 0) => i j; rewrite !inE size_map size_iota/= => ip jp.
 rewrite !(nth_map 0%N) ?size_iota// ?nth_iota// => /(mulfI xN0).
 by move/eqP; rewrite (eq_prim_root_expr r_root) !modn_small// => /eqP.
@@ -1830,8 +1828,11 @@ Qed.
 
 Lemma Xn_sub_xnE : (n > 0)%N ->
  'X^n - (x ^+ n)%:P = \prod_(i < n) ('X - (x * r ^+ i)%:P).
-Proof using r_root xNE xnE.
-move=> n_gt0; rewrite [LHS](@all_roots_prod_XsubC _ _ rs).
+Proof using r_root.
+move=> n_gt0; have [->|xN0] := eqVneq x 0.
+  under eq_bigr do rewrite mul0r subr0.
+  by rewrite expr0n gtn_eqF// subr0 prodr_const card_ord.
+rewrite [LHS](@all_roots_prod_XsubC _ _ rs).
 - by rewrite (monicP _) ?monic_XnsubC// scale1r big_map big_enum.
 - by rewrite size_XnsubC// size_map size_enum_ord.
 - rewrite all_map; apply/allP => i _ /=; rewrite /root !hornerE hornerXn.
@@ -1840,7 +1841,7 @@ move=> n_gt0; rewrite [LHS](@all_roots_prod_XsubC _ _ rs).
 Qed.
 
 Lemma dvdp_minpoly_Xn_subn : minPoly E x %| ('X^n - (x ^+ n)%:P).
-Proof.
+Proof using xnE.
 have [->|n_gt0] := posnP n; first by rewrite !expr0 subrr dvdp0.
 by rewrite minPoly_dvdp /root ?poly_XnsubC_over// !hornerE hornerXn subrr.
 Qed.
@@ -1869,14 +1870,15 @@ Hypothesis n_gt0 : (n > 0)%N.
 
 Lemma galois_Fadjoin_prime : galois E <<E; x>>.
 Proof using r_root xnE n_gt0 rE.
-have [xE|xNE] := boolP (x \in E); first by rewrite (Fadjoin_idP _) ?galois_refl.
+have [->|XN0] := eqVneq x 0.
+  by rewrite (Fadjoin_idP _) ?rpred0 ?galois_refl.
 apply/splitting_galoisField; exists ('X^n - (x ^+ n)%:P)%R.
 split; first by rewrite rpredB ?rpredX ?polyOverX ?polyOverC//.
-  rewrite (Xn_sub_xnE r_root xNE)// -(big_map _ predT (fun x => 'X - x%:P)).
+  rewrite (Xn_sub_xnE _ r_root)// -(big_map _ predT (fun x => 'X - x%:P)).
   rewrite separable_prod_XsubC -[index_enum _]enumT.
-  by rewrite (uniq_roots_Xn_sub_xn r_root xNE).
+  by rewrite (uniq_roots_Xn_sub_xn r_root).
 exists [seq x * r ^+ val i | i : 'I_n].
-  by rewrite (Xn_sub_xnE r_root xNE)// big_map big_enum//= eqpxx.
+  by rewrite (Xn_sub_xnE _ r_root)// big_map big_enum//= eqpxx.
 apply/eqP; rewrite /image_mem (map_comp (fun i => x * r ^+ i)) val_enum_ord.
 rewrite -[n]prednK ?p_gt0//= mulr1 adjoin_cons Fadjoin_seq_idP// all_map.
 by apply/allP => i _/=; rewrite rpredM ?memv_adjoin// rpredX// subvP_adjoin.
@@ -1893,13 +1895,14 @@ Hypothesis xNF : x \notin <<E; r>>%VS.
 
 Lemma Fadjoin_primeE : minPoly E x = 'X^n - (x ^+ n)%:P.
 Proof using r_root xNF xnE n_prime.
+have xN0 : x != 0 by apply: contraNneq xNF => ->; rewrite rpred0.
 set F := <<E; r>>%VS; suff: minPoly F x = ('X^n - (x ^+ n)%:P)%R.
   move=> mFx; apply/eqP; rewrite -eqp_monic ?monic_minPoly ?monic_XnsubC//.
   by rewrite /eqp dvdp_minpoly_Xn_subn//= -mFx minPolyS// subv_adjoin.
 have xnF: (x ^+ n)%R \in F by apply: subvP xnE; apply: subv_adjoin.
 have dvd_mpEx := dvdp_minpoly_Xn_subn xnF.
 apply/eqP; rewrite -eqp_monic ?(monic_minPoly, monic_XnsubC)//.
-move: {+}dvd_mpEx; rewrite (Xn_sub_xnE r_root xNF)//.
+move: {+}dvd_mpEx; rewrite (Xn_sub_xnE _ r_root)//.
 pose U x (i : 'I_n) := x * r ^+ i.
 rewrite -(big_map (U x) predT (fun z => 'X - z%:P)) /=.
 rewrite /index_enum -enumT /=; set rs := map _ _.
@@ -1908,7 +1911,7 @@ suff mrsE: mask m rs = rs by rewrite mrsE in mpEx.
 have: (minPoly F x)`_0 \in F by apply/polyOverP/minPolyOver.
 move: {+}mpEx; rewrite eqp_monic ?(monic_minPoly, monic_prod_XsubC) //.
 move/eqP=> ->; rewrite coef0_prod {1}mask_filter //; last first.
-  exact: uniq_roots_Xn_sub_xn r_root xNF.
+  exact: uniq_roots_Xn_sub_xn r_root _.
 rewrite big_filter big_map (eq_bigr (U (- x))); last first.
 - by move=> i _; rewrite coefB coefX coefC eqxx /U mulNr sub0r.
 rewrite big_mkcond big_enum -big_mkcond prodrMl /= fpredMr; last first.
@@ -1921,13 +1924,13 @@ rewrite exprNn fpredMl; last first.
 - by rewrite rpredX // rpredN rpred1.
 set S := (S in x ^+ #|S|); case/boolP: (#|S| == 0%N) => [/eqP/card0_eq z_S|nz_S].
 - move: {+}mpEx; rewrite mask_filter //; last first.
-    exact: uniq_roots_Xn_sub_xn r_root xNF.
+    exact: uniq_roots_Xn_sub_xn r_root _.
   rewrite big_filter big_map big_pred0.
     by move/eqp_root/(_ x); rewrite root_minPoly rootC oner_eq0.
   by move=> /= i; move: (z_S i).
 have: (#|S| <= n)%N by rewrite -[X in (_ <= X)%N]card_ord max_card.
 rewrite leq_eqVlt => /orP[Sfull _|lt_S_p].
-- rewrite mask_filter ?(uniq_roots_Xn_sub_xn r_root xNF) //.
+- rewrite mask_filter ?(uniq_roots_Xn_sub_xn r_root _) //.
   rewrite (@eq_in_filter _ _ predT) ?filter_predT//.
   move=> _ /mapP[/= i _ ->]; apply: contraLR Sfull => xri_maskN.
   rewrite -[X in _ != X]card_ord eqn_leq max_card /= -ltnNge.
