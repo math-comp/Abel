@@ -1501,25 +1501,32 @@ Admitted.
 
 (** Ok, easy to finish CHECK whether r \notin E is needed **)
 Lemma splitting_Fadjoin_cyclotomic :
-  (* r \notin E -> *) splittingFieldFor E (cyclotomic r n) <<E; r>>.
+  splittingFieldFor E (cyclotomic r n) <<E; r>>.
 Proof.
-(* move=> Er;  *)exists [seq r ^+ val k | k <- enum 'I_n & coprime (val k) n].
+exists [seq r ^+ val k | k <- enum 'I_n & coprime (val k) n].
   by rewrite /cyclotomic big_map big_filter big_enum_cond/= eqpxx.
-have foo i :  <<<<E; r>>; r ^+ i>>%VS = <<E; r>>%VS.
-  by rewrite (Fadjoin_idP _)// rpredX// memv_adjoin.
-Admitted.
+rewrite map_comp -(filter_map _ (fun i => coprime i n)) val_enum_ord.
+have [n_gt1|] := ltnP 1 n; last first.
+  case: n r_is_nth_root (prim_order_gt0 r_is_nth_root) => [|[|]]//= rnth _ _.
+  by rewrite adjoin_seq1 expr0 -[r]expr1 prim_expr_order.
+set s := (X in <<_ & X>>%VS); suff /eq_adjoin-> : s =i r :: s.
+  rewrite adjoin_cons Fadjoin_seq_idP//.
+  by apply/allP => _/mapP[i _ ->]/=; rewrite rpredX// memv_adjoin.
+move=> x; rewrite in_cons orbC; symmetry; have []//= := boolP (_ \in _).
+apply: contraNF => /eqP ->; rewrite -[r]expr1 map_f//.
+by rewrite mem_filter mem_iota// coprime1n.
+Qed.
 
 (** Easy **)
 (*     - E(x) is Galois                                                       *)
 Lemma galois_Fadjoin_cyclotomic : galois E <<E; r>>.
 Proof.
-have [rE|rNE] := boolP (r \in E).
-  admit.
 apply/splitting_galoisField; exists (cyclotomic r n).
 split => //; last exact: splitting_Fadjoin_cyclotomic.
 rewrite /cyclotomic -(big_image _ _ _ (fun x => 'X - x%:P))/=.
-rewrite separable_prod_XsubC.
-Admitted.
+rewrite separable_prod_XsubC map_inj_uniq ?enum_uniq// => i j /eqP.
+by rewrite (eq_prim_root_expr r_is_nth_root) !modn_small// => /eqP/val_inj.
+Qed.
 
 Local Notation "r .-ext" := (extension_pred r)
   (at level 2, format "r .-ext") : ring_scope.
