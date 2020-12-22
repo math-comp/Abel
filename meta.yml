@@ -1,0 +1,86 @@
+fullname: Abel - Ruffini Theorem as a Mathematical Component
+shortname: abel
+organization: math-comp
+opam_name: coq-mathcomp-abel
+community: false
+action: true
+coqdoc: false
+
+synopsis: >-
+  Abel Ruffini's theorem
+description: |-
+  This repository contains a proof of Abel Ruffini Theorem in the
+  Coq proof-assistant and using the Mathematical Components library.
+
+authors:
+- name : Sophie Bernard
+  intia: true
+- name: Cyril Cohen
+  initial: true
+- name: Assia Mahboubi
+  initial: true
+- name: Pierre-Yves Strub
+  initial: true
+
+opam-file-maintainer: Cyril Cohen <cyril.cohen@inria.fr>
+
+opam-file-version: dev
+
+# license:
+#   fullname: CeCILL-C
+#   identifier: CECILL-C
+#   file: LICENSE
+
+supported_coq_versions:
+  text: Coq 8.10 and 8.11
+  opam: '{ (>= "8.10" & < "8.12~") | (= "dev") }'
+
+tested_coq_opam_versions:
+- version: '1.11.0-coq-8.10'
+  repo: 'mathcomp/mathcomp'
+- version: '1.11.0-coq-8.11'
+  repo: 'mathcomp/mathcomp'
+
+dependencies:
+- opam:
+    name: coq-mathcomp-ssreflect
+    version: '{ (>= "1.11.0" & < "1.12~") }'
+  description: |-
+    [MathComp ssreflect 1.11](https://math-comp.github.io)
+- opam:
+    name: coq-mathcomp-fingroup
+    version: '{ (>= "1.11.0" & < "1.12~") }'
+  description: |-
+    [MathComp fingroup 1.11](https://math-comp.github.io)
+- opam:
+    name: coq-mathcomp-algebra
+    version: '{ (>= "1.11.0" & < "1.12~") }'
+  description: |-
+    [MathComp algebra 1.11](https://math-comp.github.io)
+- opam:
+    name: coq-mathcomp-solvable
+    version: '{ (>= "1.11.0" & < "1.12~") }'
+  description: |-
+    [MathComp solvable 1.11](https://math-comp.github.io)
+- opam:
+    name: coq-mathcomp-field
+    version: '{ (>= "1.11.0" & < "1.12~") }'
+  description: |-
+    [MathComp field 1.11](https://math-comp.github.io)
+- opam:
+    name: coq-mathcomp-real-closed
+    version: '{ (= "1.1.1") }'
+  description: |-
+    [MathComp real closed 1.11.1](https://github.com/math-comp/real-closed)
+namespace: mathcomp.abel
+
+keywords:
+- name: algebra
+- name: galois
+- name: unsolvability of quintincs
+
+
+documentation: |-
+  ## Development information
+
+  [Developping with nix](NIX.md)

@@ -1,50 +1,58 @@
-# Developing Abel Theorem
+<!---
+This file was generated from `meta.yml`, please do not edit manually.
+Follow the instructions on https://github.com/coq-community/templates to regenerate.
+--->
+# Abel - Ruffini Theorem as a Mathematical Component
 
-## With nix.
+[![Docker CI][docker-action-shield]][docker-action-link]
 
-1. Install nix:
-  - To install it on a single-user unix system where you have admin
-    rights, just type:
+[docker-action-shield]: https://github.com/math-comp/abel/workflows/Docker%20CI/badge.svg?branch=master
+[docker-action-link]: https://github.com/math-comp/abel/actions?query=workflow:"Docker%20CI"
 
-    > sh <(curl https://nixos.org/nix/install)
 
-    You should run this under your usual user account, not as
-    root. The script will invoke `sudo` as needed.
 
-    For other configurations (in particular if multiple users share
-    the machine) or for nix uninstallation, go to the [appropriate
-    section of the nix
-    manual](https://nixos.org/nix/manual/#ch-installing-binary).
 
-  - You need to **log out of your desktop session and log in again** before you proceed to step 2.
+This repository contains a proof of Abel Ruffini Theorem in the
+Coq proof-assistant and using the Mathematical Components library.
 
-  - Step 1. only need to be done once on a same machine.
+## Meta
 
-2. Open a new terminal. Navigate to the root of the Abel repository. Then type:
-   > nix-shell
+- Author(s):
+  - Sophie Bernard
+  - Cyril Cohen (initial)
+  - Assia Mahboubi (initial)
+  - Pierre-Yves Strub (initial)
+- Compatible Coq versions: Coq 8.10 and 8.11
+- Additional dependencies:
+  - [MathComp ssreflect 1.11](https://math-comp.github.io)
+  - [MathComp fingroup 1.11](https://math-comp.github.io)
+  - [MathComp algebra 1.11](https://math-comp.github.io)
+  - [MathComp solvable 1.11](https://math-comp.github.io)
+  - [MathComp field 1.11](https://math-comp.github.io)
+  - [MathComp real closed 1.11.1](https://github.com/math-comp/real-closed)
+- Coq namespace: `mathcomp.abel`
+- Related publication(s): none
 
-   - This will download and build the required packages, wait until
-     you get a shell.
-   - You need to type this command every time you open a new terminal.
-   - You can call `nixEnv` after you start the nix shell to see your
-     work environemnet (or call `nix-shell` with option `--arg
-     print-env true`).
+## Building and installation instructions
 
-3. You are now in the correct work environment. You can do
-   > make
+The easiest way to install the latest released version of Abel - Ruffini Theorem as a Mathematical Component
+is via [OPAM](https://opam.ocaml.org/doc/Install.html):
 
-   and do whatever you are accustomed to do with Coq.
+```shell
+opam repo add coq-released https://coq.inria.fr/opam/released
+opam install coq-mathcomp-abel
+```
 
-4. In particular, you can edit files using `emacs` or `coqide`.
+To instead build and install manually, do:
 
-   - If you were already using emacs with proof general, make sure you
-     empty your `coq-prog-name` variables and any other proof general
-     options that used to be tied to a previous local installation of
-     Coq.
-   - If you do not have emacs installed, but want to use it, you can
-     go back to step 2. and call `nix-shell` with the following option
-     > nix-shell --arg withEmacs true
+``` shell
+git clone https://github.com/math-comp/abel.git
+cd abel
+make   # or make -j <number-of-cores-on-your-machine> 
+make install
+```
 
-     in order to get a temporary installation of emacs and
-     proof-general.  Make sure you add `(require 'proof-site)` to your
-     `$HOME/.emacs`.
+
+## Development information
+
+[Developping with nix](NIX.md)

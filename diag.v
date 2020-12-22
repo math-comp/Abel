@@ -180,11 +180,11 @@ Qed.
 
 Lemma commmxC (f : 'M[F]_n) (a : F) : GRing.comm f a%:M.
 Proof. by rewrite /GRing.comm [_ * _]mul_mx_scalar [_ * _]mul_scalar_mx. Qed.
-Hint Resolve commmxC.
+Hint Resolve commmxC : core.
 
 Lemma commCmx (f : 'M[F]_n) (a : F) : GRing.comm a%:M f.
 Proof. exact/commr_sym/commmxC. Qed.
-Hint Resolve commCmx.
+Hint Resolve commCmx : core.
 
 Lemma commr_poly (R : ringType) (a b : R) (p : {poly R}) :
       GRing.comm a b -> comm_coef p a -> GRing.comm a p.[b].
@@ -690,7 +690,7 @@ Definition subindex n (p_ : 'I_n -> nat) (j : 'I_(\sum_i p_ i)) : 'I_n :=
 Lemma suboffset_subproof n (p_ : 'I_n -> nat) (j : 'I_(\sum_i p_ i)) :
   (j - subindex_start p_ (subindex j) < p_(subindex j))%N.
 Proof.
-rewrite /subindex; case: arg_maxP => /= [|i0 j_ge i0_ge].
+rewrite /subindex; case: arg_maxnP => /= [|i0 j_ge i0_ge].
   by rewrite /subindex_start min_subindex_eq0 big1.
 rewrite ltn_subLR// /subindex_start {j_ge}.
 apply: (@leq_trans (\sum_(i < n | i <= i0) p_ i)%N); last first.
@@ -720,7 +720,7 @@ Definition superindex n (p_ : 'I_n -> nat) (i0 : 'I_n) (k : 'I_(p_ i0)) :
 Lemma suboffsetK  n (p_ : 'I_n -> nat) (j : 'I_(\sum_i p_ i)) :
   superindex (suboffset j) = j.
 Proof.
-apply: val_inj; rewrite /= subnK /subindex//; case: arg_maxP => //=.
+apply: val_inj; rewrite /= subnK /subindex//; case: arg_maxnP => //=.
 by rewrite /subindex_start min_subindex_eq0 big1.
 Qed.
 
@@ -728,7 +728,7 @@ Lemma superindexK1 n (p_ : 'I_n -> nat) (i0 : 'I_n) (k : 'I_(p_ i0)) :
   subindex (superindex k) = i0.
 Proof.
 apply: val_inj; rewrite /subindex /superindex /= /subindex_start.
-case: arg_maxP => //=; first by rewrite min_subindex_eq0 big1.
+case: arg_maxnP => //=; first by rewrite min_subindex_eq0 big1.
 move=> i exi maxi; apply/eqP; rewrite eqn_leq maxi ?leq_addl ?andbT//.
 apply: contraTT exi; rewrite -!ltnNge => lt_i0i; rewrite -addSn.
 rewrite [X in (_ <= X)%N](bigD1 i0)//= leq_add => //.
@@ -929,17 +929,17 @@ Lemma diagonalisable_diag {n} (d : 'rV_n) : diagonalisable (diag_mx d).
 Proof.
 by exists 1%:M; rewrite ?unitmx1// sim_diagE conj1mx is_diag_mx_diag.
 Qed.
-Hint Resolve diagonalisable_diag.
+Hint Resolve diagonalisable_diag : core.
 
 Lemma diagonalisable_scalar {n} (a : F) : diagonalisable (a%:M : 'M_n).
 Proof. by rewrite -diag_const_mx. Qed.
-Hint Resolve diagonalisable_scalar.
+Hint Resolve diagonalisable_scalar : core.
 
 Lemma diagonalisable0 {n} : diagonalisable (0 : 'M[F]_n).
 Proof.
 by rewrite (_ : 0 = 0%:M)//; apply/matrixP => i j; rewrite !mxE// mul0rn.
 Qed.
-Hint Resolve diagonalisable0.
+Hint Resolve diagonalisable0 : core.
 
 Lemma diagonalisablePeigen {n} {f : 'M[F]_n} :
   diagonalisable f <->

@@ -1,5 +1,5 @@
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra all_solvable.
-From mathcomp Require Import all_field finmap polyrcf qe_rcf_th.
+From mathcomp Require Import all_field polyrcf qe_rcf_th.
 From Abel Require Import Sn_solvable galmx diag.
 
 (******************************************************************************)
@@ -427,7 +427,7 @@ move=> /= [g q_eq]; rewrite q_eq (eqp_trans (eqp_scale _ _))//.
 have fN0 : f != 0 by apply: contra_neq qN0; rewrite q_eq => ->; rewrite mul0r.
 have gN0 : g != 0 by apply: contra_neq qN0; rewrite q_eq => ->; rewrite mulr0.
 rewrite size_map_poly_id0 ?intr_eq0 ?lead_coef_eq0// in fN1.
-have [/eqP[/size_poly1P[c cN0 ->]]|gN1] := eqVneq (size g) 1%N.
+have [/eqP/size_poly1P[c cN0 ->]|gN1] := eqVneq (size g) 1%N.
   by rewrite mulrC mul_polyC map_polyZ/= eqp_sym eqp_scale// intr_eq0.
 have c_neq0 : (lead_coef q)%:~R != 0 :> 'F_p
    by rewrite -(dvdz_charf (char_Fp _)).
@@ -814,7 +814,7 @@ Qed.
 Lemma normal_prodvr (k K F : {subfield L}) : (k <= K)%VS -> (k <= F)%VS ->
   normalField k K -> normalField F (K * F).
 Proof.
-move=> kK kF /(splitting_normalField kK) [p [pk [rs p_eq krs]]].
+move=> kK kF /(splitting_normalField kK) [p pk [rs p_eq krs]].
 apply/splitting_normalField; rewrite ?field_subvMl//; exists p.
   by apply: polyOverS pk => x; apply: subvP.
 exists rs => //; apply/eqP; rewrite eqEsubv; apply/andP; split.
@@ -861,7 +861,7 @@ Proof.
 apply/forallP => /= u; apply/implyP; rewrite in_set.
 by move=> /andP[/andP[_ /fixedSpace_limg->]].
 Qed.
-Hint Resolve normalField_refl.
+Hint Resolve normalField_refl : core.
 
 Lemma fixedField_sub  (K E : {subfield L}) (A : {set gal_of E}) :
   galois K E -> (('Gal(E / K))%g \subset A) -> (fixedField A <= K)%VS.
@@ -1214,12 +1214,10 @@ Local Notation "r .-tower" := (tower r)
 Local Notation "r .-ext" := (extension_pred r)
   (at level 2, format "r .-ext") : ring_scope.
 
-Local Open Scope fset_scope.
-
 Section Properties.
 
 Implicit Types r : {vspace L} -> L -> nat -> bool.
-Implicit Types (U V : {subfield L}) (A : {fset L}).
+Implicit Types (U V : {subfield L}).
 
 Lemma rext_refl r (E : {subfield L}) : r.-ext E E.
 Proof.
@@ -1334,7 +1332,7 @@ apply: (ih [tuple of behead e] [tuple of behead pw]) => /=.
   by rewrite -adjoin_cons -drop1 (tnth_nth 0) -drop_nth 1?(drop0, size_tuple).
 apply/forallP=> /= i; move/forallP/(_ (rshift 1 i)): Ee => /=.
 rewrite !(tnth_nth 0, tnth_nth 0%N) !nth_behead [_ (rshift 1 i)]/=.
-by rewrite -adjoin_cons take_addn drop1 (take_nth 0) 1?size_tuple // take0.
+by rewrite -adjoin_cons takeD drop1 (take_nth 0) 1?size_tuple // take0.
 Qed.
 
 Lemma solvable_by_radical_pradical (E F : {subfield L}) :
@@ -1569,7 +1567,6 @@ Lemma solvable_Fadjoin_cyclotomic : solvable 'Gal(<<E; r>> / E).
 Proof. exact/abelian_sol/abelian_cyclotomic. Qed.
 
 End Cyclotomic.
-
 
 (* Following the french wikipedia proof :
 https://fr.wikipedia.org/wiki/Th%C3%A9or%C3%A8me_d%27Abel_(alg%C3%A8bre)#D%C3%A9monstration_du_th%C3%A9or%C3%A8me_de_Galois
@@ -1932,7 +1929,7 @@ Qed.
 Lemma order_galois_Fadjoin_prime : #|G| = p.
 Proof.
 rewrite -galois_dim 1?galois_Fadjoin_prime // -adjoin_degreeE.
-by have [] := size_minPoly E x; rewrite size_Fadjoin_prime => -[].
+by have := size_minPoly E x; rewrite size_Fadjoin_prime => -[].
 Qed.
 
 (* - Gal(E(x) / E) is cyclic                                                  *)
@@ -1961,7 +1958,7 @@ move=> charL EF [K [/pradicalext_radicalext [n e pw {K}<- /towerP epwP FK]]].
 pose K := <<E & e>>%VS; pose d := (\prod_(i < n) tnth pw i)%N.
 exists d => r r_root.
 have EK: (E <= K)%VS by apply: subv_trans FK.
-suff [/(solvable_extP charL) [M /and3P[KrsubM EM solEM]]] : solvable_ext E <<K; r>>%AS.
+suff /(solvable_extP charL) [M /and3P[KrsubM EM solEM]] : solvable_ext E <<K; r>>%AS.
   apply/(solvable_extP charL); exists M; rewrite EM solEM (subv_trans _ KrsubM)//=.
   by rewrite (subv_trans _ (subv_adjoin _ _)).
 pose k := n; have -> : <<K ; r>>%AS = <<E & r :: take k e>>%AS.
@@ -2123,7 +2120,7 @@ Definition mup (x : L) (p : {poly L}) :=
 Lemma mup_geq x q n : q != 0 -> (n <= mup x q)%N = (('X - x%:P) ^+ n %| q).
 Proof.
 move=> q_neq0; rewrite /mup; symmetry.
-case: arg_maxP; rewrite ?expr0 ?dvd1p//= => i i_dvd gti.
+case: arg_maxnP; rewrite ?expr0 ?dvd1p//= => i i_dvd gti.
 case: ltnP => [|/dvdp_exp2l/dvdp_trans]; last exact.
 apply: contraTF => dvdq; rewrite -leqNgt.
 suff n_small : (n < (size q).+1)%N by exact: (gti (Ordinal n_small)).
