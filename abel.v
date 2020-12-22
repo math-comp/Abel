@@ -1,5 +1,9 @@
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra all_solvable.
-From mathcomp Require Import all_field polyrcf qe_rcf_th.
+From mathcomp Require Import all_field polyrcf qe_rcf_th qe_rcf.
+(* bug: qe_rcf exports a redefinition of `True` and `False` *)
+Notation False := Logic.False.
+Notation True := Logic.True.
+
 From Abel Require Import Sn_solvable galmx diag.
 
 (******************************************************************************)
@@ -2005,15 +2009,9 @@ Admitted.
 
 End Abel.
 
-
-
-
-
-
 Section Examples.
 
-
-Import GRing.Theory Num.Theory.
+Import GRing.Theory Order.Theory Num.Theory.
 
 Open Scope ring_scope.
 
@@ -2374,51 +2372,89 @@ pose simp := (rmorphB, rmorphD, rmorphN, map_polyZ,
 by do !rewrite [map_poly _ _]simp/= ?natz.
 Qed.
 
-Lemma size_poly_ex_int : size poly_example_int = 6.
+Lemma size_poly_exmpl_int : size poly_example_int = 6.
 Proof.
 rewrite /poly_example_int -addrA size_addl ?size_polyXn//.
 by rewrite size_addl ?size_opp ?size_scale ?size_polyX ?size_polyC.
 Qed.
 
-Lemma size_poly_ex : size poly_example = 6.
+Lemma size_poly_exmpl : size poly_example = 6.
 Proof.
-rewrite poly_exampleEint size_map_poly_id0 ?size_poly_ex_int//.
-by rewrite intr_eq0 lead_coef_eq0 -size_poly_eq0 size_poly_ex_int.
+rewrite poly_exampleEint size_map_poly_id0 ?size_poly_exmpl_int//.
+by rewrite intr_eq0 lead_coef_eq0 -size_poly_eq0 size_poly_exmpl_int.
 Qed.
 
-Lemma poly_ex_int_neq0 : poly_example_int != 0.
-Proof. by rewrite -size_poly_eq0 size_poly_ex_int. Qed.
+Lemma poly_exmpl_int_neq0 : poly_example_int != 0.
+Proof. by rewrite -size_poly_eq0 size_poly_exmpl_int. Qed.
 
 Lemma poly_example_neq0 : poly_example != 0.
-Proof. by rewrite -size_poly_eq0 size_poly_ex. Qed.
+Proof. by rewrite -size_poly_eq0 size_poly_exmpl. Qed.
 
-Lemma irreducible_ex : irreducible_poly poly_example.
+Lemma lc_poly_example : lead_coef poly_example = 1.
+Proof.
+rewrite /poly_example -addrA lead_coefDl ?lead_coefXn// size_polyXn ltnS.
+rewrite (leq_trans (size_add _ _))//.
+by rewrite size_polyC size_opp size_scale// size_polyX.
+Qed.
+
+Lemma irreducible_exmpl : irreducible_poly poly_example.
 Proof.
 pose coefE := (coefB, coefD, coefZ, coefC, coefX, coefXn).
 rewrite poly_exampleEint; apply: (@eisenstein 2) => // [|||i];
-  rewrite ?lead_coefE ?size_poly_ex_int ?coefE//.
+  rewrite ?lead_coefE ?size_poly_exmpl_int ?coefE//.
 by move: i; do 6!case=> //.
 Qed.
 
-Lemma separable_ex : separable_poly poly_example.
+Lemma separable_exmpl : separable_poly poly_example.
 Proof.
-apply/coprimepP => q /(irredp_XsubCP irreducible_ex) [//| eqq].
-have size_deriv_ex : size poly_example^`() = 5.
+apply/coprimepP => q /(irredp_XsubCP irreducible_exmpl) [//| eqq].
+have size_deriv_exmpl : size poly_example^`() = 5.
   rewrite !derivCE addr0 alg_polyC -scaler_nat /=.
   by rewrite size_addl ?size_scale ?size_opp ?size_polyXn ?size_polyC.
-by rewrite gtNdvdp -?size_poly_eq0 ?size_deriv_ex ?(eqp_size eqq) ?size_poly_ex.
+by rewrite gtNdvdp -?size_poly_eq0 ?size_deriv_exmpl ?(eqp_size eqq) ?size_poly_exmpl.
 Qed.
 
-Lemma prime_ex : prime (size poly_example).-1.
-Proof. by rewrite size_poly_ex. Qed.
+Lemma prime_exmpl : prime (size poly_example).-1.
+Proof. by rewrite size_poly_exmpl. Qed.
 
 (* Using the package real_closed, we should be able to monitor the sign of    *)
 (* the derivative, and find that the polynomial has exactly three real roots. *)
 (*** By Cyril ?                                                             ***)
-Lemma count_roots_ex :
-  let rp := sval (closed_field_poly_normal ((map_poly ratr poly_example) : {poly algC})) in
-  count (fun x => x \isn't Num.real) rp == 2.
+Definition example_roots :=
+  sval (closed_field_poly_normal ((map_poly ratr poly_example) : {poly algC})).
+
+Lemma ratr_example_poly : map_poly ratr poly_example = \prod_(x <- example_roots) ('X - x%:P).
 Proof.
+rewrite /example_roots; case: closed_field_poly_normal => //= rs ->.
+by rewrite lead_coef_map/= lc_poly_example rmorph1 scale1r.
+Qed.
+
+Lemma deriv_poly_example : poly_example^`() = 5%:R *: 'X^4 - 4%:R%:P.
+Proof. by rewrite /poly_example !derivE addr0 alg_polyC scaler_nat. Qed.
+
+Definition alpha : algC := sqrtC (2%:R / sqrtC 5%:R).
+
+Lemma root_deriv_poly_example (x : algC) : x \is Num.real ->
+  (root (map_poly ratr poly_example^`()) x) = ((x == alpha) || (x == - alpha)).
+Proof.
+move=> x_real; rewrite deriv_poly_example /root.
+rewrite rmorphB linearZ/= map_polyC/= map_polyXn.
+rewrite hornerD hornerN hornerZ hornerXn hornerC !rmorph_nat.
+rewrite -[5%:R]sqrtCK (exprM _ 2 2) -exprMn (natrX _ 2 2) subr_sqr.
+rewrite mulf_eq0 orbC gt_eqF /=; last first.
+  rewrite -[0](addr0) ler_lt_add// ?ltr0n//.
+  by rewrite mulr_ge0// ?sqrtC_ge0 ?ler0n// real_exprn_even_ge0.
+have sqrt5_neq0 : sqrtC (5%:R : algC) != 0.
+  by rewrite gt_eqF// sqrtC_gt0 ?ltr0n.
+rewrite subr_eq0 (can2_eq (mulKf _) (mulVKf _))// mulrC -subr_eq0.
+by rewrite -[X in _ - X]sqrtCK -/alpha subr_sqr mulf_eq0 subr_eq0 addr_eq0.
+Qed.
+
+Lemma count_roots_ex : count (fun x => x \isn't Num.real) example_roots == 2.
+Proof.
+pose c := qe_rcf.CcountWeak [:: 2%:Q%:T; 4%:Q%:T; 0; 0; 1]%qfT
+   [::] (fun t => t == 3%:Q%:T)%qfT.
+(* Cannot compute c, takes too long... *)
 Admitted.
 
 (** No **)
