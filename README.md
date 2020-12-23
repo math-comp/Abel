@@ -18,7 +18,7 @@ Coq proof-assistant and using the Mathematical Components library.
 ## Meta
 
 - Author(s):
-  - Sophie Bernard
+  - Sophie Bernard (initial)
   - Cyril Cohen (initial)
   - Assia Mahboubi (initial)
   - Pierre-Yves Strub (initial)
@@ -95,9 +95,8 @@ make install
   matrices, this enables the use of `diag` to find eigenvectors and
   eigenvalues.
 
-- `xmathcomp/mxextra.v` is a matrix <-> `'Hom(_, _)` correspondence
-   which is unused in the current development, we use `mxgal`
-   instead.
+- `xmathcomp/mxextra.v` is a correspondance between `'M_(_,_)` and `'Hom(_, _)`
+   which is unused in the current development, we use `mxgal` instead.
 
 ## Development information
 

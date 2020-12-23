@@ -125,9 +125,8 @@ documentation: |-
     matrices, this enables the use of `diag` to find eigenvectors and
     eigenvalues.
 
-  - `xmathcomp/mxextra.v` is a matrix <-> `'Hom(_, _)` correspondence
-     which is unused in the current development, we use `mxgal`
-     instead.
+  - `xmathcomp/mxextra.v` is a correspondance between `'M_(_,_)` and `'Hom(_, _)`
+     which is unused in the current development, we use `mxgal` instead.
 
   ## Development information
 
