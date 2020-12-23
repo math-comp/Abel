@@ -12,10 +12,10 @@ Notation True := Logic.True.
 (*                                                                           *)
 (*     radical U x n := x is a radical element of degree n over U            *)
 (*    pradical U x p := x is a radical element of prime degree p over U      *)
-(* r.-tower n U e pw := e is a chain of n elements of L such that            *)
+(*   r.-tower U e pw := e is a chain of elements of L such that              *)
 (*                      forall i, r <<U & take i e>> e`_i pw`_i              *)
 (*        r.-ext U V := there exists e and pw such that <<U & e>> = V        *)
-(*                      and r.-tower r U e pw.                               *)
+(*                      and r.-tower U e p  w.                               *)
 (* solvable_by r E F := there is a field K, such that F <= K and r.-ext E K  *)
 (*                      if p has roots rs, solvable_by radicals E <<E, rs>>  *)
 (*                                                                           *)
@@ -62,7 +62,7 @@ Lemma towerP r n U (e : n.-tuple L) (pw : n.-tuple nat) :
           (tower r U e pw).
 Proof. exact/forallP. Qed.
 
-Local Notation "r .-tower" := (tower r)
+Local Notation "r .-tower" := (@tower r _)
   (at level 2, format "r .-tower") : ring_scope.
 
 Record ext_data := ExtData { ext_size : nat;
@@ -74,7 +74,7 @@ Definition trivExt := ExtData [tuple] [tuple].
 
 Definition extension_of r U V :=
   exists2 e : ext_data,
-    r.-tower (ext_size e) U (ext_ep e) (ext_pw e)
+    r.-tower U (ext_ep e) (ext_pw e)
     & << U & ext_ep e >>%VS = V.
 
 Local Notation "r .-ext" := (extension_of r)
@@ -85,7 +85,7 @@ Definition solvable_by r (U V : {subfield L}) :=
 
 End Defs.
 
-Local Notation "r .-tower" := (tower r)
+Local Notation "r .-tower" := (@tower r _)
   (at level 2, format "r .-tower") : ring_scope.
 Local Notation "r .-ext" := (extension_of r)
   (at level 2, format "r .-ext") : ring_scope.
@@ -177,7 +177,7 @@ Qed.
 
 Lemma tower_sub r1 r2 n E (e : n.-tuple L) (pw : n.-tuple nat) :
   (forall U x n, r1 U x n -> r2 U x n) ->
-    r1.-tower _ E e pw -> r2.-tower _ E e pw.
+    r1.-tower E e pw -> r2.-tower E e pw.
 Proof. by move=> sub_r /forallP /= h; apply/forallP=> /= i; apply/sub_r/h. Qed.
 
 Lemma radical_pradical U x p : pradical U x p -> radical U x p.

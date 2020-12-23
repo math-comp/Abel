@@ -22,7 +22,7 @@ Coq proof-assistant and using the Mathematical Components library.
   - Cyril Cohen (initial)
   - Assia Mahboubi (initial)
   - Pierre-Yves Strub (initial)
-- Compatible Coq versions: Coq 8.10 and 8.11
+- Compatible Coq versions: Coq 8.10 to 8.12
 - Additional dependencies:
   - [MathComp ssreflect 1.11](https://math-comp.github.io)
   - [MathComp fingroup 1.11](https://math-comp.github.io)
