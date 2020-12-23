@@ -1,6 +1,6 @@
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field.
-From Abel Require Import various char0.
+From mathcomp Require Import various char0.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

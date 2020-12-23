@@ -74,7 +74,7 @@ dependencies:
     version: '{ (= "1.1.1") }'
   description: |-
     [MathComp real closed 1.11.1](https://github.com/math-comp/real-closed)
-namespace: Abel
+namespace: mathcomp.abel
 
 keywords:
 - name: algebra

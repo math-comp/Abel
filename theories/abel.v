@@ -1,7 +1,7 @@
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field polyrcf qe_rcf_th qe_rcf.
-From Abel Require Import various classic_ext map_gal.
-From Abel Require Import diag char0 cyclotomic galmx.
+From mathcomp Require Import various classic_ext map_gal.
+From mathcomp Require Import diag char0 cyclotomic galmx.
 (* bug: qe_rcf exports a redefinition of `True` and `False` *)
 Notation False := Logic.False.
 Notation True := Logic.True.

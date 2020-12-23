@@ -8,7 +8,7 @@ theories/xmathcomp/map_gal.v
 theories/xmathcomp/char0.v
 theories/xmathcomp/cyclotomic.v
 
--R theories Abel
+-R theories mathcomp.abel
 -arg -w -arg -projection-no-head-constant
 -arg -w -arg -redundant-canonical-projection
 -arg -w -arg -notation-overridden

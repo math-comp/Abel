@@ -30,7 +30,7 @@ Coq proof-assistant and using the Mathematical Components library.
   - [MathComp solvable 1.11](https://math-comp.github.io)
   - [MathComp field 1.11](https://math-comp.github.io)
   - [MathComp real closed 1.11.1](https://github.com/math-comp/real-closed)
-- Coq namespace: `Abel`
+- Coq namespace: `mathcomp.abel`
 - Related publication(s): none
 
 ## Building and installation instructions
