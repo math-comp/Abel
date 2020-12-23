@@ -14,7 +14,7 @@ description: |-
 
 authors:
 - name : Sophie Bernard
-  intia: true
+  intial: true
 - name: Cyril Cohen
   initial: true
 - name: Assia Mahboubi
@@ -32,13 +32,15 @@ opam-file-version: dev
 #   file: LICENSE
 
 supported_coq_versions:
-  text: Coq 8.10 and 8.11
-  opam: '{ (>= "8.10" & < "8.12~") | (= "dev") }'
+  text: Coq 8.10 to 8.12
+  opam: '{ (>= "8.10" & < "8.13~") }'
 
 tested_coq_opam_versions:
 - version: '1.11.0-coq-8.10'
   repo: 'mathcomp/mathcomp'
 - version: '1.11.0-coq-8.11'
+  repo: 'mathcomp/mathcomp'
+- version: '1.11.0-coq-8.12'
   repo: 'mathcomp/mathcomp'
 
 dependencies:
