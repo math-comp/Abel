@@ -1,10 +1,14 @@
-Sn_solvable.v
-abel.v
-mxextra.v
-galmx.v
-diag.v
+theories/abel.v
+theories/xmathcomp/mxextra.v
+theories/xmathcomp/galmx.v
+theories/xmathcomp/diag.v
+theories/xmathcomp/various.v
+theories/xmathcomp/classic_ext.v
+theories/xmathcomp/map_gal.v
+theories/xmathcomp/char0.v
+theories/xmathcomp/cyclotomic.v
 
--R . Abel
+-R theories Abel
 -arg -w -arg -projection-no-head-constant
 -arg -w -arg -redundant-canonical-projection
 -arg -w -arg -notation-overridden
