@@ -6,7 +6,7 @@ theories/xmathcomp/various.v
 theories/xmathcomp/classic_ext.v
 theories/xmathcomp/map_gal.v
 theories/xmathcomp/char0.v
-theories/xmathcomp/cyclotomic.v
+theories/xmathcomp/cyclotomic_ext.v
 
 -R theories Abel
 -arg -w -arg -projection-no-head-constant

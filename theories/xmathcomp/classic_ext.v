@@ -1,6 +1,6 @@
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field.
-From Abel Require Import various cyclotomic.
+From Abel Require Import various cyclotomic_ext.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
