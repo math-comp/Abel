@@ -37,6 +37,9 @@ Hint Resolve normalField_refl : core.
 Lemma galois_refl (E : {subfield L}) : galois E E.
 Proof. by rewrite /galois subvv separable_refl normalField_refl. Qed.
 
+Lemma gal1 (K : {subfield L}) (g : gal_of K) : g \in 'Gal(K / 1%VS)%g.
+Proof. by rewrite gal_kHom ?sub1v// k1HomE ahomWin. Qed.
+
 Program Canonical prodv_aspace_law :=
   @Monoid.Law {subfield L} 1%AS (@prodv_aspace _ _) _ _ _.
 Next Obligation. by move=> *; apply/val_inj/prodvA. Qed.
@@ -378,8 +381,6 @@ Proof. by rewrite lker0_map_homE// AHom_lker0. Qed.
 Lemma map_hom_algC (f : 'End(L)) : (map_hom iota f \o iota = iota \o f)%VF.
 Proof. by rewrite lker0_map_homC// AHom_lker0. Qed.
 
-Definition ahom_inj := (lker0P (AHom_lker0 iota)).
-
 Lemma map_ahom_in (f : 'End(L)) (E : {vspace L}) :
   ahom_in (iota @: E) (map_hom iota f) = ahom_in E f.
 Proof.
@@ -389,9 +390,9 @@ apply/ahom_inP/ahom_inP => -[mfM mf1]; last first.
   by rewrite !(map_hom_algE, =^~rmorphM)/= mfM.
 split=> [x y xE yE|]; last first.
   have : map_hom iota f (iota 1) = iota 1 by rewrite rmorph1.
-  by rewrite map_hom_algE => /ahom_inj.
+  by rewrite map_hom_algE => /fmorph_inj.
 have := mfM _ _ (memv_img iota xE) (memv_img iota yE).
-by rewrite !(map_hom_algE, =^~rmorphM)/= => /ahom_inj.
+by rewrite !(map_hom_algE, =^~rmorphM)/= => /fmorph_inj.
 Qed.
 
 Lemma map_ahom_subproof (f : 'AEnd(L)) :
@@ -420,8 +421,6 @@ Lemma limg_map_ahom (f : 'AEnd(L))  (E : {vspace L}) :
 Proof. by rewrite -limg_comp map_ahomC limg_comp. Qed.
 
 End map_ahom.
-
-Arguments ahom_inj {F0 L L'}.
 
 Section gal_kAEnd.
 
@@ -496,7 +495,7 @@ Lemma map_gal_inj : ('injm map_gal)%g.
 Proof.
 apply/injmP => /= f g _ _ eq_fg; apply/eqP/gal_eqP => x xE.
 have /eqP/gal_eqP/(_ _ (memv_img iota xE)) := eq_fg.
-by rewrite !map_galE// => /ahom_inj.
+by rewrite !map_galE// => /fmorph_inj.
 Qed.
 
 Lemma img_map_gal (K : {subfield L}) :
@@ -525,7 +524,7 @@ have /kHom_to_AEnd[f eqf] : kHom K E (iota^-1 \o f' \o iota)%VF.
   apply/kHomP; split => //=; last first.
     by move=> x xK; rewrite !comp_lfunE f'K ?lker0_lfunK ?memv_img.
   move=> x y xE yE; rewrite !comp_lfunE.
-  apply: (ahom_inj iota); rewrite [in RHS]rmorphM/=.
+  apply: (fmorph_inj [rmorphism of iota]); rewrite [in RHS]rmorphM/=.
   by rewrite !limg_lfunVK ?f'iota ?rpredM// !rmorphM.
 have fE : (f @: E <= E)%VS.
   apply/subvP => _/memv_imgP[x xK ->]/=; rewrite -eqf// !comp_lfunE.
@@ -570,9 +569,7 @@ apply/splitting_galoisField/splitting_galoisField => -[p [pK sep [rs peq Krs]]].
 exists (map_poly iota p); rewrite separable_map sep; split=> //.
   by apply/polyOverP => i; rewrite coef_map/= ?memv_img// (polyOverP pK).
 exists (map iota rs); last by rewrite /= -aimg_adjoin_seq Krs.
-rewrite big_map; have := peq; rewrite -(eqp_map [rmorphism of iota]).
-move=> /eqp_trans->//=; rewrite (big_morph _ (rmorphM _) (rmorph1 _))/=.
-by under eq_bigr do rewrite rmorphB/= map_polyX map_polyC/=; rewrite eqpxx.
+by have := peq; rewrite -(eqp_map [rmorphism of iota]) map_prod_XsubC.
 Qed.
 
 End map_gal.
@@ -731,10 +728,8 @@ by move=> n; rewrite char_lalg charF0.
 Qed.
 
 Section RadicalRoots.
-Variables (F0 : fieldType) (L : fieldExtType F0).
-Variables (E : {subfield L}) (n : nat) (x : L) (r : L).
+Variables (F : fieldType) (n : nat) (x r : F).
 Hypothesis r_root : (n.-primitive_root r)%R.
-Hypothesis xnE : (x ^+ n)%R \in E.
 Notation rs := [seq x * r ^+ val i | i : 'I_n].
 
 Lemma uniq_roots_Xn_sub_xn : x != 0 -> uniq rs.
