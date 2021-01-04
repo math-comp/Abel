@@ -22,14 +22,14 @@ Coq proof-assistant and using the Mathematical Components library.
   - Cyril Cohen (initial)
   - Assia Mahboubi (initial)
   - Pierre-Yves Strub (initial)
-- Compatible Coq versions: Coq 8.10 to 8.12
+- Compatible Coq versions: Coq 8.10 to 8.13
 - Additional dependencies:
-  - [MathComp ssreflect 1.11](https://math-comp.github.io)
-  - [MathComp fingroup 1.11](https://math-comp.github.io)
-  - [MathComp algebra 1.11](https://math-comp.github.io)
-  - [MathComp solvable 1.11](https://math-comp.github.io)
-  - [MathComp field 1.11](https://math-comp.github.io)
-  - [MathComp real closed 1.11.1](https://github.com/math-comp/real-closed)
+  - [MathComp ssreflect 1.11 and 1.12](https://math-comp.github.io)
+  - [MathComp fingroup 1.11 and 1.12](https://math-comp.github.io)
+  - [MathComp algebra 1.11 and 1.12](https://math-comp.github.io)
+  - [MathComp solvable 1.11 and 1.12](https://math-comp.github.io)
+  - [MathComp field 1.11 and 1.12](https://math-comp.github.io)
+  - [MathComp real closed >= 1.11.1](https://github.com/math-comp/real-closed)
 - Coq namespace: `Abel`
 - Related publication(s): none
 
