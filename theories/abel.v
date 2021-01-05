@@ -455,10 +455,11 @@ End Part1c.
 (* Main lemma of part 1 *)
 Lemma ext_solvable_by_radical (F0 : fieldType) (L : splittingFieldType F0)
     (r : L) (E F : {subfield L}) :
-    [char L] =i pred0 -> (\dim_E (minGalois E F)).-primitive_root r ->
+    (\dim_E (minGalois E F)).-primitive_root r ->
   solvable_ext E F -> solvable_by radical E F.
 Proof.
-move=> charL rprim /(galois_solvable_by_radical (minGalois_galois charL _ _)).
+move=> rprim /andP[sepEF].
+move=> /(galois_solvable_by_radical (minGalois_galois sepEF)).
 move=> /(_ r rprim) [M EM EFM]; exists M => //.
 by rewrite (subv_trans _ EFM) ?sub_minGalois.
 Qed.
@@ -486,9 +487,7 @@ have dF0N0: d%:R != 0 :> F0.
   by rewrite -(char_lalg L') charL'.
 (* classically grabbing a root of the unity and changing fields from L to L' *)
 apply: (@classic_cycloSplitting _ L' _ dF0N0) => -[L [r [iota r_full r_root]]].
-suff: solvable_ext (iota @: E') (iota @: F').
-  rewrite /solvable_ext -aimg_minGalois// -img_map_gal.
-  by rewrite injm_sol ?map_gal_inj ?subsetT.
+rewrite -(solvable_ext_img iota).
 set E := (iota @: E')%VS.
 set F := (iota @: F')%VS.
 pose e := [tuple of map iota e'].
@@ -501,15 +500,15 @@ have epwP : forall i : 'I_n, pradical <<E & take i e>> (tnth e i) (tnth pw i).
   move=> i; have /pradicalP[pwi_prime e'i_rad] := epwP' i.
   apply/pradicalP; split; rewrite // -map_take -aimg_adjoin_seq.
   by rewrite tnth_map -rmorphX/= memv_img.
-suff /(solvable_extP charL) [M /and3P[KrsubM EM solEM]] : solvable_ext E <<K; r>>%AS.
-  apply/(solvable_extP charL); exists M; rewrite EM solEM (subv_trans _ KrsubM)//=.
+suff /solvable_extP [M /and3P[KrsubM EM solEM]] : solvable_ext E <<K; r>>%AS.
+  apply/solvable_extP; exists M; rewrite EM solEM (subv_trans _ KrsubM)//=.
   by rewrite (subv_trans _ (subv_adjoin _ _)).
 pose k := n; have -> : <<K ; r>>%AS = <<E & r :: take k e>>%AS.
   rewrite take_oversize ?size_tuple//.
   apply/val_inj; rewrite /= -adjoin_rcons.
   by rewrite (@eq_adjoin _ _ _ (rcons _ _) (r :: e))// => x; rewrite mem_rcons.
 elim: k => /= [|k IHsol]; rewrite ?take0 ?adjoin_seq1.
-  apply/(solvable_extP charL); exists <<E & [:: r] >>%AS.
+  apply/solvable_extP; exists <<E & [:: r] >>%AS.
   rewrite /= adjoin_seq1 subvv/= (galois_Fadjoin_cyclotomic _ r_root).
   by rewrite (solvable_Fadjoin_cyclotomic _ r_root).
 have [ltnk|lenk] := ltnP k n; last first.
@@ -520,8 +519,8 @@ have [ekE|ekNE] := boolP (nth r e k \in <<E & r :: take k e>>%VS).
   by rewrite (Fadjoin_idP _).
 have prim : (tnth pw ko).-primitive_root (r ^+ (d %/ tnth pw ko)).
   by rewrite dvdn_prim_root// /d (bigD1 ko)//= dvdn_mulr.
-apply: (solvable_ext_trans charL) IHsol _; first by rewrite subv_adjoin_seq subv_adjoin.
-rewrite (solvable_ext_Fadjoin_prime charL prim _ _ _ pwk_prime)//.
+apply: solvable_ext_trans IHsol _; first by rewrite subv_adjoin_seq subv_adjoin.
+rewrite (solvable_ext_Fadjoin_prime prim _ _ _ pwk_prime)//.
   rewrite -[k]/(val ko) -tnth_nth; apply: subvP ekP.
   by apply: adjoin_seqSr => x xe; rewrite in_cons xe orbT.
 by rewrite /= adjoin_cons rpredX// (subvP (subv_adjoin_seq _ _))// memv_adjoin.
@@ -540,7 +539,7 @@ Lemma AbelGalois  (F0 : fieldType) (L : splittingFieldType F0) (r : L)
   (solvable_by radical E F) <-> (solvable_ext E F).
 Proof.
 move=> EF charL rprim; split; first exact: radical_solvable_ext.
-exact: (ext_solvable_by_radical _ rprim).
+exact: (ext_solvable_by_radical rprim).
 Qed.
 
 End Abel.
@@ -563,16 +562,16 @@ move=> charF; split=> + L rs pE => [/(_ L rs pE) + r r_prim|solrs]/=.
   have charL : [char L] =i pred0 by move=> i; rewrite char_lalg.
   move=> /AbelGalois-/(_ r (sub1v _) charL)/=.
   by rewrite dimv1 divn1 => /(_ r_prim).
+have charL : [char L] =i pred0 by move=> i; rewrite char_lalg.
+have seprs: separable 1 <<1 & rs>> by apply/char0_separable.
 pose n := \dim (minGalois 1 <<1 & rs>>).
 have nFN0 : n%:R != 0 :> F by have /charf0P-> := charF; rewrite -lt0n adim_gt0.
 apply: (@classic_cycloSplitting _ L _ nFN0) => - [L' [r [iota rL' r_prim]]].
-suff: solvable_ext (iota @: 1%VS) (iota @: <<1 & rs>>%VS).
-  rewrite /solvable_ext -aimg_minGalois// -img_map_gal.
-  by rewrite injm_sol ?map_gal_inj ?subsetT.
+rewrite -(solvable_ext_img iota).
 have charL' : [char L'] =i pred0 by move=> i; rewrite char_lalg.
 apply/(@AbelGalois _ _ r) => //.
 - by rewrite limgS// sub1v.
-- by rewrite -aimg_minGalois//= aimg1 dimv1 divn1 dim_aimg.
+- by rewrite -aimg_minGalois //= aimg1 dimv1 divn1 dim_aimg.
 have /= := solrs L' (map iota rs) _ r.
 rewrite -(aimg1 iota) -!aimg_adjoin_seq -aimg_minGalois// dim_aimg.
 apply => //; have := pE; rewrite -(eqp_map [rmorphism of iota]).
@@ -603,7 +602,7 @@ apply: classic_bind (@classic_fieldExtFor _ _ (p : {poly F^o}) p_neq0).
 move=> L rs prs; apply: sol_p => -[M [rs' [prs']]].
 have charL : [char L] =i pred0 by move=> n; rewrite char_lalg charF.
 have charM : [char M] =i pred0 by move=> n; rewrite char_lalg charF.
-rewrite /solvable_ext !minGalois_id//; last 2 first.
+rewrite !char0_solvable_extE//= !minGalois_id//; last 2 first.
 - apply/char0_galois; rewrite ?sub1v//.
   apply/splitting_normalField; rewrite ?sub1v//.
   exists (p ^^ in_alg L); first by apply/polyOver1P; exists p.
@@ -671,9 +670,11 @@ apply/classic_bind => -[C [r [g rg r_prim]]]; apply/classicW.
 have gf : g \o f =1 in_alg C by move=> v /=; rewrite fF rmorph_alg.
 have pgrs : p ^^ in_alg C %= \prod_(x <- [seq g i | i <- rs]) ('X - x%:P).
   by rewrite -(eq_map_poly gf) map_poly_comp/= -map_prod_XsubC eqp_map//.
+have charL : [char L] =i pred0 by move=> i; rewrite char_lalg.
 exists C, (map g rs); split => //=.
 apply: (sol_p C (map g rs) _ r) => //.
-by rewrite -(aimg1 g) -aimg_adjoin_seq -aimg_minGalois//= dim_aimg.
+rewrite -(aimg1 g) -aimg_adjoin_seq.
+by rewrite -aimg_minGalois ?char0_separable ?dim_aimg.
 Qed.
 
 Import GRing.Theory Order.Theory Num.Theory.
@@ -717,8 +718,8 @@ have splitS : splittingFieldFor 1 (p ^^ in_alg S) fullv by exists rs.
 have splitS' : splittingFieldFor 1 (p ^^ in_alg S') <<1 & rs'>> by exists rs'.
 have [f /= imgf] := splitting_ahom splitS splitS'.
 exists S', iota', rs'; split => //; apply: (p_sol S' rs' prs' r).
-rewrite -imgf -(aimg1 f) -aimg_minGalois//; last exact: char_num.
-by rewrite dim_aimg/= -rsf.
+have charS : [char S] =i pred0 by move=> i; rewrite char_lalg char_num.
+by rewrite -imgf -(aimg1 f) -aimg_minGalois ?char0_separable// dim_aimg/= -rsf.
 Qed.
 
 Open Scope ring_scope.
@@ -766,10 +767,10 @@ Definition binOp_countMixin := CanCountMixin code_binOpK.
 Canonical binOp_countType := CountType binOp binOp_countMixin.
 
 Definition encode_unOp (c : unOp) : nat + nat :=
-   match c with Opp => inl _ 0%N | Inv => inl _ 1%N 
+   match c with Opp => inl _ 0%N | Inv => inl _ 1%N
            | Exp n => inl _ n.+2 | Root n => inr _ n end.
 Definition decode_unOp (n : nat + nat) : unOp :=
-   match n with inl 0 => Opp | inl 1 => Inv 
+   match n with inl 0 => Opp | inl 1 => Inv
            | inl n.+2 => Exp n | inr n => Root n end.
 Lemma code_unOpK : cancel encode_unOp decode_unOp.
 Proof. by case. Qed.
@@ -916,14 +917,10 @@ have {}pE : p ^^ ratr %= \prod_(z <- rsalg) ('X - z%:P).
   rewrite pE (eqp_trans (eqp_scale _ _)) ?eqpxx//.
   by rewrite lead_coef_map//= fmorph_eq0 lead_coef_eq0.
 have [fs fsE] : exists fs, map (alg_eval ratr) fs = rsalg.
-  have /(_ _)/sig_eqW-/all_sig [f fE] :
-      forall i : 'I_(size rsalg), exists f, alg_eval ratr f = rsalg`_i.
-    move=> i; have := mkalg rsalg`_i.
-    by rewrite -topredE/= (eqp_root pE) root_prod_XsubC mem_nth// => /(_ isT).
-  pose fs := [tuple f i | i < size rsalg].
-  have /(congr1 val)/= fsE : [tuple of map (alg_eval ratr) fs] = in_tuple rsalg.
-    by apply: eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple fE (tnth_nth 0).
-  by exists fs.
+  have /(_ _ _)/sig_eqW-/(all_sig_cond (Base 0)) [h hE] :
+      forall x : algC, x \in rsalg -> exists f, alg_eval ratr f = x.
+    by move=> *; apply: mkalg; rewrite -topredE/= (eqp_root pE) root_prod_XsubC.
+  by exists (map h rsalg); rewrite -map_comp map_id_in//.
 pose algs := flatten (map (subeval ratr) fs).
 pose mp := \prod_(x <- algs) projT1 (minCpolyP x).
 have mp_monic : mp \is monic.
@@ -952,24 +949,8 @@ have algsW: {subset rsalg <= algs}.
 have rsmpW: {subset algs <= rsmpalg}.
   move=> x xalgs; rewrite -root_prod_XsubC -mpE mpratr.
   by rewrite (big_rem _ xalgs)/= rootM root_minCpoly.
-have [als alsE] : exists s : seq L, map iota s = algs.
-  have /(_ _)/sig_eqW-/all_sig [a aE] :
-      forall i : 'I_(size algs), exists a : S, iota a = algs`_i.
-    move=> i; have /rsmpW := mem_nth 0 (ltn_ord i); rewrite -iota_rs.
-    by move=> /mapP[a _]; exists a.
-  pose als := [tuple a i | i < size algs].
-  have /(congr1 val)/= alsE : [tuple of map iota als] = in_tuple algs.
-    by apply: eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple aE (tnth_nth 0).
-  by exists als.
-have [rs rsE] : exists rs, map iota rs = rsalg.
-  have /(_ _)/sig_eqW-/all_sig [r rE] :
-      forall i : 'I_(size rsalg), exists r : S, iota r = rsalg`_i.
-    move=> i; have /algsW := mem_nth 0 (ltn_ord i); rewrite -alsE.
-    by move=> /mapP[a _]; exists a.
-  pose rs := [tuple r i | i < size rsalg].
-  have /(congr1 val)/= rsE : [tuple of map iota rs] = in_tuple rsalg.
-    by apply: eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple rE (tnth_nth 0).
-  by exists rs.
+have := rsmpW; rewrite -iota_rs => /(subset_mapP 0)[als _ /esym alsE].
+have := algsW; rewrite -alsE => /(subset_mapP 0)[rs _ /esym rsE].
 have prs : p ^^ in_alg S %= \prod_(x <- rs) ('X - x%:P).
   rewrite -(eqp_map iota) -map_poly_comp (eq_map_poly (fmorph_eq_rat _)).
   by rewrite map_prod_XsubC rsE.
@@ -1017,7 +998,7 @@ elim: f => //= [x|c|u f1 IHf1|b f1 IHf1 f2 IHf2] in k {r fr} als1 als1E *.
   apply: rext_trans (IHf1 k l IHlu) _ => /=.
   move: IHlu; rewrite subevalE; case: l => // x1 l [iotax1 _].
   rewrite -iotax1 -rmorphN -fmorphV in IHl.
-  have x1kx1 : x1 \in <<k & x1 :: l>>%VS  by  rewrite seqv_sub_adjoin ?mem_head.
+  have x1kx1 : x1 \in <<k & x1 :: l>>%VS by rewrite seqv_sub_adjoin ?mem_head.
   case: u => [||n|n]/= in IHl.
   + rewrite (Fadjoin_idP _); first exact: rext_refl.
     by have /fmorph_inj-> := IHl; rewrite rpredN.
@@ -1438,7 +1419,7 @@ have gal1rs : galois 1 <<1 & rs>> by apply: (@PDTNRR.galois1K _ iota poly_exampl
 rewrite /solvable_ext minGalois_id//.
 have := PDTNRR.isog_gal_perm irreducible_exmpl rs_uniq poly_ex_eq_prod _.
 move=> /(_ iota); rewrite size_poly_exmpl => /(_ isT)/(_ _)/isog_sol->//.
-  by move=> /not_solvable_Sym; rewrite card_ord/=; apply.
+  by move=> /andP[_ /not_solvable_Sym]; rewrite card_ord/=; apply.
 have /eqP := count_roots_ex.
 rewrite -size_filter -(perm_size (perm_filter _ perm_rs)).
 by rewrite size_filter count_map => ->.
