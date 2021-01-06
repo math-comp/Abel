@@ -30,6 +30,20 @@ move=> NfNP; apply/classicPT => exPF; apply: NfNP => x Px.
 by apply: exPF; exists x.
 Qed.
 
+(*******)
+(* seq *)
+(*******)
+
+Lemma subset_mapP (X Y : choiceType) (x0 : X) (s : seq X) (s' : seq Y) (f : X -> Y) :
+    {subset s' <= map f s} <-> (exists2 t, all (mem s) t & s' = map f t).
+Proof.
+split => [|[r /allP/= rE ->] _ /mapP[x xr ->]]; last by rewrite map_f ?rE.
+move=> /(_ _ _)/mapP/sig2_eqW -/(all_sig_cond x0)[f' f'P].
+exists (map f' s'); first by apply/allP => _ /mapP [x /f'P[? ?] ->].
+by symmetry; rewrite -map_comp; apply: map_id_in => x /f'P[].
+Qed.
+Arguments subset_mapP {X Y} x0.
+
 (*********)
 (* bigop *)
 (*********)
@@ -836,6 +850,92 @@ have hlr : lrmorphism (fun v : Kx => (pol (val v) ^^ f).[x']).
 pose h := linfun_ahom (LRMorphism hlr).
 exists h; first by rewrite lfunE/= polX map_polyX hornerX.
 by move=> v; rewrite /comp lfunE/= vsval_sub/= polC map_polyC hornerC.
+Qed.
+
+Lemma lker0_img_cap (K : fieldType) (aT rT : vectType K) (f : 'Hom(aT, rT))
+    (U V : {vspace aT}) : lker f == 0%VS ->
+  (f @: (U :&: V) = f @: U :&: f @: V)%VS.
+Proof.
+move=> kf0; apply/eqP; rewrite eqEsubv limg_cap/=; apply/subvP => x.
+rewrite memv_cap => /andP[/memv_imgP[u uU ->]] /memv_imgP[v vV].
+by move=> /(lker0P kf0) eq_uv; rewrite memv_img// memv_cap uU eq_uv vV.
+Qed.
+
+Lemma aimg_cap (K : fieldType) (aT rT : fieldExtType K) (f : 'AHom(aT, rT))
+    (U V : {vspace aT}) : (f @: (U :&: V) = f @: U :&: f @: V)%VS.
+Proof. exact/lker0_img_cap/AHom_lker0. Qed.
+
+Lemma sub_aimgP (F0 : fieldType) (L L' : splittingFieldType F0)
+  (iota : 'AHom(L, L')) (F : {subfield L'}) :
+  reflect (exists E : {subfield L}, (iota @: E)%VS = F) (F <= iota @: fullv)%VS.
+Proof.
+apply: (iffP idP) => [Fiota|[E <-]]; last by rewrite limgS ?subvf.
+suff F_is_aspace : is_aspace (iota @^-1: F)%VS.
+  by exists (ASpace F_is_aspace); apply/eqP; rewrite eqEsubv/= lpreimK ?subvv.
+apply/andP => /=; split.
+  by apply/has_algid1; rewrite -memv_preim rmorph1 rpred1.
+by apply/prodvP => u v; rewrite -!memv_preim => uF vF; rewrite rmorphM rpredM.
+Qed.
+
+Lemma polyOver_img (K : fieldType) (L L' : fieldExtType K)
+    (E : {vspace L}) (f : 'AHom(L, L')) (p' : {poly L'}) :
+  reflect (exists2 p, p \is a polyOver E & p' = p ^^ f)
+          (p' \is a polyOver (f @: E)%VS).
+Proof.
+apply: (iffP polyOverP) => [|[p pE -> i]]; last first.
+  by rewrite coef_map memv_img ?(polyOverP pE).
+move=> /(_ _)/memv_imgP/sig2_eqW-/all_sig[p_ pP].
+exists (\poly_(i < size p') p_ i).
+  apply/polyOverP => i; rewrite coef_poly; case: ifP => _; rewrite ?rpred0//.
+  by case: (pP i).
+apply/polyP => i; rewrite coef_map/= coef_poly.
+by case: ltnP => ip'; [case: (pP i) | rewrite nth_default ?rmorph0].
+Qed.
+Arguments polyOver_img {K L L' E f p'}.
+
+Lemma mapf_polyOver (K : fieldType) (L L' : fieldExtType K)
+    (E : {vspace L}) (f : 'AHom(L, L')) (p : {poly L}) :
+  (p ^^ f \is a polyOver (f @: E)%VS) = (p \is a polyOver E).
+Proof.
+apply/polyOverP/polyOverP => piE i; last by rewrite coef_map/= memv_img.
+by have := piE i; rewrite coef_map/= memvE -limg_line limg_ker0 ?AHom_lker0.
+Qed.
+
+Lemma separable_img  (F0 : fieldType) (L L' : fieldExtType F0)
+  (E F : {subfield L}) (f : 'AHom(L, L')) :
+   separable (f @: E) (f @: F) = separable E F.
+Proof.
+apply/separableP/separableP => [sepEF x xF|sepEF _ /memv_imgP[x xF ->]].
+  have /separable_elementP[_ [/polyOver_img[p pE ->]]] :=
+    sepEF (f x) (memv_img f xF).
+  rewrite mapf_root separable_map => root_p sep_p.
+  by apply/separable_elementP; exists p; split.
+have /(_ _ xF)/separable_elementP[p [pE rpx sepp]] := sepEF.
+apply/separable_elementP; exists (p ^^ f).
+by rewrite ?mapf_polyOver ?rmorph_root ?separable_map.
+Qed.
+
+Lemma subset_limgP (F0 : fieldType) (L L' : fieldExtType F0)
+    (E : {subfield L}) (f : 'AHom(L, L')) (r' : seq L') :
+  {subset r' <= (f @: E)%VS} <-> (exists2 r, all (mem E) r & r' = map f r).
+Proof.
+split => [|[r /allP/= rE ->] _ /mapP[x xr ->]]; last by rewrite memv_img ?rE.
+move=> /(_ _ _)/memv_imgP/sig2_eqW-/(all_sig_cond (0 : L))[f' f'P].
+exists (map f' r'); first by apply/allP => _ /mapP [x /f'P[? ?] ->].
+by symmetry; rewrite -map_comp; apply: map_id_in => x /f'P[].
+Qed.
+
+Lemma splittingFieldFor_img  (F0 : fieldType) (L L' : fieldExtType F0)
+  (E F : {subfield L}) p (f : 'AHom(L, L')) :
+   splittingFieldFor (f @: E) (p ^^ f) (f @: F) <-> splittingFieldFor E p F.
+Proof.
+split=> -[rs' pE EF]; last first.
+  by exists (map f rs'); rewrite -?map_prod_XsubC ?eqp_map -?aimg_adjoin_seq ?EF.
+have /subset_limgP[rs _ rs'E] : {subset rs' <= (f @: F)%VS}.
+  by rewrite -EF; apply: seqv_sub_adjoin.
+exists rs; first by have := pE; rewrite rs'E -map_prod_XsubC ?eqp_map.
+have := EF; rewrite rs'E -aimg_adjoin_seq => /eqP.
+by rewrite eq_limg_ker0 ?AHom_lker0// => /eqP.
 Qed.
 
 (********************)
