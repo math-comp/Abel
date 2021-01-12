@@ -61,8 +61,8 @@ make install
   + `radical_solvable_ext` (no mention of roots of unity),
   + `AbelGalois`, (equivalence obtained from the above two, requires
   roots of unity), and consequences on solvability of polynomial
-  + and their consequence on the example polynomial X⁵ -4X + X:
-  `example_not_solvable_by_radicals`
+  + and their consequence on the example polynomial X⁵ -4X + 2X:
+  `example_not_solvable_by_radicals`,
 
 - `xmathcomp/various.v` contains various (rather straightforward)
   extensions that should be added to various mathcomp packages asap
@@ -89,6 +89,16 @@ make install
   in the classically monad, making the results available either for
   a boolean goal or a classical goal. This was instrumental in
   eliminating references to some embarrassing roots of the unity.
+
+- `xmathcomp/algR.v` contains a proof that the real subset of `algC`
+  (isomorphic to `{x : algC | x \is Num.real}`) is a real closed field
+  (and archimedean), and endows this type `algR` with appropriate
+  canonical instances.
+
+- `xmathcomp/real_closed_ext.v` contains some missing lemmas from
+  the library `math-comp/real_closed`, in particular bounding the
+  number of real roots of a polynomial by one plus the number of
+  real roots of its derivative,
 
 - `xmathcomp/diag.v` contains the theory of diagonalisation and
   codiagonalisation with the standard criterions.
