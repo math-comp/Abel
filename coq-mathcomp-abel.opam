@@ -29,7 +29,8 @@ depends: [
 
 tags: [
   "keyword:algebra"
-  "keyword:galois"
+  "keyword:Galois"
+  "keyword:Abel Ruffini"
   "keyword:unsolvability of quintincs"
   "logpath:Abel"
 ]
