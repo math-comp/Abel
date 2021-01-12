@@ -59,8 +59,10 @@ make install
   + `galois_solvable_by_radical` (requires explicit roots of unity),
   + `ext_solvable_by_radical` (equivalent, and still requires roots of unity),
   + `radical_solvable_ext` (no mention of roots of unity),
-  + `AbelGalois`, (equivalence obtained from the above to, requires  roots of unity)
-  + and their consequence `example_not_solvable_by_radicals` (with one admit)
+  + `AbelGalois`, (equivalence obtained from the above two, requires
+  roots of unity), and consequences on solvability of polynomial
+  + and their consequence on the example polynomial X⁵ -4X + X:
+  `example_not_solvable_by_radicals`
 
 - `xmathcomp/various.v` contains various (rather straightforward)
   extensions that should be added to various mathcomp packages asap
@@ -73,7 +75,7 @@ make install
   wrapper`NullCharType` akin to `PrimeCharType` (from `finfield.v`),
 
 - `xmathcomp/cyclotomic.v` contains complementary results about
-  cyclotomic polynomials, (there is still one admit),
+  cyclotomic polynomials,
 
 - `xmathcomp/map_gal.v` contains complementary results about galois
   groups and galois extensions, including various isomorphisms,

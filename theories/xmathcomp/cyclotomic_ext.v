@@ -101,7 +101,9 @@ by rewrite mem_filter mem_iota// coprime1n.
 Qed.
 
 Lemma cyclotomic_over : cyclotomic r n \is a polyOver E.
-Proof. Admitted.
+Proof.
+by apply/polyOverP=> i; rewrite -Phi_cyclotomic // coef_map /= rpred_int.
+Qed.
 
 Hint Resolve cyclotomic_over : core.
 
@@ -113,18 +115,22 @@ Variables (F0 : fieldType) (L : splittingFieldType F0).
 Variables (E : {subfield L}) (r : L) (n : nat).
 Hypothesis r_is_nth_root : n.-primitive_root r.
 
-(** Very Hard **)
-(*     - E(x) is cyclotomic                                                   *)
-Lemma minPoly_cyclotomic : r \notin E -> minPoly E r = cyclotomic r n.
+(* MISSING *)
+Lemma root_dvdp (F : idomainType) (p q : {poly F}) (x : F) :
+  root p x -> p %| q -> root q x.
+Proof. rewrite -!dvdp_XsubCl; exact: dvdp_trans. Qed.
+
+(* MISSING *)
+Lemma primitive_root_pow (F : fieldType) (m : nat) (s z : F) :
+  m.-primitive_root s -> m.-primitive_root z -> exists2 k, coprime k m & z = s ^+ k.
 Proof.
-move=> Er; apply/eqP; rewrite -eqp_monic ?monic_minPoly ?cyclotomic_monic//.
-rewrite /eqp minPoly_dvdp ?root_cyclotomic//=; last first.
-  rewrite /cyclotomic.
-(* minPoly %| cyclotomic *)
-(* then using a decomposition of minPoly in linear terms : its constant *)
-(* coefficient is a power of x, and in E : it can only be at power p, hence *)
-(* its size, and value *)
-Admitted.
+move/root_cyclotomic<-.
+rewrite /cyclotomic -big_filter; have [t et [uniqs tP /= perms]] := big_enumP.
+pose rs := [seq s ^+ (val i) | i <- t]; set p := (X in root X).
+have {p} -> :  p = \prod_(z <- rs) ('X - z%:P) by rewrite /p big_map.
+rewrite root_prod_XsubC; case/mapP=> [[i ltim]]; rewrite tP /= => copim ez.
+by exists i.
+Qed.
 
 (** Easy **)
 (*     - E(x) is Galois                                                       *)
@@ -150,10 +156,7 @@ move/orbit_eqP/orbitP => [] h h_in <- {f f_in}; apply/eqP.
 rewrite gal_adjoin_eq //= /conjg /= ?groupM ?groupV //.
 rewrite ?galM ?memv_gal ?memv_adjoin //.
 have hg_gal f : f \in 'Gal(<<E; r>> / E)%g -> ((f r) ^+ n = 1)%R.
-  move=> f_in; apply/prim_expr_order.
-  have /and3P[subF _ NF] := galois_Fadjoin_cyclotomic.
-  rewrite -(root_cyclotomic r_is_nth_root) -(minPoly_cyclotomic r_notin_E) //.
-  by rewrite root_minPoly_gal // ?subF ?subvv ?memv_adjoin.
+  by move=> f_in; apply/prim_expr_order; rewrite fmorph_primitive_root.
 have := svalP (prim_rootP r_is_nth_root (hg_gal _ g_in)).
 have h1_in : (h^-1)%g \in 'Gal(<<E; r>> / E)%g by rewrite ?groupV.
 have := svalP (prim_rootP r_is_nth_root (hg_gal _ h1_in)).
