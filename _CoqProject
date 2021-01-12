@@ -1,4 +1,5 @@
 theories/abel.v
+theories/xmathcomp/algR.v
 theories/xmathcomp/mxextra.v
 theories/xmathcomp/galmx.v
 theories/xmathcomp/diag.v
