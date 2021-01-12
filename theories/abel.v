@@ -1,11 +1,7 @@
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
-From mathcomp Require Import all_solvable all_field polyrcf qe_rcf_th qe_rcf.
-From Abel Require Import various classic_ext map_gal.
-From Abel Require Import diag char0 cyclotomic_ext galmx.
-(* bug: qe_rcf exports a redefinition of `True` and `False` *)
-Notation False := Logic.False.
-Notation True := Logic.True.
-
+From mathcomp Require Import all_solvable all_field polyrcf.
+From Abel Require Import various classic_ext map_gal algR.
+From Abel Require Import diag char0 cyclotomic_ext galmx real_closed_ext.
 
 (*****************************************************************************)
 (* We work inside a enclosing splittingFieldType L over a base field F0      *)
@@ -1239,13 +1235,6 @@ apply/mapP/idP => [[z zrp->]|yrp]; first by rewrite lfunE conjL_rp.
 by exists (conjL y); rewrite ?conjL_rp//= !lfunE [RHS]conjLK.
 Qed.
 
-Lemma CrealJ (C : numClosedFieldType) : {mono (@conjC C) : x / x \is Num.real}.
-Proof.
-suff realK : {homo (@conjC C) : x / x \is Num.real}.
-  by move=> x; apply/idP/idP => /realK//; rewrite conjCK.
-by move=> x xreal; rewrite conj_Creal.
-Qed.
-
 Lemma conj_rp0 : conjL rp`_i0 = rp`_i1.
 Proof.
 have /(nthP 0)[j jlt /esym rpj_eq]: conjL rp`_i0 \in rp.
@@ -1304,10 +1293,12 @@ Section Example1.
 Definition poly_example_int : {poly int} := 'X^5 - 4%:R *: 'X + 2%:R%:P.
 Definition poly_example : {poly rat} := 'X^5 - 4%:R *: 'X + 2%:R%:P.
 
+Local Definition pesimp := (coefD, coefN, coefB, coefZ, coefXn, coefX, coefC,
+  hornerD, hornerN, hornerC, hornerZ, hornerX, hornerXn, rmorph_nat).
+
 Lemma poly_exampleEint : poly_example = map_poly intr poly_example_int.
 Proof.
-pose simp := (rmorphB, rmorphD, rmorphN, map_polyZ,
-              map_polyXn, map_polyX, map_polyC).
+pose simp := (rmorphB, rmorphD, map_polyZ, map_polyXn, map_polyX, map_polyC).
 by do !rewrite [map_poly _ _]simp/= ?natz.
 Qed.
 
@@ -1328,13 +1319,11 @@ Proof. by rewrite -size_poly_eq0 size_poly_exmpl_int. Qed.
 
 Lemma poly_example_neq0 : poly_example != 0.
 Proof. by rewrite -size_poly_eq0 size_poly_exmpl. Qed.
+Hint Resolve poly_example_neq0 : core.
 
 Lemma poly_example_monic : poly_example \is monic.
-Proof.
-rewrite /poly_example monicE -addrA lead_coefDl ?lead_coefXn// size_polyXn ltnS.
-rewrite (leq_trans (size_add _ _))//.
-by rewrite size_polyC size_opp size_scale// size_polyX.
-Qed.
+Proof. by rewrite monicE lead_coefE !pesimp size_poly_exmpl. Qed.
+Hint Resolve poly_example_monic : core.
 
 Lemma irreducible_exmpl : irreducible_poly poly_example.
 Proof.
@@ -1343,6 +1332,7 @@ rewrite poly_exampleEint; apply: (@eisenstein 2) => // [|||i];
   rewrite ?lead_coefE ?size_poly_exmpl_int ?coefE//.
 by move: i; do 6!case=> //.
 Qed.
+Hint Resolve irreducible_exmpl : core.
 
 Lemma separable_exmpl : separable_poly poly_example.
 Proof.
@@ -1352,6 +1342,7 @@ have size_deriv_exmpl : size poly_example^`() = 5.
   by rewrite size_addl ?size_scale ?size_opp ?size_polyXn ?size_polyC.
 by rewrite gtNdvdp -?size_poly_eq0 ?size_deriv_exmpl ?(eqp_size eqq) ?size_poly_exmpl.
 Qed.
+Hint Resolve separable_exmpl : core.
 
 Lemma prime_exmpl : prime (size poly_example).-1.
 Proof. by rewrite size_poly_exmpl. Qed.
@@ -1361,7 +1352,8 @@ Proof. by rewrite size_poly_exmpl. Qed.
 Definition example_roots :=
   sval (closed_field_poly_normal ((map_poly ratr poly_example) : {poly algC})).
 
-Lemma ratr_example_poly : map_poly ratr poly_example = \prod_(x <- example_roots) ('X - x%:P).
+Lemma ratr_example_poly :
+  poly_example ^^ ratr = \prod_(x <- example_roots) ('X - x%:P).
 Proof.
 rewrite /example_roots; case: closed_field_poly_normal => //= rs ->.
 by rewrite lead_coef_map/= (eqP poly_example_monic) rmorph1 scale1r.
@@ -1373,17 +1365,38 @@ have /(congr1 (fun p : {poly _} => size p)) := ratr_example_poly.
 by rewrite size_map_poly size_poly_exmpl size_prod_XsubC => -[].
 Qed.
 
+Lemma example_roots_uniq : uniq example_roots.
+Proof.
+rewrite -separable_prod_XsubC -ratr_example_poly.
+by rewrite separable_map separable_exmpl.
+Qed.
+
 Lemma deriv_poly_example : poly_example^`() = 5%:R *: 'X^4 - 4%:R%:P.
 Proof. by rewrite /poly_example !derivE addr0 alg_polyC scaler_nat. Qed.
 
+Lemma deriv_poly_example_neq0 : poly_example^`() != 0.
+Proof.
+apply/eqP => /(congr1 (fun p => p.[0])).
+by rewrite deriv_poly_example !pesimp => /eqP; compute.
+Qed.
+Hint Resolve deriv_poly_example_neq0 : core.
+
 Definition alpha : algC := sqrtC (2%:R / sqrtC 5%:R).
 
+Lemma alpha_gt0 : alpha > 0.
+Proof. by rewrite sqrtC_gt0 mulr_gt0 ?invr_gt0 ?sqrtC_gt0 ?ltr0n. Qed.
+
+Lemma alpha_real : alpha \is Num.real.
+Proof. by rewrite ger0_real// (ltW alpha_gt0). Qed.
+Hint Resolve alpha_real : core.
+
+Local Notation alphaR := (in_algR alpha_real).
+
 Lemma root_deriv_poly_example (x : algC) : x \is Num.real ->
-  (root (map_poly ratr poly_example^`()) x) = ((x == alpha) || (x == - alpha)).
+  (root (poly_example^`() ^^ ratr) x) = ((x == alpha) || (x == - alpha)).
 Proof.
 move=> x_real; rewrite deriv_poly_example /root.
-rewrite rmorphB linearZ/= map_polyC/= map_polyXn.
-rewrite hornerD hornerN hornerZ hornerXn hornerC !rmorph_nat.
+rewrite rmorphB linearZ/= map_polyC/= map_polyXn !pesimp.
 rewrite -[5%:R]sqrtCK (exprM _ 2 2) -exprMn (natrX _ 2 2) subr_sqr.
 rewrite mulf_eq0 orbC gt_eqF /=; last first.
   rewrite -[0](addr0) ler_lt_add// ?ltr0n//.
@@ -1394,12 +1407,68 @@ rewrite subr_eq0 (can2_eq (mulKf _) (mulVKf _))// mulrC -subr_eq0.
 by rewrite -[X in _ - X]sqrtCK -/alpha subr_sqr mulf_eq0 subr_eq0 addr_eq0.
 Qed.
 
-Lemma count_roots_ex : count (fun x => x \isn't Num.real) example_roots == 2.
+Lemma rootsR_deriv_poly_example :
+  rootsR (poly_example^`() ^^ ratr) = [:: - alphaR; alphaR].
 Proof.
-pose c := qe_rcf.CcountWeak [:: 2%:Q%:T; 4%:Q%:T; 0; 0; 1]%qfT
-   [::] (fun t => t == 3%:Q%:T)%qfT.
-(* Cannot compute c, takes too long... *)
-Admitted.
+apply: eq_sorted_lt; rewrite ?sorted_roots//.
+  by rewrite /= andbT -subr_gt0 opprK ?addr_gt0 ?ltEsub ?alpha_gt0.
+move=> x; rewrite mem_rootsR ?map_poly_eq0// !inE -topredE/= orbC.
+rewrite -(mapf_root [rmorphism of algRval]) -map_poly_comp.
+by rewrite (eq_map_poly (fmorph_eq_rat _)) root_deriv_poly_example ?algRvalP.
+Qed.
+
+Lemma count_roots_ex : count (fun x => x \isn't Num.real) example_roots = 2.
+Proof.
+rewrite -!sum1_count; pose pR : {poly algR} := poly_example ^^ ratr.
+have pR0 : pR != 0 by rewrite map_poly_eq0.
+suff cR : (\sum_(j <- example_roots | j \is Num.real) 1)%N = 3.
+  have := size_example_roots; rewrite -sum1_size (bigID (mem Num.real))/=.
+  by rewrite cR => -[->].
+rewrite -big_filter (perm_big (map algRval (rootsR pR))); last first.
+  rewrite uniq_perm ?filter_uniq ?example_roots_uniq//.
+    by rewrite (map_inj_uniq (fmorph_inj _)) uniq_roots.
+  move=> x; rewrite mem_filter -root_prod_XsubC -ratr_example_poly.
+  rewrite -(eq_map_poly (fmorph_eq_rat [rmorphism of algRval \o ratr]))/=.
+  rewrite map_poly_comp/=.
+  apply/andP/mapP => [[xR xroot]|[y + ->]].
+    exists (in_algR xR); rewrite // mem_rootsR// -topredE/=.
+    by rewrite -(mapf_root algRval_rmorphism)/=.
+  rewrite mem_rootsR// -[y \in _]topredE/=.
+  by split; [apply/algRvalP|rewrite mapf_root].
+apply/eqP; rewrite sum1_size size_map eqn_leq.
+rewrite (leq_trans (size_root_leSderiv _))//=; last first.
+  by rewrite deriv_map rootsR_deriv_poly_example.
+have pRN2 : Num.sg pR.[-2%:R] = -1.
+  apply: ltr0_sg; rewrite ltEsub/= -!horner_map/=.
+  rewrite -map_poly_comp (eq_map_poly (fmorph_eq_rat _)).
+  rewrite -(rmorph1 [rmorphism of ratr]) -rmorphD -rmorphN.
+  by rewrite horner_map ltrq0 !pesimp.
+have pRN1 : Num.sg pR.[-1%:R] =  1.
+  apply: gtr0_sg; rewrite ltEsub/= -!horner_map/=.
+  rewrite -map_poly_comp (eq_map_poly (fmorph_eq_rat _)).
+  by rewrite -(rmorphN1 [rmorphism of ratr]) horner_map ltr0q/= !pesimp.
+have pR1 : Num.sg pR.[1%:R] = -1.
+  apply: ltr0_sg; rewrite ltEsub/= -!horner_map/=.
+  rewrite -map_poly_comp (eq_map_poly (fmorph_eq_rat _)).
+  by rewrite -(rmorph1 [rmorphism of ratr]) horner_map ltrq0/= !pesimp.
+have pR2 : Num.sg pR.[2%:R] =  1.
+  apply: gtr0_sg; rewrite ltEsub/= -!horner_map/=.
+  rewrite -map_poly_comp (eq_map_poly (fmorph_eq_rat _)).
+  by rewrite -(rmorph1 [rmorphism of ratr]) -rmorphD horner_map ltr0q !pesimp.
+have [||x0 /andP[/= _ x0N1] rootx0] := @ivt_sign _ pR (- 2%:R) (- 1).
+- by rewrite -subr_ge0 opprK addKr ler01.
+- by rewrite pRN2 pRN1 mulN1r.
+have [||x1 /andP[/= x10 x11] rootx1] := @ivt_sign _ pR (-1) 1.
+- by rewrite -subr_ge0 opprK addr_ge0 ?ler01.
+- by rewrite pRN1 pR1 mulrN1.
+have [||x2 /andP[/= x21 _] rootx2] := @ivt_sign _ pR 1 2%:R.
+- by rewrite -subr_ge0 addrK ler01.
+- by rewrite pR1 pR2 mulN1r.
+have: sorted <%R [:: x0; x1; x2] by rewrite /= (lt_trans x0N1) ?(lt_trans x11).
+rewrite lt_sorted_uniq_le => /andP[uniqx012 _].
+apply: (@uniq_leq_size _ [:: x0; x1; x2]) => //.
+by move=> x; rewrite !inE => /or3P[]/eqP->/=; rewrite mem_rootsR.
+Qed.
 
 Lemma example_not_solvable_by_radicals : ~ solvable_by_radical_poly poly_example.
 Proof.
@@ -1409,9 +1478,8 @@ rewrite (eq_map_poly (fmorph_eq_rat _)) -char0_ratrE.
 rewrite eqp_monic ?map_monic ?poly_example_monic ?monic_prod_XsubC//.
 move=> /eqP poly_ex_eq_prod.
 have perm_rs : perm_eq (map iota rs) example_roots.
-  apply: prod_XsubC_eq; rewrite -ratr_example_poly; symmetry.
-  rewrite -(eq_map_poly (fmorph_eq_rat [rmorphism of iota \o char0_ratr _])).
-  by rewrite map_poly_comp poly_ex_eq_prod map_prod_XsubC.
+  apply: prod_XsubC_eq; rewrite -ratr_example_poly -map_prod_XsubC.
+  by rewrite -poly_ex_eq_prod -map_poly_comp (eq_map_poly (fmorph_eq_rat _)).
 have rs_uniq : uniq rs.
   by rewrite -separable_prod_XsubC -poly_ex_eq_prod separable_map separable_exmpl.
 move=> /(radical_solvable_ext charL (sub1v _)) /=.
@@ -1420,9 +1488,7 @@ rewrite /solvable_ext minGalois_id//.
 have := PDTNRR.isog_gal_perm irreducible_exmpl rs_uniq poly_ex_eq_prod _.
 move=> /(_ iota); rewrite size_poly_exmpl => /(_ isT)/(_ _)/isog_sol->//.
   by move=> /andP[_ /not_solvable_Sym]; rewrite card_ord/=; apply.
-have /eqP := count_roots_ex.
-rewrite -size_filter -(perm_size (perm_filter _ perm_rs)).
-by rewrite size_filter count_map => ->.
+by rewrite -(count_map _ [predC Creal]) (seq.permP perm_rs) count_roots_ex.
 Qed.
 
 End Example1.

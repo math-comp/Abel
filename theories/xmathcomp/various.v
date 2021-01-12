@@ -34,6 +34,15 @@ Qed.
 (* seq *)
 (*******)
 
+Lemma sortedP T x0 (s : seq T) (r : rel T) :
+  reflect (forall i, (i < (size s).-1)%N -> r (nth x0 s i) (nth x0 s i.+1))
+          (sorted r s).
+Proof.
+elim: s => [|x [|y s]//= IHs]/=; do ?by constructor.
+apply: (iffP andP) => [[rxy rys] [|i]// /IHs->//|rS].
+by rewrite (rS 0%N); split=> //; apply/IHs => i /(rS i.+1).
+Qed.
+
 Lemma subset_mapP (X Y : choiceType) (x0 : X) (s : seq X) (s' : seq Y) (f : X -> Y) :
     {subset s' <= map f s} <-> (exists2 t, all (mem s) t & s' = map f t).
 Proof.
@@ -261,6 +270,22 @@ rewrite -(prim_order_dvd x_prim) nE mulnC Gauss_dvd ?coprime_expl//.
 rewrite pfactor_dvdn// ltn_geF// -[k]muln1 logn_Gauss ?logn1//.
 by rewrite logn_gt0 mem_primes p_prime dvdpn n_gt0.
 Qed.
+
+(**********)
+(* ssrnum *)
+(**********)
+
+Section ssrnum.
+Import Num.Theory.
+
+Lemma CrealJ (C : numClosedFieldType) :
+  {mono (@conjC C) : x / x \is Num.real}.
+Proof.
+suff realK : {homo (@conjC C) : x / x \is Num.real}.
+  by move=> x; apply/idP/idP => /realK//; rewrite conjCK.
+by move=> x xreal; rewrite conj_Creal.
+Qed.
+End ssrnum.
 
 (**********)
 (* ssrint *)
