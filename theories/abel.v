@@ -1444,7 +1444,8 @@ apply: (@uniq_leq_size _ [:: x0; x1; x2]) => //.
 by move=> x; rewrite !inE => /or3P[]/eqP->/=; rewrite mem_rootsR.
 Qed.
 
-Lemma example_not_solvable_by_radicals : ~ solvable_by_radical_poly poly_example.
+Lemma example_not_solvable_by_radicals :
+  ~ solvable_by_radical_poly ('X^5 - 4%:R *: 'X + 2%:Q%:P).
 Proof.
 move=> /(solvable_poly_rat poly_example_neq0)[L [iota [rs []]]].
 have charL := char_ext L.
