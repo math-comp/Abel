@@ -12,8 +12,11 @@ Follow the instructions on https://github.com/coq-community/templates to regener
 
 
 
-This repository contains a proof of Abel Ruffini Theorem in the
-Coq proof-assistant and using the Mathematical Components library.
+This repository contains a proof of Abel - Galois Theorem
+(equivalence between being solvable by radicals and having a
+solvable Galois group) and Abel - Ruffini Theorem (unsolvability of
+quintic equations) in the Coq proof-assistant and using the
+Mathematical Components library.
 
 ## Meta
 
@@ -22,6 +25,7 @@ Coq proof-assistant and using the Mathematical Components library.
   - Cyril Cohen (initial)
   - Assia Mahboubi (initial)
   - Pierre-Yves Strub (initial)
+- License: [CeCILL-B](CeCILL-B)
 - Compatible Coq versions: Coq 8.10 to 8.13
 - Additional dependencies:
   - [MathComp ssreflect 1.11 and 1.12](https://math-comp.github.io)
