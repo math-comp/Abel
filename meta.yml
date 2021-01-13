@@ -56,32 +56,28 @@ tested_coq_opam_versions:
 dependencies:
 - opam:
     name: coq-mathcomp-ssreflect
-    version: '{ (>= "1.11.0" & < "1.13~") }'
+    version: '{ (>= "1.11.0" & < "1.13~") | = "dev" }'
   description: |-
     [MathComp ssreflect 1.11 and 1.12](https://math-comp.github.io)
 - opam:
     name: coq-mathcomp-fingroup
-    version: '{ (>= "1.11.0" & < "1.13~") }'
   description: |-
     [MathComp fingroup 1.11 and 1.12](https://math-comp.github.io)
 - opam:
     name: coq-mathcomp-algebra
-    version: '{ (>= "1.11.0" & < "1.13~") }'
   description: |-
     [MathComp algebra 1.11 and 1.12](https://math-comp.github.io)
 - opam:
     name: coq-mathcomp-solvable
-    version: '{ (>= "1.11.0" & < "1.13~") }'
   description: |-
     [MathComp solvable 1.11 and 1.12](https://math-comp.github.io)
 - opam:
     name: coq-mathcomp-field
-    version: '{ (>= "1.11.0" & < "1.13~") }'
   description: |-
     [MathComp field 1.11 and 1.12](https://math-comp.github.io)
 - opam:
     name: coq-mathcomp-real-closed
-    version: '{ (>= "1.1.1") }'
+    version: '{ (>= "1.1.1") | = "dev" }'
   description: |-
     [MathComp real closed >= 1.11.1](https://github.com/math-comp/real-closed)
 namespace: Abel
