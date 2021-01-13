@@ -1302,50 +1302,50 @@ pose simp := (rmorphB, rmorphD, map_polyZ, map_polyXn, map_polyX, map_polyC).
 by do !rewrite [map_poly _ _]simp/= ?natz.
 Qed.
 
-Lemma size_poly_exmpl_int : size poly_example_int = 6.
+Lemma size_poly_example_int : size poly_example_int = 6.
 Proof.
 rewrite /poly_example_int -addrA size_addl ?size_polyXn//.
 by rewrite size_addl ?size_opp ?size_scale ?size_polyX ?size_polyC.
 Qed.
 
-Lemma size_poly_exmpl : size poly_example = 6.
+Lemma size_poly_example : size poly_example = 6.
 Proof.
-rewrite poly_exampleEint size_map_poly_id0 ?size_poly_exmpl_int//.
-by rewrite intr_eq0 lead_coef_eq0 -size_poly_eq0 size_poly_exmpl_int.
+rewrite /poly_example -addrA size_addl ?size_polyXn//.
+by rewrite size_addl ?size_opp ?size_scale ?size_polyX ?size_polyC.
 Qed.
 
-Lemma poly_exmpl_int_neq0 : poly_example_int != 0.
-Proof. by rewrite -size_poly_eq0 size_poly_exmpl_int. Qed.
+Lemma poly_example_int_neq0 : poly_example_int != 0.
+Proof. by rewrite -size_poly_eq0 size_poly_example_int. Qed.
 
 Lemma poly_example_neq0 : poly_example != 0.
-Proof. by rewrite -size_poly_eq0 size_poly_exmpl. Qed.
+Proof. by rewrite -size_poly_eq0 size_poly_example. Qed.
 Hint Resolve poly_example_neq0 : core.
 
 Lemma poly_example_monic : poly_example \is monic.
-Proof. by rewrite monicE lead_coefE !pesimp size_poly_exmpl. Qed.
+Proof. by rewrite monicE lead_coefE !pesimp size_poly_example. Qed.
 Hint Resolve poly_example_monic : core.
 
-Lemma irreducible_exmpl : irreducible_poly poly_example.
+Lemma irreducible_example : irreducible_poly poly_example.
 Proof.
-pose coefE := (coefB, coefD, coefZ, coefC, coefX, coefXn).
 rewrite poly_exampleEint; apply: (@eisenstein 2) => // [|||i];
-  rewrite ?lead_coefE ?size_poly_exmpl_int ?coefE//.
+  rewrite ?lead_coefE ?size_poly_example_int ?pesimp//.
 by move: i; do 6!case=> //.
 Qed.
-Hint Resolve irreducible_exmpl : core.
+Hint Resolve irreducible_example : core.
 
-Lemma separable_exmpl : separable_poly poly_example.
+Lemma separable_example : separable_poly poly_example.
 Proof.
-apply/coprimepP => q /(irredp_XsubCP irreducible_exmpl) [//| eqq].
-have size_deriv_exmpl : size poly_example^`() = 5.
+apply/coprimepP => q /(irredp_XsubCP irreducible_example) [//| eqq].
+have size_deriv_example : size poly_example^`() = 5.
   rewrite !derivCE addr0 alg_polyC -scaler_nat /=.
   by rewrite size_addl ?size_scale ?size_opp ?size_polyXn ?size_polyC.
-by rewrite gtNdvdp -?size_poly_eq0 ?size_deriv_exmpl ?(eqp_size eqq) ?size_poly_exmpl.
+rewrite gtNdvdp -?size_poly_eq0 ?size_deriv_example//.
+by rewrite (eqp_size eqq) ?size_poly_example.
 Qed.
-Hint Resolve separable_exmpl : core.
+Hint Resolve separable_example : core.
 
-Lemma prime_exmpl : prime (size poly_example).-1.
-Proof. by rewrite size_poly_exmpl. Qed.
+Lemma prime_example : prime (size poly_example).-1.
+Proof. by rewrite size_poly_example. Qed.
 
 (* Using the package real_closed, we should be able to monitor the sign of    *)
 (* the derivative, and find that the polynomial has exactly three real roots. *)
@@ -1362,13 +1362,13 @@ Qed.
 Lemma size_example_roots : size example_roots = 5.
 Proof.
 have /(congr1 (fun p : {poly _} => size p)) := ratr_example_poly.
-by rewrite size_map_poly size_poly_exmpl size_prod_XsubC => -[].
+by rewrite size_map_poly size_poly_example size_prod_XsubC => -[].
 Qed.
 
 Lemma example_roots_uniq : uniq example_roots.
 Proof.
 rewrite -separable_prod_XsubC -ratr_example_poly.
-by rewrite separable_map separable_exmpl.
+by rewrite separable_map separable_example.
 Qed.
 
 Lemma deriv_poly_example : poly_example^`() = 5%:R *: 'X^4 - 4%:R%:P.
@@ -1381,43 +1381,30 @@ by rewrite deriv_poly_example !pesimp => /eqP; compute.
 Qed.
 Hint Resolve deriv_poly_example_neq0 : core.
 
-Definition alpha : algC := sqrtC (2%:R / sqrtC 5%:R).
+Definition alpha : algR := Num.sqrt (2%:R / Num.sqrt 5%:R).
 
 Lemma alpha_gt0 : alpha > 0.
-Proof. by rewrite sqrtC_gt0 mulr_gt0 ?invr_gt0 ?sqrtC_gt0 ?ltr0n. Qed.
-
-Lemma alpha_real : alpha \is Num.real.
-Proof. by rewrite ger0_real// (ltW alpha_gt0). Qed.
-Hint Resolve alpha_real : core.
-
-Local Notation alphaR := (in_algR alpha_real).
-
-Lemma root_deriv_poly_example (x : algC) : x \is Num.real ->
-  (root (poly_example^`() ^^ ratr) x) = ((x == alpha) || (x == - alpha)).
-Proof.
-move=> x_real; rewrite deriv_poly_example /root.
-rewrite rmorphB linearZ/= map_polyC/= map_polyXn !pesimp.
-rewrite -[5%:R]sqrtCK (exprM _ 2 2) -exprMn (natrX _ 2 2) subr_sqr.
-rewrite mulf_eq0 orbC gt_eqF /=; last first.
-  rewrite -[0](addr0) ler_lt_add// ?ltr0n//.
-  by rewrite mulr_ge0// ?sqrtC_ge0 ?ler0n// real_exprn_even_ge0.
-have sqrt5_neq0 : sqrtC (5%:R : algC) != 0.
-  by rewrite gt_eqF// sqrtC_gt0 ?ltr0n.
-rewrite subr_eq0 (can2_eq (mulKf _) (mulVKf _))// mulrC -subr_eq0.
-by rewrite -[X in _ - X]sqrtCK -/alpha subr_sqr mulf_eq0 subr_eq0 addr_eq0.
-Qed.
+Proof. by rewrite sqrtr_gt0 mulr_gt0 ?invr_gt0 ?sqrtr_gt0 ?ltr0n. Qed.
 
 Lemma rootsR_deriv_poly_example :
-  rootsR (poly_example^`() ^^ ratr) = [:: - alphaR; alphaR].
+  rootsR (poly_example^`() ^^ ratr) = [:: - alpha; alpha].
 Proof.
 apply: eq_sorted_lt; rewrite ?sorted_roots//.
-  by rewrite /= andbT -subr_gt0 opprK ?addr_gt0 ?ltEsub ?alpha_gt0.
+ by rewrite /= andbT -subr_gt0 opprK ?addr_gt0 ?alpha_gt0.
 move=> x; rewrite mem_rootsR ?map_poly_eq0// !inE -topredE/= orbC.
-rewrite -(mapf_root [rmorphism of algRval]) -map_poly_comp.
-by rewrite (eq_map_poly (fmorph_eq_rat _)) root_deriv_poly_example ?algRvalP.
+rewrite deriv_poly_example /root.
+rewrite rmorphB linearZ/= map_polyC/= map_polyXn !pesimp.
+rewrite -[5%:R]sqr_sqrtr ?ler0n// (exprM _ 2 2) -exprMn (natrX _ 2 2) subr_sqr.
+rewrite mulf_eq0 [_ + 2%:R == 0]gt_eqF ?orbF; last first.
+  by rewrite ltr_spaddr ?ltr0n// mulr_ge0 ?sqrtr_ge0// exprn_even_ge0.
+have sqrt5N0 : Num.sqrt (5%:R : algR) != 0 by rewrite gt_eqF// sqrtr_gt0 ?ltr0n.
+rewrite subr_eq0 (can2_eq (mulKf _) (mulVKf _))// mulrC -subr_eq0.
+rewrite -[X in _ - X]sqr_sqrtr; last first.
+  by rewrite mulr_ge0 ?invr_ge0 ?sqrtr_ge0 ?ler0n.
+by rewrite subr_sqr mulf_eq0 subr_eq0 addr_eq0.
 Qed.
 
-Lemma count_roots_ex : count (fun x => x \isn't Num.real) example_roots = 2.
+Lemma count_roots_ex : count [predC Creal] example_roots = 2.
 Proof.
 rewrite -!sum1_count; pose pR : {poly algR} := poly_example ^^ ratr.
 have pR0 : pR != 0 by rewrite map_poly_eq0.
@@ -1438,32 +1425,19 @@ rewrite -big_filter (perm_big (map algRval (rootsR pR))); last first.
 apply/eqP; rewrite sum1_size size_map eqn_leq.
 rewrite (leq_trans (size_root_leSderiv _))//=; last first.
   by rewrite deriv_map rootsR_deriv_poly_example.
-have pRN2 : Num.sg pR.[-2%:R] = -1.
-  apply: ltr0_sg; rewrite ltEsub/= -!horner_map/=.
-  rewrite -map_poly_comp (eq_map_poly (fmorph_eq_rat _)).
-  rewrite -(rmorph1 [rmorphism of ratr]) -rmorphD -rmorphN.
-  by rewrite horner_map ltrq0 !pesimp.
-have pRN1 : Num.sg pR.[-1%:R] =  1.
-  apply: gtr0_sg; rewrite ltEsub/= -!horner_map/=.
-  rewrite -map_poly_comp (eq_map_poly (fmorph_eq_rat _)).
-  by rewrite -(rmorphN1 [rmorphism of ratr]) horner_map ltr0q/= !pesimp.
-have pR1 : Num.sg pR.[1%:R] = -1.
-  apply: ltr0_sg; rewrite ltEsub/= -!horner_map/=.
-  rewrite -map_poly_comp (eq_map_poly (fmorph_eq_rat _)).
-  by rewrite -(rmorph1 [rmorphism of ratr]) horner_map ltrq0/= !pesimp.
-have pR2 : Num.sg pR.[2%:R] =  1.
-  apply: gtr0_sg; rewrite ltEsub/= -!horner_map/=.
-  rewrite -map_poly_comp (eq_map_poly (fmorph_eq_rat _)).
-  by rewrite -(rmorph1 [rmorphism of ratr]) -rmorphD horner_map ltr0q !pesimp.
-have [||x0 /andP[/= _ x0N1] rootx0] := @ivt_sign _ pR (- 2%:R) (- 1).
-- by rewrite -subr_ge0 opprK addKr ler01.
-- by rewrite pRN2 pRN1 mulN1r.
-have [||x1 /andP[/= x10 x11] rootx1] := @ivt_sign _ pR (-1) 1.
-- by rewrite -subr_ge0 opprK addr_ge0 ?ler01.
-- by rewrite pRN1 pR1 mulrN1.
-have [||x2 /andP[/= x21 _] rootx2] := @ivt_sign _ pR 1 2%:R.
-- by rewrite -subr_ge0 addrK ler01.
-- by rewrite pR1 pR2 mulN1r.
+have pRE x : Num.sg pR.[x%:~R] = locked ratr (Num.sg poly_example.[x%:~R]).
+  by rewrite -lock ratr_sg -horner_map/= ratr_int.
+have pN2 : Num.sg pR.[(- 2%:Z)%:~R] = - 1 by rewrite pRE !pesimp -lock rmorphN1.
+have pN1 : Num.sg pR.[(- 1%:Z)%:~R] =   1 by rewrite pRE !pesimp -lock rmorph1.
+have p1  : Num.sg pR.[1%:~R]        = - 1 by rewrite pRE !pesimp -lock rmorphN1.
+have p2  : Num.sg pR.[2%:~R]        =   1 by rewrite pRE !pesimp -lock rmorph1.
+have simp := (pN2, pN1, p1, p2, mulN1r, mulrN1).
+have [||x0 /andP[_ x0N1] rx0] := @ivt_sign _ pR (- 2%:R) (- 1); rewrite ?simp//.
+  by rewrite -subr_ge0 opprK addKr ler01.
+have [||x1 /andP[x10 x11] rx1] := @ivt_sign _ pR (-1) 1; rewrite ?simp//.
+  by rewrite -subr_ge0 opprK addr_ge0 ?ler01.
+have [||x2 /andP[/= x21 _] rx2] := @ivt_sign _ pR 1 2%:R; rewrite ?simp//.
+  by rewrite -subr_ge0 addrK ler01.
 have: sorted <%R [:: x0; x1; x2] by rewrite /= (lt_trans x0N1) ?(lt_trans x11).
 rewrite lt_sorted_uniq_le => /andP[uniqx012 _].
 apply: (@uniq_leq_size _ [:: x0; x1; x2]) => //.
@@ -1481,12 +1455,13 @@ have perm_rs : perm_eq (map iota rs) example_roots.
   apply: prod_XsubC_eq; rewrite -ratr_example_poly -map_prod_XsubC.
   by rewrite -poly_ex_eq_prod -map_poly_comp (eq_map_poly (fmorph_eq_rat _)).
 have rs_uniq : uniq rs.
-  by rewrite -separable_prod_XsubC -poly_ex_eq_prod separable_map separable_exmpl.
+  rewrite -separable_prod_XsubC -poly_ex_eq_prod.
+  by rewrite separable_map separable_example.
 move=> /(radical_solvable_ext charL (sub1v _)) /=.
 have gal1rs : galois 1 <<1 & rs>> by apply: (@PDTNRR.galois1K _ iota poly_example).
 rewrite /solvable_ext minGalois_id//.
-have := PDTNRR.isog_gal_perm irreducible_exmpl rs_uniq poly_ex_eq_prod _.
-move=> /(_ iota); rewrite size_poly_exmpl => /(_ isT)/(_ _)/isog_sol->//.
+have := PDTNRR.isog_gal_perm irreducible_example rs_uniq poly_ex_eq_prod _.
+move=> /(_ iota); rewrite size_poly_example => /(_ isT)/(_ _)/isog_sol->//.
   by move=> /andP[_ /not_solvable_Sym]; rewrite card_ord/=; apply.
 by rewrite -(count_map _ [predC Creal]) (seq.permP perm_rs) count_roots_ex.
 Qed.
