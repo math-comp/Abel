@@ -10,7 +10,7 @@ dev-repo: "git+https://github.com/math-comp/abel.git"
 bug-reports: "https://github.com/math-comp/abel/issues"
 license: "CECILL-B"
 
-synopsis: "Abel Ruffini's theorem"
+synopsis: "Abel - Ruffini's theorem"
 description: """
 This repository contains a proof of Abel - Galois Theorem
 (equivalence between being solvable by radicals and having a

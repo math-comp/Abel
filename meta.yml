@@ -7,7 +7,7 @@ action: true
 coqdoc: false
 
 synopsis: >-
-  Abel Ruffini's theorem
+  Abel - Ruffini's theorem
 description: |-
   This repository contains a proof of Abel - Galois Theorem
   (equivalence between being solvable by radicals and having a
