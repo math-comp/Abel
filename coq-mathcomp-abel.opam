@@ -8,12 +8,15 @@ version: "dev"
 homepage: "https://github.com/math-comp/abel"
 dev-repo: "git+https://github.com/math-comp/abel.git"
 bug-reports: "https://github.com/math-comp/abel/issues"
-
+license: "CECILL-B"
 
 synopsis: "Abel Ruffini's theorem"
 description: """
-This repository contains a proof of Abel Ruffini Theorem in the
-Coq proof-assistant and using the Mathematical Components library."""
+This repository contains a proof of Abel - Galois Theorem
+(equivalence between being solvable by radicals and having a
+solvable Galois group) and Abel - Ruffini Theorem (unsolvability of
+quintic equations) in the Coq proof-assistant and using the
+Mathematical Components library."""
 
 build: [make "-j%{jobs}%" ]
 install: [make "install"]

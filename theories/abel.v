@@ -40,6 +40,10 @@ Local Open Scope ring_scope.
 
 Local Notation "p ^^ f" := (map_poly f p)
   (at level 30, f at level 30, format "p  ^^  f").
+Local Notation "2" := 2%:R : ring_scope.
+Local Notation "3" := 3%:R : ring_scope.
+Local Notation "4" := 4%:R : ring_scope.
+Local Notation "5" := 5%:R : ring_scope.
 
 Section RadicalExtension.
 
@@ -1038,7 +1042,7 @@ Hypothesis rp'_uniq : uniq rp'.
 Hypothesis ratr_p' : map_poly ratr p = \prod_(x <- rp') ('X - x%:P).
 Let d := (size p).-1.
 Hypothesis d_prime : prime d.
-Hypothesis count_rp' : count [pred x | iota x \isn't Num.real] rp' = 2.
+Hypothesis count_rp' : count [pred x | iota x \isn't Num.real] rp' = 2%N.
 
 Let rp := [seq x <- rp' | iota x \isn't Num.real]
           ++ [seq x <- rp' | iota x \is Num.real].
@@ -1290,11 +1294,14 @@ Module PDTNRR := PrimeDegreeTwoNonRealRoots.
 
 Section Example1.
 
-Definition poly_example_int : {poly int} := 'X^5 - 4%:R *: 'X + 2%:R%:P.
-Definition poly_example : {poly rat} := 'X^5 - 4%:R *: 'X + 2%:R%:P.
+Definition poly_example_int : {poly int} := 'X^5 - 4 *: 'X + 2.
+Definition poly_example : {poly rat} := 'X^5 - 4 *: 'X + 2.
 
 Local Definition pesimp := (coefD, coefN, coefB, coefZ, coefXn, coefX, coefC,
   hornerD, hornerN, hornerC, hornerZ, hornerX, hornerXn, rmorph_nat).
+
+Lemma polyCn (R : ringType) n : n%:R%:P = n%:R :> {poly R}.
+Proof. by rewrite rmorph_nat. Qed.
 
 Lemma poly_exampleEint : poly_example = map_poly intr poly_example_int.
 Proof.
@@ -1305,13 +1312,13 @@ Qed.
 Lemma size_poly_example_int : size poly_example_int = 6.
 Proof.
 rewrite /poly_example_int -addrA size_addl ?size_polyXn//.
-by rewrite size_addl ?size_opp ?size_scale ?size_polyX ?size_polyC.
+by rewrite size_addl ?size_opp ?size_scale ?size_polyX -?polyCn ?size_polyC.
 Qed.
 
 Lemma size_poly_example : size poly_example = 6.
 Proof.
 rewrite /poly_example -addrA size_addl ?size_polyXn//.
-by rewrite size_addl ?size_opp ?size_scale ?size_polyX ?size_polyC.
+by rewrite size_addl ?size_opp ?size_scale ?size_polyX -?polyCn ?size_polyC.
 Qed.
 
 Lemma poly_example_int_neq0 : poly_example_int != 0.
@@ -1336,8 +1343,8 @@ Hint Resolve irreducible_example : core.
 Lemma separable_example : separable_poly poly_example.
 Proof.
 apply/coprimepP => q /(irredp_XsubCP irreducible_example) [//| eqq].
-have size_deriv_example : size poly_example^`() = 5.
-  rewrite !derivCE addr0 alg_polyC -scaler_nat /=.
+have size_deriv_example : size poly_example^`() = 5%N.
+  rewrite !derivCE addr0 alg_polyC -scaler_nat addr0.
   by rewrite size_addl ?size_scale ?size_opp ?size_polyXn ?size_polyC.
 rewrite gtNdvdp -?size_poly_eq0 ?size_deriv_example//.
 by rewrite (eqp_size eqq) ?size_poly_example.
@@ -1359,7 +1366,7 @@ rewrite /example_roots; case: closed_field_poly_normal => //= rs ->.
 by rewrite lead_coef_map/= (eqP poly_example_monic) rmorph1 scale1r.
 Qed.
 
-Lemma size_example_roots : size example_roots = 5.
+Lemma size_example_roots : size example_roots = 5%N.
 Proof.
 have /(congr1 (fun p : {poly _} => size p)) := ratr_example_poly.
 by rewrite size_map_poly size_poly_example size_prod_XsubC => -[].
@@ -1372,7 +1379,7 @@ by rewrite separable_map separable_example.
 Qed.
 
 Lemma deriv_poly_example : poly_example^`() = 5%:R *: 'X^4 - 4%:R%:P.
-Proof. by rewrite /poly_example !derivE addr0 alg_polyC scaler_nat. Qed.
+Proof. by rewrite /poly_example !derivE addr0 alg_polyC scaler_nat ?addr0. Qed.
 
 Lemma deriv_poly_example_neq0 : poly_example^`() != 0.
 Proof.
@@ -1404,11 +1411,11 @@ rewrite -[X in _ - X]sqr_sqrtr; last first.
 by rewrite subr_sqr mulf_eq0 subr_eq0 addr_eq0.
 Qed.
 
-Lemma count_roots_ex : count [predC Creal] example_roots = 2.
+Lemma count_roots_ex : count [predC Creal] example_roots = 2%N.
 Proof.
 rewrite -!sum1_count; pose pR : {poly algR} := poly_example ^^ ratr.
 have pR0 : pR != 0 by rewrite map_poly_eq0.
-suff cR : (\sum_(j <- example_roots | j \is Num.real) 1)%N = 3.
+suff cR : (\sum_(j <- example_roots | j \is Num.real) 1)%N = 3%N.
   have := size_example_roots; rewrite -sum1_size (bigID (mem Num.real))/=.
   by rewrite cR => -[->].
 rewrite -big_filter (perm_big (map algRval (rootsR pR))); last first.
@@ -1445,7 +1452,7 @@ by move=> x; rewrite !inE => /or3P[]/eqP->/=; rewrite mem_rootsR.
 Qed.
 
 Lemma example_not_solvable_by_radicals :
-  ~ solvable_by_radical_poly ('X^5 - 4%:R *: 'X + 2%:Q%:P).
+  ~ solvable_by_radical_poly ('X^5 - 4 *: 'X + 2 : {poly rat}).
 Proof.
 move=> /(solvable_poly_rat poly_example_neq0)[L [iota [rs []]]].
 have charL := char_ext L.
