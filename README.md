@@ -65,7 +65,7 @@ make install
   + `radical_solvable_ext` (no mention of roots of unity),
   + `AbelGalois`, (equivalence obtained from the above two, requires
   roots of unity), and consequences on solvability of polynomial
-  + and their consequence on the example polynomial X⁵ -4X + 2X:
+  + and their consequence on the example polynomial X⁵ -4X + 2:
   `example_not_solvable_by_radicals`,
 
 - `xmathcomp/various.v` contains various (rather straightforward)
