@@ -637,27 +637,34 @@ Qed.
 Lemma reflexiveW T (r : rel T) : reflexive r -> forall x y, x = y -> r x y.
 Proof. by move=> ? ? ? ->. Qed.
 
+Lemma normalField_aimg (K : {subfield L}) : (K <= E)%VS ->
+   normalField (iota @: K) (iota @: E) = normalField K E.
+Proof.
+move=> KE; have iotaKS : (iota @: K <= iota @: E)%VS by rewrite limgS.
+apply/splitting_normalField/splitting_normalField => //= -[p [pK [rs peq Krs]]].
+  have /polyOver_img [q qK pE] := pK.
+  have /subset_limgP [rs' _ rsE] : {subset rs <= (iota @: E)%VS}.
+    by rewrite -Krs; apply/seqv_sub_adjoin.
+  exists q => //; exists rs'.
+    by have := peq; rewrite pE rsE -map_prod_XsubC/= eqp_map.
+  by do [rewrite rsE -aimg_adjoin_seq => /eqP;
+         rewrite eq_limg_ker0// => /eqP] in Krs.
+exists (map_poly iota p) => //; first by rewrite mapf_polyOver.
+by apply/splittingFieldFor_img; exists rs.
+Qed.
+
 Lemma galois_aimg (K : {subfield L}) :
    galois (iota @: K) (iota @: E) = galois K E.
 Proof.
-apply/splitting_galoisField/splitting_galoisField => -[p [pK sep [rs peq Krs]]].
-  have /polyOver_img [q qK pE] := pK.
-  exists q; split => //; first by have := sep; rewrite pE separable_map.
-  have /subset_limgP [rs' _ rsE] : {subset rs <= (iota @: E)%VS}.
-    by rewrite -Krs; apply/seqv_sub_adjoin.
-  exists rs'; first by have := peq; rewrite pE rsE -map_prod_XsubC/= eqp_map.
-  by do [rewrite rsE -aimg_adjoin_seq => /eqP;
-         rewrite eq_limg_ker0// => /eqP] in Krs.
-exists (map_poly iota p); rewrite separable_map sep; split=> //.
-  by rewrite mapf_polyOver.
-by apply/splittingFieldFor_img; exists rs.
+rewrite /galois limg_ker0 ?AHom_lker0// separable_img.
+by case: (boolP (K <= E)%VS) => // /normalField_aimg->.
 Qed.
 
 End map_gal.
 
 Import AEnd_FinGroup.
 
-Section minGalois.
+Section normalClosure.
 Variable (F0 : fieldType) (L : splittingFieldType F0).
 Implicit Types (K E F : {subfield L}).
 
@@ -669,60 +676,82 @@ suff /eq_in_limg->: {in E, s =1 \1%VF} by rewrite lim1g.
 by move=> x xE; rewrite lfunE/= s_id.
 Qed.
 
-Definition minGalois (U V : {vspace L}) :=
+Definition normalClosure (U V : {vspace L}) :=
   (\big[@prodv _ _/1]_(s in kAEndf U) (s @: (U * V)))%VS.
 
-Definition minGalois_is_aspace (E F : {subfield L}) : is_aspace (minGalois E F).
+Definition normalClosure_is_aspace E F : is_aspace (normalClosure E F).
 Proof.
-by rewrite /minGalois big_prodv_eq_aspace; case: (\big[_/_]_(_ in _) _).
+by rewrite /normalClosure big_prodv_eq_aspace; case: (\big[_/_]_(_ in _) _).
 Qed.
-Canonical minGalois_aspace (E F : {subfield L}) :=
-  ASpace (minGalois_is_aspace E F).
+Canonical normalClosure_aspace E F := ASpace (normalClosure_is_aspace E F).
 
-Let prodv_sub_minGalois (E F : {subfield L}) : (E * F <= minGalois E F)%VS.
+Lemma prodv_sub_normalClosure E F : (E * F <= normalClosure E F)%VS.
 Proof.
-rewrite /minGalois (bigD1 \1%AF) ?group1//= lim1g.
+rewrite /normalClosure (bigD1 \1%AF) ?group1//= lim1g.
 by rewrite big_prodv_eq_aspace field_subvMr.
 Qed.
 
-Lemma sub_minGalois (E F : {subfield L}) : (F <= minGalois E F)%VS.
-Proof. exact: subv_trans (field_subvMl _ _) (prodv_sub_minGalois _ _). Qed.
-Hint Resolve sub_minGalois : core.
-
-Lemma minGalois_galois (E F : {subfield L}) : separable E F ->
-  galois E (minGalois E F).
+Lemma normalClosureSl E F : (E <= normalClosure E F)%VS.
 Proof.
-move=> sepEF; apply/and3P; split.
-- by rewrite (subv_trans (field_subvMr _ _) (prodv_sub_minGalois _ _)).
-- rewrite separable_big_prodv big_andE; apply/forall_inP => g ggal/=.
-  by rewrite separable_imgr// separable_prodv separable_refl.
+by rewrite (subv_trans (field_subvMr _ _) (prodv_sub_normalClosure _ _)).
+Qed.
+Hint Resolve normalClosureSl : core.
+
+Lemma normalClosureSr E F : (F <= normalClosure E F)%VS.
+Proof. exact: subv_trans (field_subvMl _ _) (prodv_sub_normalClosure _ _). Qed.
+Hint Resolve normalClosureSr : core.
+
+Lemma normalClosure_normal E F : normalField E (normalClosure E F).
+Proof.
 apply/'forall_implyP => s s_end; apply/eqP.
-rewrite /minGalois (big_morph _ (aimgM _) (aimg1 _)).
+rewrite /normalClosure (big_morph _ (aimgM _) (aimg1 _)).
 under eq_bigr => s' do rewrite -limg_comp.
 under eq_bigr => s' do have -> : (s \o s')%VF = 'R%act s' s by [].
 have /(reindex_astabs 'R _) : s \in ('N(kAEndf E | 'R))%g by rewrite astabsR/=.
 by move/(_ _ _ _ (fun i => i @: (E * F))%AS); rewrite !big_prodv_eq_aspace => <-.
 Qed.
-Hint Resolve minGalois_galois : core.
+Hint Resolve normalClosure_normal : core.
 
-Lemma minGalois_min (E F K' : {subfield L}) : (F <= K')%VS -> galois E K' ->
-  (minGalois E F <= K')%VS.
+Lemma normalClosure_separable E F : separable E F ->
+   separable E (normalClosure E F).
 Proof.
-move=> FK' /and3P[EK' sepEK' /'forall_implyP/(_ _ _)/eqP/= sK'].
+move=> sepEF; rewrite separable_big_prodv big_andE; apply/forall_inP => g ggal.
+by rewrite separable_imgr// separable_prodv separable_refl.
+Qed.
+
+Lemma normalClosure_galois E F : separable E F -> galois E (normalClosure E F).
+Proof.
+move=> sepEF; rewrite /galois.
+by rewrite normalClosureSl normalClosure_separable// normalClosure_normal.
+Qed.
+Hint Resolve normalClosure_galois : core.
+
+Lemma normalClosureP E F K' : (E <= K')%VS -> (F <= K')%VS ->
+  normalField E K' -> (normalClosure E F <= K')%VS.
+Proof.
+move=> EK' FK' /'forall_implyP/(_ _ _)/eqP/= sK'.
 apply/big_prod_subfieldP => /= u uEF; rewrite rpred_prod// => s s_end.
 by apply/subvP: (uEF s s_end); rewrite -(sK' _ s_end) limgS// prodv_sub.
 Qed.
 
-Lemma minGalois_id (E F : {subfield L}) : galois E F -> minGalois E F = F.
+Lemma galoisClosureP E F K' : (F <= K')%VS ->
+  galois E K' -> (normalClosure E F <= K')%VS.
+Proof. by move=> EK' /and3P[FK' _ ] /normalClosureP; apply. Qed.
+
+Lemma normalClosure_id E F : (E <= F)%VS -> normalField E F ->
+   normalClosure E F = F.
 Proof.
-by move=> gEF; apply/eqP; rewrite eqEsubv/= sub_minGalois minGalois_min.
+by move=> EF nEF; apply/eqP; rewrite eqEsubv/= normalClosureSr normalClosureP.
 Qed.
 
-Definition solvable_ext (E F : {vspace L}) :=
-  separable E F && solvable 'Gal(minGalois E F / E).
+Lemma galoisClosure_id E F : galois E F -> normalClosure E F = F.
+Proof. by move=> /and3P[EF _ /normalClosure_id->]. Qed.
 
-Lemma char0_solvable_extE (E F : {subfield L}) : [char L] =i pred0 ->
-  solvable_ext E F = solvable 'Gal(minGalois E F / E).
+Definition solvable_ext (E F : {vspace L}) :=
+  separable E F && solvable 'Gal(normalClosure E F / E).
+
+Lemma char0_solvable_extE E F : [char L] =i pred0 ->
+  solvable_ext E F = solvable 'Gal(normalClosure E F / E).
 Proof. by rewrite /solvable_ext => /char0_separable->. Qed.
 
 Lemma solvable_extP (E F : {subfield L}) :
@@ -731,10 +760,11 @@ Lemma solvable_extP (E F : {subfield L}) :
           (solvable_ext E F).
 Proof.
 apply: (iffP idP) => [/andP[sepEF solEF]|[K /and3P[FK galEK solEK]]].
-  by exists [aspace of minGalois E F]; rewrite minGalois_galois ?sub_minGalois.
-have MsubK := minGalois_min FK galEK; rewrite /solvable_ext.
+  exists [aspace of normalClosure E F].
+  by rewrite normalClosure_galois ?normalClosureSr.
+have MsubK := galoisClosureP FK galEK; rewrite /solvable_ext.
 have sepEF : separable E F by case/and3P: galEK => [_ /separableSr->].
-have /and3P [EsubM _ EnormM] := (minGalois_galois sepEF).
+have /and3P [EsubM _ EnormM] := (normalClosure_galois sepEF).
 by rewrite -(isog_sol (normalField_isog galEK _ _)) ?EsubM ?quotient_sol ?andbT.
 Qed.
 
@@ -742,10 +772,10 @@ Lemma solvable_prodv (k E F : {subfield L}) :
   (k <= F)%VS -> solvable_ext k E -> solvable_ext F (E * F)%AS.
 Proof.
 move=> kF /andP[sepkE solkE]; apply/solvable_extP => //.
-exists ([aspace of minGalois k E] * F)%AS.
-rewrite (@galois_prodvr _ _ k) ?minGalois_galois ?prodvSl ?sub_minGalois//=.
-rewrite (isog_sol (galois_isog (minGalois_galois _) _))//.
-by rewrite (solvableS _ solkE)// galS// subv_cap kF galois_subW ?minGalois_galois.
+exists ([aspace of normalClosure k E] * F)%AS.
+rewrite (@galois_prodvr _ _ k) ?normalClosure_galois ?prodvSl ?sub_normalClosure//=.
+rewrite (isog_sol (galois_isog (normalClosure_galois _) _))//.
+by rewrite (solvableS _ solkE)// galS// subv_cap kF galois_subW ?normalClosure_galois.
 Qed.
 
 Import AEnd_FinGroup.
@@ -757,21 +787,21 @@ move=> /andP[kF FE] solkF solFE.
 move: (solkF) (solFE) => /andP[sepkF solmkF] /andP[sepFE solmFE].
 have sepkE := separable_trans sepFE.
 have /solvable_extP [/= l /and3P[EKl galKl subl]] :=
-  solvable_prodv (sub_minGalois k F) solFE.
-apply/solvable_extP; exists [aspace of minGalois k l] => /=.
-have galkK := minGalois_galois sepkF.
-set K := minGalois k F in galkK galKl subl EKl *.
+  solvable_prodv (normalClosureSr k F) solFE.
+apply/solvable_extP; exists [aspace of normalClosure k l] => /=.
+have galkK := normalClosure_galois sepkF.
+set K := normalClosure k F in galkK galKl subl EKl *.
 have /and3P [kK sepkK normkK] := galkK.
 have /and3P [Kl sepKl normKl] := galKl.
 have sepkl := separable_trans sepkK sepKl.
 have kl := subv_trans kK Kl.
-rewrite minGalois_galois ?(subv_trans _ (sub_minGalois _ _))//=; last first.
+rewrite normalClosure_galois ?(subv_trans _ (normalClosureSr _ _))//=; last first.
   by rewrite (subv_trans _ EKl)//= field_subvMr.
-have KM : (K <= minGalois k l)%VS := subv_trans Kl (sub_minGalois _ _).
-have kKM : (k <= K <= minGalois k l)%VS by rewrite kK KM.
+have KM : (K <= normalClosure k l)%VS := subv_trans Kl (normalClosureSr _ _).
+have kKM : (k <= K <= normalClosure k l)%VS by rewrite kK KM.
 rewrite (series_sol (normalField_normal _ normkK))//= -/K.
-rewrite (isog_sol (normalField_isog _ _ _)) ?minGalois_galois//=.
-rewrite [X in _ && X]solmkF andbT /minGalois.
+rewrite (isog_sol (normalField_isog _ _ _)) ?normalClosure_galois//=.
+rewrite [X in _ && X]solmkF andbT /normalClosure.
 under eq_bigr do rewrite /= (prodv_idPr _)//.
 rewrite big_prodv_eq_aspace big_enum_val/=.
 have /'forall_implyP/(_ _ _)/eqP/= sK := galois_normalW galkK.
@@ -789,23 +819,26 @@ move: (enum_val _) (enum_valP i) => s s_end; rewrite -(sK _ s_end).
 by rewrite -img_map_gal/= morphim_sol.
 Qed.
 
-End minGalois.
+End normalClosure.
 
-Lemma aimg_minGalois (F0 : fieldType) (L L' : splittingFieldType F0)
+Hint Resolve normalClosureSl : core.
+Hint Resolve normalClosureSr : core.
+Hint Resolve normalClosure_normal : core.
+
+Lemma aimg_normalClosure (F0 : fieldType) (L L' : splittingFieldType F0)
   (iota : 'AHom(L, L')) (K E : {subfield L}) :
-  separable K E ->
-  (iota @: minGalois K E)%VS = minGalois (iota @: K) (iota @: E).
+  (iota @: normalClosure K E)%VS = normalClosure (iota @: K) (iota @: E).
 Proof.
-move=> sepKE; set G' := minGalois (iota @: _) _; have iK0 := AHom_lker0 iota.
-have G'sub : (G' <= iota @: minGalois K E)%VS.
-  rewrite minGalois_min ?limgS/= ?sub_minGalois//.
-  by rewrite galois_aimg ?minGalois_galois// => n; rewrite char_lalg charF0.
-apply/eqP; rewrite eqEsubv G'sub /G'.
-have /sub_aimgP[G GE] : (G' <= iota @: fullv)%VS.
-  by apply: subv_trans G'sub _; rewrite limgS ?subvf.
-rewrite -GE limgS// minGalois_min//.
-  by rewrite -(limg_ker0 _ _ iK0) GE/= sub_minGalois.
-by rewrite -(galois_aimg iota) GE minGalois_galois // separable_img.
+set M' := normalClosure (iota @: _) _; have iK0 := AHom_lker0 iota.
+have M'sub : (M' <= iota @: normalClosure K E)%VS.
+  by rewrite normalClosureP ?limgS//= normalField_aimg/=.
+apply/eqP; rewrite eqEsubv M'sub /M'.
+have /sub_aimgP[/= M ME] : (M' <= iota @: fullv)%VS.
+  by apply: subv_trans M'sub _; rewrite limgS ?subvf.
+have KM : (K <= M)%VS by rewrite -(limg_ker0 _ _ iK0) ME/= normalClosureSl.
+rewrite -ME limgS// normalClosureP//.
+  by rewrite -(limg_ker0 _ _ iK0) ME/= normalClosureSr.
+by rewrite -(normalField_aimg iota)// ME// normalClosure_normal.
 Qed.
 
 Lemma solvable_ext_img (F0 : fieldType) (L L' : splittingFieldType F0)
@@ -813,7 +846,7 @@ Lemma solvable_ext_img (F0 : fieldType) (L L' : splittingFieldType F0)
   solvable_ext (iota @: E) (iota @: F) = solvable_ext E F.
 Proof.
 rewrite /solvable_ext separable_img; have [sepEF|]//= := boolP (separable _ _).
-by rewrite -aimg_minGalois// -img_map_gal injm_sol ?map_gal_inj ?subsetT.
+by rewrite -aimg_normalClosure// -img_map_gal injm_sol ?map_gal_inj ?subsetT.
 Qed.
 
 Section RadicalRoots.

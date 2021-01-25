@@ -455,13 +455,13 @@ End Part1c.
 (* Main lemma of part 1 *)
 Lemma ext_solvable_by_radical (F0 : fieldType) (L : splittingFieldType F0)
     (r : L) (E F : {subfield L}) :
-    (\dim_E (minGalois E F)).-primitive_root r ->
+    (\dim_E (normalClosure E F)).-primitive_root r ->
   solvable_ext E F -> solvable_by radical E F.
 Proof.
 move=> rprim /andP[sepEF].
-move=> /(galois_solvable_by_radical (minGalois_galois sepEF)).
+move=> /(galois_solvable_by_radical (normalClosure_galois sepEF)).
 move=> /(_ r rprim) [M EM EFM]; exists M => //.
-by rewrite (subv_trans _ EFM) ?sub_minGalois.
+by rewrite (subv_trans _ EFM) ?normalClosureSr.
 Qed.
 
 End Part1.
@@ -535,7 +535,7 @@ Qed.
 (** Ok **)
 Lemma AbelGalois  (F0 : fieldType) (L : splittingFieldType F0) (r : L)
   (E F : {subfield L}) : (E <= F)%VS -> [char L] =i pred0 ->
-  (\dim_E (minGalois E F)).-primitive_root r ->
+  (\dim_E (normalClosure E F)).-primitive_root r ->
   (solvable_by radical E F) <-> (solvable_ext E F).
 Proof.
 move=> EF charL rprim; split; first exact: radical_solvable_ext.
@@ -547,7 +547,7 @@ End Abel.
 Definition solvable_by_radical_poly (F : fieldType) (p : {poly F}) :=
   forall (L : splittingFieldType F) (rs : seq L),
     p ^^ in_alg L %= \prod_(x <- rs) ('X - x%:P) ->
-    forall r : L, (\dim (minGalois 1%VS <<1 & rs>>%VS)).-primitive_root r ->
+    forall r : L, (\dim (normalClosure 1%VS <<1 & rs>>%VS)).-primitive_root r ->
     solvable_by radical 1%AS  <<1 & rs>>%AS.
 
 Definition solvable_ext_poly (F : fieldType) (p : {poly F}) :=
@@ -564,16 +564,16 @@ move=> charF; split=> + L rs pE => [/(_ L rs pE) + r r_prim|solrs]/=.
   by rewrite dimv1 divn1 => /(_ r_prim).
 have charL : [char L] =i pred0 by move=> i; rewrite char_lalg.
 have seprs: separable 1 <<1 & rs>> by apply/char0_separable.
-pose n := \dim (minGalois 1 <<1 & rs>>).
+pose n := \dim (normalClosure 1 <<1 & rs>>).
 have nFN0 : n%:R != 0 :> F by have /charf0P-> := charF; rewrite -lt0n adim_gt0.
 apply: (@classic_cycloSplitting _ L _ nFN0) => - [L' [r [iota rL' r_prim]]].
 rewrite -(solvable_ext_img iota).
 have charL' : [char L'] =i pred0 by move=> i; rewrite char_lalg.
 apply/(@AbelGalois _ _ r) => //.
 - by rewrite limgS// sub1v.
-- by rewrite -aimg_minGalois //= aimg1 dimv1 divn1 dim_aimg.
+- by rewrite -aimg_normalClosure //= aimg1 dimv1 divn1 dim_aimg.
 have /= := solrs L' (map iota rs) _ r.
-rewrite -(aimg1 iota) -!aimg_adjoin_seq -aimg_minGalois// dim_aimg.
+rewrite -(aimg1 iota) -!aimg_adjoin_seq -aimg_normalClosure// dim_aimg.
 apply => //; have := pE; rewrite -(eqp_map [rmorphism of iota]).
 by rewrite -map_poly_comp/= (eq_map_poly (rmorph_alg _)) map_prod_XsubC.
 Qed.
@@ -602,13 +602,11 @@ apply: classic_bind (@classic_fieldExtFor _ _ (p : {poly F^o}) p_neq0).
 move=> L rs prs; apply: sol_p => -[M [rs' [prs']]].
 have charL : [char L] =i pred0 by move=> n; rewrite char_lalg charF.
 have charM : [char M] =i pred0 by move=> n; rewrite char_lalg charF.
-rewrite !char0_solvable_extE//= !minGalois_id//; last 2 first.
-- apply/char0_galois; rewrite ?sub1v//.
-  apply/splitting_normalField; rewrite ?sub1v//.
+rewrite !char0_solvable_extE//= !normalClosure_id ?sub1v//; last 2 first.
+- apply/splitting_normalField; rewrite ?sub1v//.
   exists (p ^^ in_alg L); first by apply/polyOver1P; exists p.
   by exists rs => //.
-- apply/char0_galois; rewrite ?sub1v//.
-  apply/splitting_normalField; rewrite ?sub1v//.
+- apply/splitting_normalField; rewrite ?sub1v//.
   exists (p ^^ in_alg M); first by apply/polyOver1P; exists p.
   by exists rs' => //.
 pose K := [fieldExtType F of subvs_of <<1 & rs>>%VS].
@@ -663,7 +661,7 @@ have splitL : SplittingField.axiom L.
   apply/eqP; rewrite eqEsubv sub1v andbT; apply/subvP => v.
   by move=> /memv_imgP[u _ ->]; rewrite fF/= rpredZ// rpred1.
 pose S := SplittingFieldType F L splitL.
-pose d := \dim (minGalois 1 <<1 & (rs : seq S)>>).
+pose d := \dim (normalClosure 1 <<1 & (rs : seq S)>>).
 have /classic_cycloSplitting-/(_ S) : d%:R != 0 :> F.
   by have /charf0P-> := charF0; rewrite -lt0n adim_gt0.
 apply/classic_bind => -[C [r [g rg r_prim]]]; apply/classicW.
@@ -674,7 +672,7 @@ have charL : [char L] =i pred0 by move=> i; rewrite char_lalg.
 exists C, (map g rs); split => //=.
 apply: (sol_p C (map g rs) _ r) => //.
 rewrite -(aimg1 g) -aimg_adjoin_seq.
-by rewrite -aimg_minGalois ?char0_separable ?dim_aimg.
+by rewrite -aimg_normalClosure ?char0_separable ?dim_aimg.
 Qed.
 
 Import GRing.Theory Order.Theory Num.Theory.
@@ -697,7 +695,7 @@ have prs : p ^^ in_alg L %= \prod_(z <- rs) ('X - z%:P).
 have splitL : SplittingField.axiom L.
   by exists (p ^^ in_alg L); [by apply/polyOver1P; exists p | exists rs].
 pose S := SplittingFieldType rat L splitL.
-pose d := \dim (minGalois 1 <<1 & (rs : seq S)>>).
+pose d := \dim (normalClosure 1 <<1 & (rs : seq S)>>).
 have d_gt0 : (d > 0)%N by rewrite adim_gt0.
 have [ralg ralg_prim] := C_prim_root_exists d_gt0.
 have [L' [iota' [[]//= r rs' [iotar iota_rs' rrsf]]]] :=
@@ -719,7 +717,7 @@ have splitS' : splittingFieldFor 1 (p ^^ in_alg S') <<1 & rs'>> by exists rs'.
 have [f /= imgf] := splitting_ahom splitS splitS'.
 exists S', iota', rs'; split => //; apply: (p_sol S' rs' prs' r).
 have charS : [char S] =i pred0 by move=> i; rewrite char_lalg char_num.
-by rewrite -imgf -(aimg1 f) -aimg_minGalois ?char0_separable// dim_aimg/= -rsf.
+by rewrite -imgf -(aimg1 f) -aimg_normalClosure ?char0_separable// dim_aimg/= -rsf.
 Qed.
 
 Open Scope ring_scope.
@@ -1467,7 +1465,7 @@ have rs_uniq : uniq rs.
   by rewrite separable_map separable_example.
 move=> /(radical_solvable_ext charL (sub1v _)) /=.
 have gal1rs : galois 1 <<1 & rs>> by apply: (@PDTNRR.galois1K _ iota poly_example).
-rewrite /solvable_ext minGalois_id//.
+rewrite /solvable_ext galoisClosure_id//.
 have := PDTNRR.isog_gal_perm irreducible_example rs_uniq poly_ex_eq_prod _.
 move=> /(_ iota); rewrite size_poly_example => /(_ isT)/(_ _)/isog_sol->//.
   by move=> /andP[_ /not_solvable_Sym]; rewrite card_ord/=; apply.
