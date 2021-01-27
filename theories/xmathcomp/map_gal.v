@@ -17,28 +17,37 @@ Section Prodv.
 Import AEnd_FinGroup.
 
 Variables (F0 : fieldType) (L : splittingFieldType F0).
+Implicit Types (K E F : {subfield L}).
 
-Lemma galois_subW (E F : {subfield L}) : galois E F -> (E <= F)%VS.
-Proof. by case/andP. Qed.
+Lemma galois_subW E F : galois E F -> (E <= F)%VS. Proof. by case/andP. Qed.
 
-Lemma galois_normalW (E F : {subfield L}) : galois E F -> (normalField E F)%VS.
+Lemma galois_normalW E F : galois E F -> (normalField E F)%VS.
 Proof. by case/and3P. Qed.
 
-Lemma galois_separableW (E F : {subfield L}) : galois E F -> (separable E F)%VS.
+Lemma galois_separableW E F : galois E F -> (separable E F)%VS.
 Proof. by case/and3P. Qed.
 
-Lemma normalField_refl (E : {subfield L}) : normalField E E.
+Lemma normalField_refl E : normalField E E.
 Proof.
 apply/forallP => /= u; apply/implyP; rewrite in_set.
 by move=> /andP[/andP[_ /fixedSpace_limg->]].
 Qed.
 Hint Resolve normalField_refl : core.
 
-Lemma galois_refl (E : {subfield L}) : galois E E.
+Lemma galois_refl E : galois E E.
 Proof. by rewrite /galois subvv separable_refl normalField_refl. Qed.
 
-Lemma gal1 (K : {subfield L}) (g : gal_of K) : g \in 'Gal(K / 1%VS)%g.
+Lemma gal1 K (g : gal_of K) : g \in 'Gal(K / 1%VS)%g.
 Proof. by rewrite gal_kHom ?sub1v// k1HomE ahomWin. Qed.
+
+Lemma Fadjoin_sub E x y : x \in <<E; y>>%VS -> (<<E; x>> <= <<E; y>>)%VS.
+Proof. by move=> xEy; apply/FadjoinP; rewrite subv_adjoin. Qed.
+
+Lemma galvv E : ('Gal(E / E) = 1)%g.
+Proof.
+apply/trivgP/subsetP=> u uG; rewrite inE.
+by apply/gal_eqP => x xE; rewrite gal_id (fixed_gal _ uG).
+Qed.
 
 Program Canonical prodv_aspace_law :=
   @Monoid.Law {subfield L} 1%AS (@prodv_aspace _ _) _ _ _.
@@ -55,7 +64,7 @@ Lemma big_prodv_eq_aspace I (r : seq I) (P : {pred I}) (F : I -> {aspace L}) :
   (\big[@prodv_aspace _ _/1%AS]_(i <- r | P i) F i).
 Proof. by elim/big_rec2: _ => // i U V _ ->. Qed.
 
-Lemma separable_mul (K : {subfield L}) x y :
+Lemma separable_mulv K x y :
   separable_element K x -> separable_element K y -> separable_element K (x * y).
 Proof.
 move/(separable_elementS (subv_adjoin K y))=> sepKy_x sepKy.
@@ -71,7 +80,7 @@ Lemma separable_prod I r (P : pred I) (v_ : I -> L) (K : {subfield L}) :
   separable_element K (\prod_(i <- r | P i) v_ i).
 Proof.
 move=> sepKi.
-by elim/big_ind: _; [apply/base_separable/mem1v | apply: separable_mul |].
+by elim/big_ind: _; [apply/base_separable/mem1v | apply: separable_mulv |].
 Qed.
 
 Lemma separable_prodv (k K1 K2 : {subfield L}) :
@@ -83,7 +92,7 @@ apply/separableP/andP => [sepK12|].
   by apply: (subv_trans yK); rewrite field_subvMl.
 move=> [/separableP sepK1 /separableP sepK2].
 move=> x /memv_mulP[n [us [vs [/allP/= usK /allP/= vsK ->]]]].
-rewrite separable_sum// => i _; rewrite separable_mul//.
+rewrite separable_sum// => i _; rewrite separable_mulv//.
   by rewrite sepK1 ?usK ?mem_tnth.
 by rewrite sepK2 ?vsK ?mem_tnth.
 Qed.
@@ -350,14 +359,7 @@ rewrite -(@normalField_img _ _ E)// ?galois_normalW//.
 Qed.
 
 End Prodv.
-
-Lemma dvdp_minpoly_Xn_subn (F0 : fieldType) (L : fieldExtType F0)
-  (E : {subfield L}) (n : nat) (x : L) :
-  (x ^+ n)%R \in E -> minPoly E x %| ('X^n - (x ^+ n)%:P).
-Proof.
-move=> xnE; have [->|n_gt0] := posnP n; first by rewrite !expr0 subrr dvdp0.
-by rewrite minPoly_dvdp /root ?poly_XnsubC_over// !hornerE hornerXn subrr.
-Qed.
+Hint Resolve normalField_refl : core.
 
 Section map_hom.
 Variables (F0 : fieldType) (L L' : splittingFieldType F0).
@@ -641,7 +643,7 @@ Lemma normalField_aimg (K : {subfield L}) : (K <= E)%VS ->
    normalField (iota @: K) (iota @: E) = normalField K E.
 Proof.
 move=> KE; have iotaKS : (iota @: K <= iota @: E)%VS by rewrite limgS.
-apply/splitting_normalField/splitting_normalField => //= -[p [pK [rs peq Krs]]].
+apply/splitting_normalField/splitting_normalField => //= -[p pK [rs peq Krs]].
   have /polyOver_img [q qK pE] := pK.
   have /subset_limgP [rs' _ rsE] : {subset rs <= (iota @: E)%VS}.
     by rewrite -Krs; apply/seqv_sub_adjoin.
@@ -768,14 +770,29 @@ have /and3P [EsubM _ EnormM] := (normalClosure_galois sepEF).
 by rewrite -(isog_sol (normalField_isog galEK _ _)) ?EsubM ?quotient_sol ?andbT.
 Qed.
 
+Lemma solvable_ext_refl E : solvable_ext E E.
+Proof.
+by apply/solvable_extP; exists E; rewrite subvv galois_refl/= galvv solvable1.
+Qed.
+Hint Resolve solvable_ext_refl : core.
+
+Lemma sub_solvable_ext F K E :
+  (E <= F)%VS -> solvable_ext K F -> solvable_ext K E.
+Proof.
+move=> EF /solvable_extP[M /and3P[Msuper galKM solKM]].
+by apply/solvable_extP; exists M; rewrite (subv_trans EF) ?galKM.
+Qed.
+
 Lemma solvable_prodv (k E F : {subfield L}) :
   (k <= F)%VS -> solvable_ext k E -> solvable_ext F (E * F)%AS.
 Proof.
 move=> kF /andP[sepkE solkE]; apply/solvable_extP => //.
 exists ([aspace of normalClosure k E] * F)%AS.
-rewrite (@galois_prodvr _ _ k) ?normalClosure_galois ?prodvSl ?sub_normalClosure//=.
+rewrite (@galois_prodvr _ _ k) ?normalClosure_galois//.
+rewrite ?prodvSl ?sub_normalClosure//=.
 rewrite (isog_sol (galois_isog (normalClosure_galois _) _))//.
-by rewrite (solvableS _ solkE)// galS// subv_cap kF galois_subW ?normalClosure_galois.
+rewrite (solvableS _ solkE)// galS// subv_cap kF.
+by rewrite galois_subW ?normalClosure_galois.
 Qed.
 
 Import AEnd_FinGroup.
@@ -824,6 +841,7 @@ End normalClosure.
 Hint Resolve normalClosureSl : core.
 Hint Resolve normalClosureSr : core.
 Hint Resolve normalClosure_normal : core.
+Hint Resolve solvable_ext_refl : core.
 
 Lemma aimg_normalClosure (F0 : fieldType) (L L' : splittingFieldType F0)
   (iota : 'AHom(L, L')) (K E : {subfield L}) :
@@ -848,141 +866,3 @@ Proof.
 rewrite /solvable_ext separable_img; have [sepEF|]//= := boolP (separable _ _).
 by rewrite -aimg_normalClosure// -img_map_gal injm_sol ?map_gal_inj ?subsetT.
 Qed.
-
-Section RadicalRoots.
-Variables (F : fieldType) (n : nat) (x r : F).
-Hypothesis r_root : (n.-primitive_root r)%R.
-Notation rs := [seq x * r ^+ val i | i : 'I_n].
-
-Lemma uniq_roots_Xn_sub_xn : x != 0 -> uniq rs.
-Proof using r_root.
-move=> xN0; rewrite /image_mem (map_comp (fun i => x * r ^+ i)) val_enum_ord.
-apply/(uniqP 0) => i j; rewrite !inE size_map size_iota/= => ip jp.
-rewrite !(nth_map 0%N) ?size_iota// ?nth_iota// => /(mulfI xN0).
-by move/eqP; rewrite (eq_prim_root_expr r_root) !modn_small// => /eqP.
-Qed.
-
-Lemma Xn_sub_xnE : (n > 0)%N ->
- 'X^n - (x ^+ n)%:P = \prod_(i < n) ('X - (x * r ^+ i)%:P).
-Proof using r_root.
-move=> n_gt0; have [->|xN0] := eqVneq x 0.
-  under eq_bigr do rewrite mul0r subr0.
-  by rewrite expr0n gtn_eqF// subr0 prodr_const card_ord.
-rewrite [LHS](@all_roots_prod_XsubC _ _ rs).
-- by rewrite (monicP _) ?monic_XnsubC// scale1r big_map big_enum.
-- by rewrite size_XnsubC// size_map size_enum_ord.
-- rewrite all_map; apply/allP => i _ /=; rewrite /root !hornerE hornerXn.
-  by rewrite exprMn exprAC [r ^+ _]prim_expr_order// expr1n mulr1 subrr.
-- by rewrite uniq_rootsE uniq_roots_Xn_sub_xn.
-Qed.
-
-End RadicalRoots.
-
-Section galois_Fadjoin_prime.
-
-Variables (F0 : fieldType) (L : splittingFieldType F0).
-Hypothesis char_L : [char L] =i pred0.
-Variables (E : {subfield L}) (n : nat) (x : L) (r : L).
-Hypothesis r_root : (n.-primitive_root r)%R.
-Hypothesis xnE : (x ^+ n)%R \in E.
-Hypothesis rE : r \in E.
-
-Section n_gt0.
-Hypothesis n_gt0 : (n > 0)%N.
-
-Lemma galois_Fadjoin_prime : galois E <<E; x>>.
-Proof using r_root xnE n_gt0 rE.
-have [->|XN0] := eqVneq x 0.
-  by rewrite (Fadjoin_idP _) ?rpred0 ?galois_refl.
-apply/splitting_galoisField; exists ('X^n - (x ^+ n)%:P)%R.
-split; first by rewrite rpredB ?rpredX ?polyOverX ?polyOverC//.
-  rewrite (Xn_sub_xnE _ r_root)// -(big_map _ predT (fun x => 'X - x%:P)).
-  rewrite separable_prod_XsubC -[index_enum _]enumT.
-  by rewrite (uniq_roots_Xn_sub_xn r_root).
-exists [seq x * r ^+ val i | i : 'I_n].
-  by rewrite (Xn_sub_xnE _ r_root)// big_map big_enum//= eqpxx.
-apply/eqP; rewrite /image_mem (map_comp (fun i => x * r ^+ i)) val_enum_ord.
-rewrite -[n]prednK ?p_gt0//= mulr1 adjoin_cons (Fadjoin_seq_idP _)// all_map.
-by apply/allP => i _/=; rewrite rpredM ?memv_adjoin// rpredX// subvP_adjoin.
-Qed.
-End n_gt0.
-
-Section n_prime.
-Hypothesis xNE : x \notin E.
-Hypothesis n_prime : prime n.
-Let n_gt0 := prime_gt0 n_prime.
-
-Lemma Fadjoin_primeE : minPoly E x = 'X^n - (x ^+ n)%:P.
-Proof using n_prime rE r_root xNE xnE.
-have xN0 : x != 0 by apply: contraNneq xNE => ->; rewrite rpred0.
-have dvd_mpEx := dvdp_minpoly_Xn_subn xnE.
-apply/eqP; rewrite -eqp_monic ?(monic_minPoly, monic_XnsubC)//.
-move: {+}dvd_mpEx; rewrite (Xn_sub_xnE _ r_root)//.
-pose U x (i : 'I_n) := x * r ^+ i.
-rewrite -(big_map (U x) predT (fun z => 'X - z%:P)) /=.
-rewrite /index_enum -enumT /=; set rs := map _ _.
-case/dvdp_prod_XsubC => [m mpEx].
-suff mrsE: mask m rs = rs by rewrite mrsE in mpEx.
-have: (minPoly E x)`_0 \in E by apply/polyOverP/minPolyOver.
-move: {+}mpEx; rewrite eqp_monic ?(monic_minPoly, monic_prod_XsubC) //.
-move/eqP=> ->; rewrite coef0_prod {1}mask_filter //; last first.
-  exact: uniq_roots_Xn_sub_xn r_root _.
-rewrite big_filter big_map (eq_bigr (U (- x))); last first.
-- by move=> i _; rewrite coefB coefX coefC eqxx /U mulNr sub0r.
-rewrite big_mkcond big_enum -big_mkcond prodrMl /= fpredMr; last first.
-- apply/prodf_neq0=> /= i _; have /eqP := prim_expr_order r_root.
-  rewrite -{1}[n](@subnK i n) 1?ltnW // exprD; apply: contraL.
-  by move/eqP=> ->; rewrite mulr0 eq_sym oner_eq0.
-- by apply/rpred_prod=> i _; apply/rpredX.
-rewrite exprNn fpredMl; last first.
-- by rewrite signr_eq0.
-- by rewrite rpredX // rpredN rpred1.
-set S := (S in x ^+ #|S|); case/boolP: (#|S| == 0%N) => [/eqP/card0_eq z_S|nz_S].
-- move: {+}mpEx; rewrite mask_filter //; last first.
-    exact: uniq_roots_Xn_sub_xn r_root _.
-  rewrite big_filter big_map big_pred0.
-    by move/eqp_root/(_ x); rewrite root_minPoly rootC oner_eq0.
-  by move=> /= i; move: (z_S i).
-have: (#|S| <= n)%N by rewrite -[X in (_ <= X)%N]card_ord max_card.
-rewrite leq_eqVlt => /orP[Sfull _|lt_S_p].
-- rewrite mask_filter ?(uniq_roots_Xn_sub_xn r_root _) //.
-  rewrite (@eq_in_filter _ _ predT) ?filter_predT//.
-  move=> _ /mapP[/= i _ ->]; apply: contraLR Sfull => xri_maskN.
-  rewrite -[X in _ != X]card_ord eqn_leq max_card /= -ltnNge.
-  by apply/proper_card/properP; split; [apply/subset_predT | exists i].
-move: #|S| nz_S lt_S_p => k nz_k lt_kp; apply/contraTeq => _ /=.
-have: coprime n k by rewrite prime_coprime // gtnNdvd // lt0n.
-case/(coprimeP _ n_gt0) => -[u v] /= bz.
-move: xNE; rewrite -{1}[x]expr1 -bz expfB; last first.
-  by rewrite -subn_gt0 bz.
-apply: contra => xkE; apply: rpredM.
-+ by rewrite mulnC exprM rpredX.
-+ by rewrite rpredV mulnC exprM rpredX.
-Qed.
-
-Lemma size_Fadjoin_prime : size (minPoly E x) = n.+1.
-Proof. by rewrite Fadjoin_primeE ?size_XnsubC. Qed.
-
-Local Notation G := 'Gal(<<E; x>> / E)%g.
-
-(* - Gal(E(x) / E) has order n *)
-Lemma order_galois_Fadjoin_prime : #|G| = n.
-Proof.
-rewrite -galois_dim 1?galois_Fadjoin_prime// -adjoin_degreeE.
-by have := size_minPoly E x; rewrite size_Fadjoin_prime// => -[].
-Qed.
-
-Lemma Fadjoin_prime_cyclic : cyclic G.
-Proof. by apply/prime_cyclic; rewrite order_galois_Fadjoin_prime. Qed.
-
-Lemma Fadjoin_prime_abelian : abelian G.
-Proof. exact/cyclic_abelian/Fadjoin_prime_cyclic. Qed.
-
-Lemma solvable_ext_Fadjoin_prime : solvable_ext E <<E; x>>.
-Proof.
-apply/solvable_extP; exists <<E; x>>%AS.
-by rewrite galois_Fadjoin_prime// abelian_sol ?Fadjoin_prime_abelian/= ?subvv.
-Qed.
-
-End n_prime.
-End galois_Fadjoin_prime.
