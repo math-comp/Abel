@@ -623,32 +623,30 @@ Proof. by rewrite abelian_sol ?pradical_abelian/= ?subvv. Qed.
 
 End galois_pradical.
 
-Lemma simple_pradical_solvable_ext (p : nat)
+Lemma pradical_solvable_ext (p : nat)
    (F0 : fieldType) (L : splittingFieldType F0)
    (E : {subfield L}) (x : L) : prime p ->
    p%:R != 0 :> F0 -> x ^+ p \in E -> solvable_ext E <<E; x>>.
 Proof.
-move=> p_prime p_neq0 xpE.
-apply: (@classic_cycloSplitting _ L p p_neq0) => -[L' [r [iota r_full r_root]]].
-rewrite -(solvable_ext_img iota) aimg_adjoin.
-set E' := (iota @: E)%VS; set x' := iota x.
-have galE'r := galois_Fadjoin_cyclotomic (iota @: E)%AS r_root.
-have solE'r := solvable_Fadjoin_cyclotomic (iota @: E)%AS r_root.
-have [x'E'r|x'NE'r] := boolP (x' \in <<E'; r>>%VS).
-  apply/solvable_extP; exists <<iota @: E; r>>%AS.
-  by rewrite galE'r solE'r Fadjoin_sub.
-have x'pE' : x' ^+ p \in E' by rewrite -rmorphX memv_img.
-have x'pE'r : x' ^+ p \in <<E'; r>>%VS by rewrite (subvP (subv_adjoin _ _)).
-have galE'rx' :  galois E' <<<<E'; r>>; x'>>.
-  by rewrite (@galois_cyclo_radical p) ?prime_gt0//=.
-apply/solvable_extP; exists <<<<E'; x'>>; r>>%AS; rewrite subv_adjoin/= adjoinC.
-rewrite galE'rx' (@series_sol _ _ ('Gal(<<<<E'; r>>; x'>> / <<E'; r>>)));
+move=> p_prime p_neq0 xpE; have p_gt0 := prime_gt0 p_prime.
+wlog [r r_root] : L E x xpE / {r : L | p.-primitive_root r} => [hwlog|].
+  apply: (@classic_cycloSplitting _ L p p_neq0) => -[L' [r [f rf rr]]].
+  rewrite -(solvable_ext_img f) aimg_adjoin hwlog -?rmorphX ?memv_img//.
+  by exists r.
+have galEr := galois_Fadjoin_cyclotomic E r_root.
+have solEr := solvable_Fadjoin_cyclotomic E r_root.
+have [xEr|xNEr] := boolP (x \in <<E; r>>%VS).
+  by apply/solvable_extP; exists <<E; r>>%AS; rewrite galEr solEr Fadjoin_sub.
+have xpEr : x ^+ p \in <<E; r>>%VS by rewrite (subvP (subv_adjoin _ _)).
+have galErx : galois E <<<<E; r>>; x>> by rewrite (@galois_cyclo_radical p).
+apply/solvable_extP; exists <<<<E; x>>; r>>%AS; rewrite subv_adjoin/= adjoinC.
+rewrite galErx (@series_sol _ _ ('Gal(<<<<E; r>>; x>> / <<E; r>>)));
   last by rewrite normalField_normal ?subv_adjoin ?galois_normalW.
 rewrite (@pradical_solvable p _ _ r)// ?memv_adjoin//.
 by rewrite (isog_sol (normalField_isog _ _ _)) ?galois_normalW ?subv_adjoin.
 Qed.
 
-Lemma radical_solvable_ext (F0 : fieldType) (L : splittingFieldType F0)
+Lemma radical_ext_solvable_ext (F0 : fieldType) (L : splittingFieldType F0)
     (E F : {subfield L}) : [char L] =i pred0 -> (E <= F)%VS ->
   solvable_by radical E F -> solvable_ext E F.
 Proof.
@@ -665,7 +663,7 @@ apply: solvable_ext_trans IHsol _.
   by rewrite /= subv_adjoin_seq subv_adjoin.
 have := epwP (Ordinal kn); rewrite (tnth_nth 0) (tnth_nth 0%N)/=.
 move=> /pradicalP[pwk_prime epwEk].
-apply: (simple_pradical_solvable_ext pwk_prime) => //.
+apply: (pradical_solvable_ext pwk_prime) => //.
 by have /charf0P-> := charF0; rewrite -lt0n prime_gt0.
 Qed.
 
@@ -681,7 +679,7 @@ Lemma AbelGalois  (F0 : fieldType) (L : splittingFieldType F0) (r : L)
   (\dim_E (normalClosure E F)).-primitive_root r ->
   (solvable_by radical E F) <-> (solvable_ext E F).
 Proof.
-move=> EF charL rprim; split; first exact: radical_solvable_ext.
+move=> EF charL rprim; split; first exact: radical_ext_solvable_ext.
 exact: (ext_solvable_by_radical rprim).
 Qed.
 
@@ -792,7 +790,7 @@ move=> p_neq0 charF0; split => sol_p; last first.
   apply/AbelGaloisPoly => //; apply/solvable_ext_polyP => //.
   apply: classic_bind sol_p => -[L [rs [prs sol_p]]]; apply/classicW.
   exists L, rs; split => //.
-  apply: radical_solvable_ext; rewrite ?sub1v// => v.
+  apply: radical_ext_solvable_ext; rewrite ?sub1v// => v.
   by rewrite char_lalg charF0.
 have FoE (v : F^o) : v = in_alg F^o v by rewrite /= /(_%:A)/= mulr1.
 apply: classic_bind (@classic_fieldExtFor _ _ (p : {poly F^o}) p_neq0).
@@ -1606,7 +1604,7 @@ have perm_rs : perm_eq (map iota rs) example_roots.
 have rs_uniq : uniq rs.
   rewrite -separable_prod_XsubC -poly_ex_eq_prod.
   by rewrite separable_map separable_example.
-move=> /(radical_solvable_ext charL (sub1v _)) /=.
+move=> /(radical_ext_solvable_ext charL (sub1v _)) /=.
 have gal1rs : galois 1 <<1 & rs>> by apply: (@PDTNRR.galois1K _ iota poly_example).
 rewrite /solvable_ext galoisClosure_id//.
 have := PDTNRR.isog_gal_perm irreducible_example rs_uniq poly_ex_eq_prod _.
