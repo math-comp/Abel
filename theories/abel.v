@@ -273,10 +273,8 @@ Section Abel.
 (******************************************************************************)
 
 Section Part1.
-
-Section Part1a.
-
-Import GRing.Theory.
+Variables (F0 : fieldType) (L : splittingFieldType F0).
+Implicit Types (E F K : {subfield L}) (r : L) (n : nat).
 
 (* - each element of G is diagonalizable *)
 (* - the elements of G are simultaneously diagonalizable *)
@@ -292,13 +290,11 @@ Import GRing.Theory.
 (*   - then ri^n is in E *)
 (* - ri is a radical element on E *)
 
-Lemma abelian_radical_ext (F0 : fieldType) (L : splittingFieldType F0)
-    (E F : {subfield L}) (G := 'Gal(F / E)%g) (n := \dim_E F) (r : L) :
-      galois E F -> abelian G ->
-      r \in E -> (n.-primitive_root r)%R ->
-  radical.-ext E F.
+Lemma abelian_radical_ext r E F (n := \dim_E F) :
+    n.-primitive_root r -> r \in E -> galois E F ->
+  abelian 'Gal(F / E) -> radical.-ext E F.
 Proof.
-move=> galois_EF abelian_G r_in_E r_is_nth_root.
+set G := (X in abelian X) => r_root rE galois_EF abelian_G.
 have subv_EF := galois_subW galois_EF.
 have n_gt0 : (n > 0)%N by rewrite /n -dim_aspaceOver ?adim_gt0.
 have asimp := (mem_aspaceOver, subv_adjoin_seq).
@@ -340,13 +336,13 @@ have /sig2W [p p_unit dG] : codiagonalisable [seq galmx e g | g in G].
     rewrite ?mem_enum in gG g'G.
     by rewrite -![_ *m _]galmxM// (centsP abelian_G).
   move=> _/mapP[g gG ->]; rewrite mem_enum in gG *.
-  pose l := [seq Subvs r_in_E ^+ i | i <- index_iota 0 n].
+  pose l := [seq Subvs rE ^+ i | i <- index_iota 0 n].
   apply/diagonalisableP; exists l.
     rewrite map_inj_in_uniq ?iota_uniq//.
     move=> x y; rewrite !mem_index_iota !leq0n/= => x_n y_n.
     move=> /(congr1 val)/=/eqP; rewrite !rmorphX/=.
-    by rewrite (eq_prim_root_expr r_is_nth_root) !modn_small// => /eqP.
-  rewrite big_map (@factor_Xn_sub_1 _ _ (Subvs r_in_E)) ?Gminpoly//.
+    by rewrite (eq_prim_root_expr r_root) !modn_small// => /eqP.
+  rewrite big_map (@factor_Xn_sub_1 _ _ (Subvs rE)) ?Gminpoly//.
   by rewrite /= -(fmorph_primitive_root [rmorphism of vsval]).
 pose r_ := [tuple galvec e (row i p) | i < n.-1.+1].
 rewrite -[n]prednK//; exists r_.
@@ -375,20 +371,14 @@ rewrite !mulmxA -!rowE row_diag_mx -scalemxAl -rowE => /(congr1 (galvec e)).
 by rewrite galvecM// linearZ/= tnth_map tnth_ord_tuple.
 Qed.
 
-End Part1a.
-
-Section Part1b.
-Variables (F0 : fieldType) (L : splittingFieldType F0).
-
-Lemma solvableWradical_ext (E : {subfield L}) (F : {subfield L}) (r : L) :
-  let n := \dim_E F in
-  galois E F -> solvable 'Gal(F / E)%g -> r \in E -> n.-primitive_root r ->
-  radical.-ext E F.
+Lemma solvableWradical_ext r E F (n := \dim_E F) :
+    n.-primitive_root r -> r \in E -> galois E F ->
+  solvable 'Gal(F / E) -> radical.-ext E F.
 Proof.
-move=> n galEF; have [k] := ubnP n; elim: k => // k IHk in r E F n galEF *.
+move=> + + galEF; have [k] := ubnP n; elim: k => // k IHk in r E F n galEF *.
 rewrite ltnS => le_nk; have subEF : (E <= F)%VS by case/andP: galEF.
 have n_gt0 : (0 < n)%N by rewrite ltn_divRL ?field_dimS// mul0n adim_gt0.
-move=> solEF Er rn; have [n_le1|n_gt1] := leqP n 1%N.
+move=> rn Er solEF; have [n_le1|n_gt1] := leqP n 1%N.
   have /eqP : n = 1%N by case: {+}n n_gt0 n_le1 => [|[]].
   rewrite -eqn_mul ?adim_gt0 ?field_dimS// mul1n eq_sym dimv_leqif_eq//.
   by rewrite val_eqE => /eqP<-; apply: rext_refl.
@@ -403,64 +393,42 @@ have p_gt0 : (p > 0)%N by rewrite divn_gt0 ?adim_gt0 ?dimvS ?fixedField_bound.
 have n_eq : n = (p * d)%N by rewrite /p /d -dim_fixedField dim_fixed_galois;
                              rewrite ?Lagrange ?normal_sub -?galois_dim.
 have Erm : r ^+ (n %/ d) \in E by rewrite rpredX.
-move=> /prime_cyclic/cyclic_abelian/abelian_radical_ext/(_ Erm)-/(_ galEH)/=.
+move=> /prime_cyclic/cyclic_abelian/abelian_radical_ext-/(_ _ _ Erm galEH)/=.
 rewrite dvdn_prim_root// => [/(_ isT)|]; last by rewrite n_eq dvdn_mull.
-move=> /rext_trans; apply.
-apply: (IHk (r ^+ (n %/ p))) => /=.
+move=> /rext_trans; apply; apply: (IHk (r ^+ (n %/ p))) => /=.
 - exact: fixedField_galois.
 - rewrite (leq_trans _ le_nk)// -dim_fixedField /n galois_dim// proper_card//.
   by rewrite properEneq H_neq normal_sub.
-- by rewrite gal_fixedField (solvableS (normal_sub Hnormal)).
-- by rewrite rpredX//; apply: subvP Er.
 - by rewrite dvdn_prim_root// n_eq dvdn_mulr.
+- by rewrite rpredX//; apply: subvP Er.
+- by rewrite gal_fixedField (solvableS (normal_sub Hnormal)).
 Qed.
 
-End Part1b.
-
-Section Part1c.
-
-(* common context *)
-Variables (F0 : fieldType) (L : splittingFieldType F0).
-Variables (E F : {subfield L}).
-Hypothesis galois_EF : galois E F.
-Local Notation G := ('Gal(F / E)%g).
-Local Notation n := (\dim_E F).
-Variable (r : L).
-Hypothesis r_root : (n.-primitive_root r)%R.
-Hypothesis solvable_G : solvable G.
-
-Let subEF : (E <= F)%VS := galois_subW galois_EF.
-
-Lemma galois_solvable_by_radical : solvable_by radical E F.
+Lemma galois_solvable_by_radical r E F (n := \dim_E F) :
+    n.-primitive_root r -> galois E F ->
+  solvable 'Gal(F / E) -> solvable_by radical E F.
 Proof.
-pose G : {group gal_of F} := 'Gal(F / F :&: <<E; r>>%AS)%G.
-have EEr := subv_adjoin E r.
-rewrite /solvable_by; exists (F * <<E; r>>)%AS; last first.
-  by rewrite field_subvMr; split.
+move=> r_root galEF solEF; have EF := galois_subW galEF.
+pose G := 'Gal(F / F :&: <<E; r>>%VS)%g; have EEr := subv_adjoin E r.
+rewrite /solvable_by; exists (F * <<E; r>>)%AS; last by rewrite field_subvMr.
 apply: rext_trans (radicalext_Fadjoin_cyclotomic _ r_root) _.
-have galErFEr: galois <<E; r>>%AS (F * <<E; r>>)%AS.
-  by rewrite (@galois_prodvr _ _ E).
+have galErFEr: galois <<E; r>> (F * <<E; r>>) by rewrite (@galois_prodvr _ _ E).
 pose r' := r ^+ (n %/ #|G|).
 have r'prim : #|G|.-primitive_root r'.
-  by apply: dvdn_prim_root; rewrite // galois_dim ?cardSg ?galS ?subv_cap ?subEF.
+  by apply: dvdn_prim_root; rewrite /n// galois_dim ?cardSg ?galS ?subv_cap ?EF.
 have r'Er : r' \in <<E; r>>%VS by rewrite rpredX ?memv_adjoin.
-apply: solvableWradical_ext r'Er _ => //=.
-  rewrite (isog_sol (galois_isog galois_EF _))//.
-  by apply: solvableS solvable_G; apply: galS; rewrite subv_cap subEF.
-by rewrite galois_dim// (card_isog (galois_isog galois_EF _)).
+apply: solvableWradical_ext r'Er _ _ => //=.
+  by rewrite galois_dim// (card_isog (galois_isog galEF _)).
+rewrite (isog_sol (galois_isog galEF _))//.
+by apply: solvableS solEF; apply: galS; rewrite subv_cap EF.
 Qed.
 
-End Part1c.
-
 (* Main lemma of part 1 *)
-Lemma ext_solvable_by_radical (F0 : fieldType) (L : splittingFieldType F0)
-    (r : L) (E F : {subfield L}) :
-    (\dim_E (normalClosure E F)).-primitive_root r ->
-  solvable_ext E F -> solvable_by radical E F.
+Lemma ext_solvable_by_radical r E F (n := \dim_E (normalClosure E F)) :
+  n.-primitive_root r -> solvable_ext E F -> solvable_by radical E F.
 Proof.
-move=> rprim /andP[sepEF].
-move=> /(galois_solvable_by_radical (normalClosure_galois sepEF)).
-move=> /(_ r rprim) [M EM EFM]; exists M => //.
+move=> rprim /andP[sepEF]; have galEF := normalClosure_galois sepEF.
+move=> /(galois_solvable_by_radical rprim galEF) [M EM EFM]; exists M => //.
 by rewrite (subv_trans _ EFM) ?normalClosureSr.
 Qed.
 
@@ -688,7 +656,7 @@ End Abel.
 Definition solvable_by_radical_poly (F : fieldType) (p : {poly F}) :=
   forall (L : splittingFieldType F) (rs : seq L),
     p ^^ in_alg L %= \prod_(x <- rs) ('X - x%:P) ->
-    forall r : L, (\dim (normalClosure 1%VS <<1 & rs>>%VS)).-primitive_root r ->
+    forall r : L, (\dim <<1 & rs>>%VS).-primitive_root r ->
     solvable_by radical 1%AS  <<1 & rs>>%AS.
 
 Definition solvable_ext_poly (F : fieldType) (p : {poly F}) :=
@@ -697,24 +665,29 @@ Definition solvable_ext_poly (F : fieldType) (p : {poly F}) :=
     solvable_ext 1%VS <<1 & rs>>%VS.
 
 Lemma AbelGaloisPoly (F : fieldType) (p : {poly F}) : [char F] =i pred0 ->
-  (solvable_ext_poly p) <-> (solvable_by_radical_poly p).
+  solvable_ext_poly p <-> solvable_by_radical_poly p.
 Proof.
 move=> charF; split=> + L rs pE => [/(_ L rs pE) + r r_prim|solrs]/=.
   have charL : [char L] =i pred0 by move=> i; rewrite char_lalg.
-  move=> /AbelGalois-/(_ r (sub1v _) charL)/=.
-  by rewrite dimv1 divn1 => /(_ r_prim).
+  move=> /AbelGalois-/(_ r (sub1v _) charL)/=; apply.
+  rewrite normalClosure_id ?dimv1 ?divn1 ?sub1v//.
+  apply/splitting_normalField; rewrite ?sub1v//.
+  by exists (p ^^ in_alg L); [apply/polyOver1P; exists p | exists rs].
 have charL : [char L] =i pred0 by move=> i; rewrite char_lalg.
 have seprs: separable 1 <<1 & rs>> by apply/char0_separable.
-pose n := \dim (normalClosure 1 <<1 & rs>>).
+pose n := \dim <<1 & rs>>.
 have nFN0 : n%:R != 0 :> F by have /charf0P-> := charF; rewrite -lt0n adim_gt0.
 apply: (@classic_cycloSplitting _ L _ nFN0) => - [L' [r [iota rL' r_prim]]].
 rewrite -(solvable_ext_img iota).
 have charL' : [char L'] =i pred0 by move=> i; rewrite char_lalg.
 apply/(@AbelGalois _ _ r) => //.
 - by rewrite limgS// sub1v.
-- by rewrite -aimg_normalClosure //= aimg1 dimv1 divn1 dim_aimg.
+- rewrite -aimg_normalClosure //= aimg1 dimv1 divn1 dim_aimg/=.
+  rewrite normalClosure_id ?dimv1 ?divn1 ?sub1v//.
+  apply/splitting_normalField; rewrite ?sub1v//.
+  by exists (p ^^ in_alg L); [apply/polyOver1P; exists p | exists rs].
 have /= := solrs L' (map iota rs) _ r.
-rewrite -(aimg1 iota) -!aimg_adjoin_seq -aimg_normalClosure// dim_aimg.
+rewrite -(aimg1 iota) -!aimg_adjoin_seq dim_aimg.
 apply => //; have := pE; rewrite -(eqp_map [rmorphism of iota]).
 by rewrite -map_poly_comp/= (eq_map_poly (rmorph_alg _)) map_prod_XsubC.
 Qed.
@@ -802,18 +775,15 @@ have splitL : SplittingField.axiom L.
   apply/eqP; rewrite eqEsubv sub1v andbT; apply/subvP => v.
   by move=> /memv_imgP[u _ ->]; rewrite fF/= rpredZ// rpred1.
 pose S := SplittingFieldType F L splitL.
-pose d := \dim (normalClosure 1 <<1 & (rs : seq S)>>).
+pose d := \dim  <<1 & (rs : seq S)>>.
 have /classic_cycloSplitting-/(_ S) : d%:R != 0 :> F.
   by have /charf0P-> := charF0; rewrite -lt0n adim_gt0.
 apply/classic_bind => -[C [r [g rg r_prim]]]; apply/classicW.
 have gf : g \o f =1 in_alg C by move=> v /=; rewrite fF rmorph_alg.
 have pgrs : p ^^ in_alg C %= \prod_(x <- [seq g i | i <- rs]) ('X - x%:P).
   by rewrite -(eq_map_poly gf) map_poly_comp/= -map_prod_XsubC eqp_map//.
-have charL : [char L] =i pred0 by move=> i; rewrite char_lalg.
-exists C, (map g rs); split => //=.
-apply: (sol_p C (map g rs) _ r) => //.
-rewrite -(aimg1 g) -aimg_adjoin_seq.
-by rewrite -aimg_normalClosure ?char0_separable ?dim_aimg.
+exists C, (map g rs); split => //=; apply: (sol_p C (map g rs) _ r) => //.
+by rewrite -(aimg1 g) -aimg_adjoin_seq dim_aimg.
 Qed.
 
 Import GRing.Theory Order.Theory Num.Theory.
@@ -836,7 +806,7 @@ have prs : p ^^ in_alg L %= \prod_(z <- rs) ('X - z%:P).
 have splitL : SplittingField.axiom L.
   by exists (p ^^ in_alg L); [by apply/polyOver1P; exists p | exists rs].
 pose S := SplittingFieldType rat L splitL.
-pose d := \dim (normalClosure 1 <<1 & (rs : seq S)>>).
+pose d := \dim <<1 & (rs : seq S)>>.
 have d_gt0 : (d > 0)%N by rewrite adim_gt0.
 have [ralg ralg_prim] := C_prim_root_exists d_gt0.
 have [L' [iota' [[]//= r rs' [iotar iota_rs' rrsf]]]] :=
@@ -856,9 +826,8 @@ pose S' := SplittingFieldType rat L' splitL'.
 have splitS : splittingFieldFor 1 (p ^^ in_alg S) fullv by exists rs.
 have splitS' : splittingFieldFor 1 (p ^^ in_alg S') <<1 & rs'>> by exists rs'.
 have [f /= imgf] := splitting_ahom splitS splitS'.
-exists S', iota', rs'; split => //; apply: (p_sol S' rs' prs' r).
-have charS : [char S] =i pred0 by move=> i; rewrite char_lalg char_num.
-by rewrite -imgf -(aimg1 f) -aimg_normalClosure ?char0_separable// dim_aimg/= -rsf.
+exists S', iota', rs'; split => //.
+by apply: (p_sol S' rs' prs' r); rewrite -imgf dim_aimg/= -rsf.
 Qed.
 
 Open Scope ring_scope.
