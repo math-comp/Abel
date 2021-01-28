@@ -500,13 +500,12 @@ exists [seq x * r ^+ val i | i : 'I_p].
   by rewrite (Xn_sub_xnE _ r_root)// big_map big_enum//= eqpxx.
 apply/eqP; rewrite /image_mem (map_comp (fun i => x * r ^+ i)) val_enum_ord.
 rewrite -[p]prednK//= mulr1 -[p.-1]prednK//= expr1 !adjoin_cons.
-have xExxr: x \in <<<<E; x>>; x * r>>%VS by rewrite adjoinC memv_adjoin.
-have rExxr:  r \in <<<<E; x>>; x * r>>%VS.
-  by rewrite -(fpredMl _ xExxr)// memv_adjoin.
-rewrite (Fadjoin_seq_idP _)//; last first.
-  by rewrite all_map; apply/allP => i _/=; rewrite rpredM// rpredX.
-rewrite [X in _ == X]adjoinC eqEsubv/= !Fadjoin_sub//.
-by rewrite rpredM 1?memv_adjoin//= adjoinC memv_adjoin.
+have -> : <<<<E; x>>; x * r>>%VS = <<<<E; r>>; x>>%VS.
+  apply/eqP; rewrite [X in _ == X]adjoinC eqEsubv/= !Fadjoin_sub//.
+    by rewrite -(@fpredMl _ _ _ _ x)// ?memv_adjoin//= adjoinC memv_adjoin.
+  by rewrite rpredM// ?memv_adjoin//= adjoinC memv_adjoin.
+rewrite (Fadjoin_seq_idP _)// all_map; apply/allP => i _/=.
+by rewrite rpredM ?rpredX//= ?memv_adjoin// adjoinC memv_adjoin.
 Qed.
 
 Lemma galois_radical E : r \in E -> (p > 0)%N -> x ^+ p \in E ->
