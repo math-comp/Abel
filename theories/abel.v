@@ -833,10 +833,12 @@ Qed.
 Open Scope ring_scope.
 
 Section Formula.
-Definition omega_ n := projT1 (@C_prim_root_exists n.-1.+1 isT).
+Definition prim_unity_root_ n := projT1 (@C_prim_root_exists n.-1.+1 isT).
 
-Lemma omega_prim n : (n > 0)%N -> n.-primitive_root (omega_ n).
-Proof. by case: n => [|n]// _; rewrite /omega_; case: C_prim_root_exists. Qed.
+Lemma prim_unity_rootP n : (n > 0)%N -> n.-primitive_root (prim_unity_root_ n).
+Proof.
+by case: n => [|n]// _; rewrite /prim_unity_root_; case: C_prim_root_exists.
+Qed.
 
 Inductive const := Zero | One | URoot of nat.
 Inductive binOp := Add | Mul.
@@ -934,8 +936,10 @@ Local Infix "+" := (BinOp Add) : algf_scope.
 Local Notation "x ^-1" := (UnOp Inv x) : algf_scope.
 Local Infix "*" := (BinOp Mul) : algf_scope.
 Local Notation "x ^+ n" := (UnOp (Exp n) x) : algf_scope.
-Local Notation "n '.-root'" := (UnOp (Root n)) : algf_scope.
-Local Notation Omega_ j := (Const (URoot j)).
+Local Notation "n '.+1-root'" := (UnOp (Root n))
+  (at level 2, format "n '.+1-root'") : algf_scope.
+Local Notation "n '.+1-prim_unity_root'" := (Const (URoot n))
+  (at level 2, format "n '.+1-prim_unity_root'") : algf_scope.
 
 Section eval.
 Variables (F : fieldType) (iota : F -> algC).
@@ -949,8 +953,8 @@ Fixpoint alg_eval (f : algformula F) : algC :=
   | (f1 * f2)%algf => alg_eval f1 * alg_eval f2
   | (f1 ^-1)%algf => (alg_eval f1)^-1
   | (f1 ^+ n)%algf => (alg_eval f1) ^+ n
-  | (n.-root f1)%algf => nthroot n.+1 (alg_eval f1)
-  | Omega_ j => omega_ j.+1
+  | (n.+1-root f1)%algf => n.+1.-root (alg_eval f1)
+  | (j.+1-prim_unity_root)%algf => prim_unity_root_ j.+1
   end.
 
 Fixpoint subeval (f : algformula F) : seq algC :=
@@ -1004,10 +1008,10 @@ have Cchar := Cchar => p_neq0; split.
   pose v := i.+1.-root (iota (u ^+ i.+1)).
   have : ('X ^+ i.+1 - (v ^+ i.+1)%:P).[iota u] == 0.
     by rewrite !hornerE hornerXn rootCK// rmorphX subrr.
-  have /Xn_sub_xnE->// := omega_prim (isT : 0 < i.+1)%N.
+  have /Xn_sub_xnE->// := prim_unity_rootP (isT : 0 < i.+1)%N.
   rewrite horner_prod prodf_seq_eq0/= => /hasP[/= l _].
   rewrite hornerXsubC subr_eq0 => /eqP u_eq.
-  pose fu := (i.-root (Base (Subvs uik)) * (Omega_ i ^+ l))%algf.
+  pose fu := (i.+1-root (Base (Subvs uik)) * (i.+1-prim_unity_root ^+ l))%algf.
   rewrite -horner_map; have -> : iota u = alg_eval (iota \o vsval) fu by [].
   move: fu => fu; elim/poly_ind: q qk => //= [|q c IHq] qXDck.
     by exists 0%algf; rewrite rmorph0 horner0.
@@ -1100,7 +1104,7 @@ elim: f => //= [x|c|u f1 IHf1|b f1 IHf1 f2 IHf2] in k {r fr} als1 als1E *.
     exact: rext_refl.
   + apply/(@rext_r _ _ _ n.+1)/radicalP; split => //.
     rewrite prim_expr_order ?rpred1//.
-    by rewrite -(fmorph_primitive_root iota) yomega omega_prim.
+    by rewrite -(fmorph_primitive_root iota) yomega prim_unity_rootP.
 - case: als1 als1E => //= a l [IHl IHlu].
   rewrite -(eq_adjoin _ (mem_rcons _ _)) adjoin_rcons.
   apply: rext_trans (IHf1 k l IHlu) _ => /=.
