@@ -522,49 +522,27 @@ Let p_gt0 := prime_gt0 p_prime.
 Lemma minPoly_pradical :  minPoly E x = 'X^p - (x ^+ p)%:P.
 Proof using r_root p_prime rE xNE xpE p_gt0.
 have xN0 : x != 0 by apply: contraNneq xNE => ->; rewrite rpred0.
-have dvd_mpEx := dvdp_minpoly_Xn_subn xpE.
-apply/eqP; rewrite -eqp_monic ?(monic_minPoly, monic_XnsubC)//.
-move: {+}dvd_mpEx; rewrite (Xn_sub_xnE _ r_root)//.
-pose U x (i : 'I_p) := x * r ^+ i.
-rewrite -(big_map (U x) predT (fun z => 'X - z%:P)) /=.
-rewrite /index_enum -enumT /=; set rs := map _ _.
-case/dvdp_prod_XsubC => [m mpEx].
-suff mrsE : mask m rs = rs by rewrite mrsE in mpEx.
-have: (minPoly E x)`_0 \in E by apply/polyOverP/minPolyOver.
-move: {+}mpEx; rewrite eqp_monic ?(monic_minPoly, monic_prod_XsubC) //.
-move/eqP=> ->; rewrite coef0_prod {1}mask_filter //; last first.
-  exact: uniq_roots_Xn_sub_xn r_root _.
-rewrite big_filter big_map (eq_bigr (U (- x))); last first.
-- by move=> i _; rewrite coefB coefX coefC eqxx /U mulNr sub0r.
-rewrite big_mkcond big_enum -big_mkcond prodrMl /= fpredMr; last first.
-- apply/prodf_neq0=> /= i _; have /eqP := prim_expr_order r_root.
-  rewrite -{1}[p](@subnK i p) 1?ltnW // exprD; apply: contraL.
-  by move/eqP=> ->; rewrite mulr0 eq_sym oner_eq0.
-- by apply/rpred_prod=> i _; apply/rpredX.
-rewrite exprNn fpredMl; last first.
-- by rewrite signr_eq0.
-- by rewrite rpredX // rpredN rpred1.
-set S := (S in x ^+ #|S|); case/boolP: (#|S| == 0%N) => [/eqP/card0_eq z_S|nz_S].
-- move: {+}mpEx; rewrite mask_filter //; last first.
-    exact: uniq_roots_Xn_sub_xn r_root _.
-  rewrite big_filter big_map big_pred0.
-    by move/eqp_root/(_ x); rewrite root_minPoly rootC oner_eq0.
-  by move=> /= i; move: (z_S i).
-have: (#|S| <= p)%N by rewrite -[X in (_ <= X)%N]card_ord max_card.
-rewrite leq_eqVlt => /orP[Sfull _|lt_S_p].
-- rewrite mask_filter ?(uniq_roots_Xn_sub_xn r_root _) //.
-  rewrite (@eq_in_filter _ _ predT) ?filter_predT//.
-  move=> _ /mapP[/= i _ ->]; apply: contraLR Sfull => xri_maskN.
-  rewrite -[X in _ != X]card_ord eqn_leq max_card /= -ltnNge.
-  by apply/proper_card/properP; split; [apply/subset_predT | exists i].
-move: #|S| nz_S lt_S_p => k nz_k lt_kp; apply/contraTeq => _ /=.
-have: coprime p k by rewrite prime_coprime // gtnNdvd // lt0n.
-case/(coprimeP _ p_gt0) => -[u v] /= bz.
-move: xNE; rewrite -{1}[x]expr1 -bz expfB; last first.
-  by rewrite -subn_gt0 bz.
-apply: contra => xkE; apply: rpredM.
-+ by rewrite mulnC exprM rpredX.
-+ by rewrite rpredV mulnC exprM rpredX.
+have := dvdp_minpoly_Xn_subn xpE; rewrite (Xn_sub_xnE _ r_root)// -big_enum/=.
+move=> /dvdp_prod_XsubC[m]; rewrite eqp_monic ?monic_minPoly//; last first.
+  by rewrite monic_prod// => i _; rewrite monic_XsubC.
+have [{}m sm ->] := resize_mask m (enum 'I_p); set s := mask _ _ => /eqP mEx.
+have [|smp_gt0] := posnP (size s).
+  case: s mEx => // /(congr1 (horner^~x))/esym/eqP.
+  by rewrite minPolyxx big_nil hornerC oner_eq0.
+suff leq_pm : (p <= size s)%N.
+  move: mEx; suff /eqP->: s == enum 'I_p by [].
+  by rewrite -(geq_leqif (size_subseq_leqif _)) ?mask_subseq// size_enum_ord.
+have xXE (i : nat) : x ^+ i \in E -> (p %| i)%N.
+  move=> xiE; apply: contraNT xNE; rewrite -prime_coprime// => /coprimeP[]// u.
+  have [/eqP->//|uip] := leqP (u.1 * p)%N (u.2 * i)%N; rewrite -[x]expr1 => <-.
+  by rewrite expfB// rpredM ?rpredV// mulnC exprM rpredX.
+have /polyOverP/(_ 0%N) := minPolyOver E x; rewrite {}mEx coef0_prod.
+under eq_bigr do rewrite coefB coefX coefC add0r -mulrN/=.
+have r_neq0 : r != 0 by rewrite (primitive_root_eq0 r_root) -lt0n.
+rewrite big_split/= fpredMr; last first.
+- by rewrite prodf_seq_eq0; apply/hasPn => i _/=; rewrite oppr_eq0 expf_neq0.
+- by rewrite rpred_prod// => i _/=; rewrite rpredN rpredX.
+by rewrite big_tnth prodr_const cardT/= size_enum_ord => /xXE; apply: dvdn_leq.
 Qed.
 
 Lemma size_minPoly_pradical: size (minPoly E x) = p.+1.
