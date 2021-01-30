@@ -471,6 +471,15 @@ Qed.
 
 End multiplicity.
 
+Lemma primitive_root_eq0 (F : fieldType) n (r : F) :
+  n.-primitive_root r -> (r == 0) = (n == 0%N).
+Proof.
+move=> rp; apply/eqP/idP => [r0|/eqP p0]; move: rp; rewrite ?r0 ?p0; last first.
+  by move=> /prim_order_gt0//.
+move=> /prim_expr_order/esym/eqP.
+by rewrite expr0n; case: (n =P 0%N); rewrite ?oner_eq0.
+Qed.
+
 Lemma dvdp_exp_XsubC (R : idomainType) (p : {poly R}) (c : R) n :
   reflect (exists2 k, (k <= n)%N & p %= ('X - c%:P) ^+ k)
           (p %| ('X - c%:P) ^+ n).
