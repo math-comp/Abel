@@ -408,19 +408,17 @@ Lemma galois_solvable_by_radical r E F (n := \dim_E F) :
     n.-primitive_root r -> galois E F ->
   solvable 'Gal(F / E) -> solvable_by radical E F.
 Proof.
-move=> r_root galEF solEF; have EF := galois_subW galEF.
-pose G := 'Gal(F / F :&: <<E; r>>%VS)%g; have EEr := subv_adjoin E r.
-rewrite /solvable_by; exists (F * <<E; r>>)%AS; last by rewrite field_subvMr.
+move=> r_root galEF solEF; have [EF Er] := (galois_subW galEF, subv_adjoin E r).
+exists (F * <<E; r>>)%AS; last by rewrite field_subvMr.
 apply: rext_trans (radicalext_Fadjoin_cyclotomic _ r_root) _.
-have galErFEr: galois <<E; r>> (F * <<E; r>>) by rewrite (@galois_prodvr _ _ E).
-pose r' := r ^+ (n %/ #|G|).
-have r'prim : #|G|.-primitive_root r'.
-  by apply: dvdn_prim_root; rewrite /n// galois_dim ?cardSg ?galS ?subv_cap ?EF.
+have galErFEr: galois <<E; r>> (F * <<E; r>>) by apply: galois_prodvr galEF.
+pose m := \dim_<<E; r>> (F * <<E; r>>); pose r' := r ^+ (n %/ m).
 have r'Er : r' \in <<E; r>>%VS by rewrite rpredX ?memv_adjoin.
-apply: solvableWradical_ext r'Er _ _ => //=.
-  by rewrite galois_dim// (card_isog (galois_isog galEF _)).
-rewrite (isog_sol (galois_isog galEF _))//.
-by apply: solvableS solEF; apply: galS; rewrite subv_cap EF.
+have r'prim : m.-primitive_root r'.
+  rewrite dvdn_prim_root // /m /n !galois_dim//.
+  by rewrite (card_isog (galois_isog galEF _)) ?cardSg ?galS ?subv_cap ?EF//.
+apply: (@solvableWradical_ext r'); rewrite // (isog_sol (galois_isog galEF _))//.
+by rewrite (solvableS _ solEF) ?galS// subv_cap EF.
 Qed.
 
 (* Main lemma of part 1 *)
