@@ -620,7 +620,7 @@ Qed.
 Lemma AbelGalois  (F0 : fieldType) (L : splittingFieldType F0) (r : L)
   (E F : {subfield L}) : (E <= F)%VS -> [char L] =i pred0 ->
   (\dim_E (normalClosure E F)).-primitive_root r ->
-  (solvable_by radical E F) <-> (solvable_ext E F).
+  solvable_by radical E F <-> solvable_ext E F.
 Proof.
 move=> EF charL rprim; split; first exact: radical_ext_solvable_ext.
 exact: (ext_solvable_by_radical rprim).
@@ -632,35 +632,51 @@ Definition solvable_by_radical_poly (F : fieldType) (p : {poly F}) :=
   forall (L : splittingFieldType F) (rs : seq L),
     p ^^ in_alg L %= \prod_(x <- rs) ('X - x%:P) ->
     forall r : L, (\dim <<1 & rs>>%VS).-primitive_root r ->
-    solvable_by radical 1%AS  <<1 & rs>>%AS.
+    solvable_by radical 1 <<1 & rs>>.
 
 Definition solvable_ext_poly (F : fieldType) (p : {poly F}) :=
   forall (L : splittingFieldType F) (rs : seq L),
     p ^^ in_alg L %= \prod_(x <- rs) ('X - x%:P) ->
-    solvable_ext 1%VS <<1 & rs>>%VS.
+    solvable 'Gal(<<1 & rs>> / 1).
+
+Lemma galois_solvable (F0 : fieldType) (L : splittingFieldType F0)
+      (E F : {subfield L}) :
+  galois E F -> solvable_ext E F = solvable 'Gal(F / E).
+Proof.
+by move=> /and3P[EF sEF nEF]; rewrite /solvable_ext sEF normalClosure_id.
+Qed.
+
+Lemma normal_solvable  (F0 : fieldType) (L : splittingFieldType F0)
+      (E F : {subfield L}) : [char L] =i pred0 ->
+  (E <= F)%VS -> normalField E F -> solvable_ext E F = solvable 'Gal(F / E).
+Proof. by move=> charL EF /(char0_galois charL EF)/galois_solvable. Qed.
 
 Lemma AbelGaloisPoly (F : fieldType) (p : {poly F}) : [char F] =i pred0 ->
   solvable_ext_poly p <-> solvable_by_radical_poly p.
 Proof.
 move=> charF; split=> + L rs pE => [/(_ L rs pE) + r r_prim|solrs]/=.
   have charL : [char L] =i pred0 by move=> i; rewrite char_lalg.
-  move=> /AbelGalois-/(_ r (sub1v _) charL)/=; apply.
-  rewrite normalClosure_id ?dimv1 ?divn1 ?sub1v//.
-  apply/splitting_normalField; rewrite ?sub1v//.
-  by exists (p ^^ in_alg L); [apply/polyOver1P; exists p | exists rs].
+  have normal_rs : normalField 1 <<1 & rs>>.
+    apply/splitting_normalField; rewrite ?sub1v//.
+    by exists (p ^^ in_alg _); [apply/polyOver1P; exists p | exists rs].
+  by move=> solrs; apply/(@AbelGalois _ _ r);
+     rewrite ?char0_solvable_extE ?normalClosure_id ?sub1v ?dimv1 ?divn1.
 have charL : [char L] =i pred0 by move=> i; rewrite char_lalg.
 have seprs: separable 1 <<1 & rs>> by apply/char0_separable.
+have normal_rs : normalField 1 <<1 & rs>>.
+  apply/splitting_normalField; rewrite ?sub1v//.
+  by exists (p ^^ in_alg _); [apply/polyOver1P; exists p | exists rs].
 pose n := \dim <<1 & rs>>.
 have nFN0 : n%:R != 0 :> F by have /charf0P-> := charF; rewrite -lt0n adim_gt0.
 apply: (@classic_cycloSplitting _ L _ nFN0) => - [L' [r [iota rL' r_prim]]].
+suff: solvable_ext 1 <<1 & rs>>.
+  by rewrite /solvable_ext seprs normalClosure_id ?sub1v.
 rewrite -(solvable_ext_img iota).
 have charL' : [char L'] =i pred0 by move=> i; rewrite char_lalg.
 apply/(@AbelGalois _ _ r) => //.
 - by rewrite limgS// sub1v.
 - rewrite -aimg_normalClosure //= aimg1 dimv1 divn1 dim_aimg/=.
-  rewrite normalClosure_id ?dimv1 ?divn1 ?sub1v//.
-  apply/splitting_normalField; rewrite ?sub1v//.
-  by exists (p ^^ in_alg L); [apply/polyOver1P; exists p | exists rs].
+  by rewrite normalClosure_id ?dimv1 ?divn1 ?sub1v//.
 have /= := solrs L' (map iota rs) _ r.
 rewrite -(aimg1 iota) -!aimg_adjoin_seq dim_aimg.
 apply => //; have := pE; rewrite -(eqp_map [rmorphism of iota]).
@@ -672,7 +688,7 @@ Lemma solvable_ext_polyP (F : fieldType) (p : {poly F}) : p != 0 ->
   solvable_ext_poly p <->
   classically (exists (L : splittingFieldType F) (rs : seq L),
                 p ^^ in_alg L %= \prod_(x <- rs) ('X - x%:P) /\
-                solvable_ext 1 <<1 & rs>>).
+                solvable 'Gal(<<1 & rs>> / 1)).
 Proof.
 move=> p_neq0 charF; split => sol_p.
 have FoE (v : F^o) : v = in_alg F^o v by rewrite /= /(_%:A)/= mulr1.
@@ -691,13 +707,6 @@ apply: classic_bind (@classic_fieldExtFor _ _ (p : {poly F^o}) p_neq0).
 move=> L rs prs; apply: sol_p => -[M [rs' [prs']]].
 have charL : [char L] =i pred0 by move=> n; rewrite char_lalg charF.
 have charM : [char M] =i pred0 by move=> n; rewrite char_lalg charF.
-rewrite !char0_solvable_extE//= !normalClosure_id ?sub1v//; last 2 first.
-- apply/splitting_normalField; rewrite ?sub1v//.
-  exists (p ^^ in_alg L); first by apply/polyOver1P; exists p.
-  by exists rs => //.
-- apply/splitting_normalField; rewrite ?sub1v//.
-  exists (p ^^ in_alg M); first by apply/polyOver1P; exists p.
-  by exists rs' => //.
 pose K := [fieldExtType F of subvs_of <<1 & rs>>%VS].
 pose rsK := map (vsproj <<1 & rs>>%VS) rs.
 have pKrs : p ^^ in_alg K %= \prod_(x <- rsK) ('X - x%:P).
@@ -734,12 +743,17 @@ Lemma solvable_by_radical_polyP (F : fieldType) (p : {poly F}) : p != 0 ->
                 p ^^ in_alg L %= \prod_(x <- rs) ('X - x%:P) /\
                 solvable_by radical 1 <<1 & rs>>).
 Proof.
-move=> p_neq0 charF0; split => sol_p; last first.
+move=> p_neq0 charF0;
+split => sol_p; last first.
   apply/AbelGaloisPoly => //; apply/solvable_ext_polyP => //.
   apply: classic_bind sol_p => -[L [rs [prs sol_p]]]; apply/classicW.
-  exists L, rs; split => //.
-  apply: radical_ext_solvable_ext; rewrite ?sub1v// => v.
-  by rewrite char_lalg charF0.
+  exists L, rs; split => //; rewrite -galois_solvable.
+    apply: radical_ext_solvable_ext; rewrite ?sub1v// => v.
+    by rewrite char_lalg charF0.
+  have charL : [char L] =i pred0 by move=> n; rewrite char_lalg charF0.
+  rewrite char0_galois// ?sub1v//.
+  apply/splitting_normalField; rewrite ?sub1v//.
+  by exists (p ^^ in_alg _); [apply/polyOver1P; exists p | exists rs].
 have FoE (v : F^o) : v = in_alg F^o v by rewrite /= /(_%:A)/= mulr1.
 apply: classic_bind (@classic_fieldExtFor _ _ (p : {poly F^o}) p_neq0).
 move=> [L [rs [f rsf p_eq]]].
@@ -805,7 +819,547 @@ exists S', iota', rs'; split => //.
 by apply: (p_sol S' rs' prs' r); rewrite -imgf dim_aimg/= -rsf.
 Qed.
 
+Lemma splitting_num_field (p : {poly rat}) :
+  {L : splittingFieldType rat & { LtoC : {rmorphism L -> algC} |
+    (p != 0 -> splittingFieldFor 1 (p ^^ in_alg L) {:L})
+    /\ (p = 0 -> L = [splittingFieldType rat of rat^o]) }}.
+Proof.
+have [->|p_neq0] := eqVneq p 0.
+  by exists [splittingFieldType rat of rat^o], [rmorphism of ratr]; split.
+have [/= rsalg pE] := closed_field_poly_normal (p ^^ (ratr : _ -> algC)).
+have {}pE : p ^^ ratr %= \prod_(z <- rsalg) ('X - z%:P).
+  by rewrite pE (eqp_trans (eqp_scale _ _)) ?eqpxx// lead_coef_eq0 map_poly_eq0.
+have [L' [L'toC [rs' rs'E rs'f]]] := num_field_exists rsalg.
+have splitL' : splittingFieldFor 1 (p ^^ in_alg L') {: L'}%AS.
+  exists rs' => //; rewrite -(eqp_map L'toC).
+  by rewrite -map_poly_comp map_prod_XsubC rs'E (eq_map_poly (fmorph_eq_rat _)).
+have splitaxL' : SplittingField.axiom L'.
+  by exists (p ^^ in_alg L'); first by apply/polyOver1P; exists p.
+exists (SplittingFieldType rat L' splitaxL'), L'toC; split => //.
+by move=> p_eq0; rewrite p_eq0 eqxx in p_neq0.
+Qed.
+
+Definition numfield (p : {poly rat}) : splittingFieldType rat :=
+  projT1 (splitting_num_field p).
+
+Lemma numfield0 : numfield 0 = [splittingFieldType rat of rat^o].
+Proof. by rewrite /numfield; case: splitting_num_field => //= ? [? [_ ->]]. Qed.
+
+Definition numfield_inC (p : {poly rat}) :
+    {rmorphism numfield p -> algC} :=
+  projT1 (projT2 (splitting_num_field p)).
+
+Lemma numfieldP (p : {poly rat}) : p != 0 ->
+  splittingFieldFor 1 (p ^^ in_alg (numfield p)) fullv.
+Proof. by rewrite /numfield; case: splitting_num_field => //= ? [? []]. Qed.
+
+Lemma char_numfield (p : {poly rat}) : [char (numfield p)] =i pred0.
+Proof. exact: char_ext. Qed.
+Hint Resolve char_numfield : core.
+
+Lemma normal_numfield (p : {poly rat}) : normalField 1 {: numfield p}.
+Proof.
+have [{p}->|p_neq0] := eqVneq p 0.
+  by rewrite numfield0 regular_fullv normalField_refl.
+apply/splitting_normalField; rewrite ?sub1v//.
+exists (p ^^ in_alg _); last exact: numfieldP.
+by apply/polyOver1P; exists p.
+Qed.
+
+Lemma galois_numfield (p : {poly rat}) : galois 1 {: numfield p}.
+Proof.
+by apply/char0_galois; [exact/char_ext|rewrite sub1v|exact: normal_numfield].
+Qed.
+
+Theorem AbelGaloisPolyRat (p : {poly rat}) :
+  reflect (solvable_by_radical_poly p) (solvable 'Gal({: numfield p} / 1)).
+Proof.
+have [{p}->|p_neq0] := eqVneq p 0.
+  rewrite numfield0 regular_fullv galvv solvable1; constructor.
+  move=> L rs; rewrite eqp_sym rmorph0 eqp0 prodf_seq_eq0.
+  by move=> /hasP[x _ /=]; rewrite polyXsubC_eq0.
+have charrat : [char rat] =i pred0 by exact: char_num.
+pose charnumfield := char_ext (numfield p).
+apply: (equivP idP); rewrite -AbelGaloisPoly//.
+have [rs prs <-] := numfieldP p_neq0.
+split; last by move=> /(_ (numfield p) rs prs).
+move=> solp; apply/solvable_ext_polyP => //.
+by apply/classicW; exists (numfield p); exists rs; split.
+Qed.
+
+Definition numfield_roots (p : {poly rat}) :=
+  if (p != 0) =P true isn't ReflectT p_neq0 then [::]
+  else projT1 (sig2_eqW (numfieldP p_neq0)).
+
+Lemma poly_numfield_eqp (p : {poly rat}) : p != 0 ->
+  p ^^ in_alg _ %= \prod_(x <- numfield_roots p) ('X - x%:P).
+Proof.
+by move=> p_neq0; rewrite /numfield_roots; case: eqP => //= ?; case: sig2_eqW.
+Qed.
+
+Lemma adjoin_numfield_roots (p : {poly rat}) :
+  (<<1 & numfield_roots p>> = fullv)%VS.
+Proof.
+rewrite /numfield_roots; case: eqP => [p0|/negP]; first by case: sig2_eqW.
+by rewrite negbK => /eqP->; rewrite numfield0 regular_fullv Fadjoin_nil.
+Qed.
+
 Open Scope ring_scope.
+
+Module PrimeDegreeTwoNonRealRoots.
+Section PrimeDegreeTwoNonRealRoots.
+
+Variables (p : {poly rat}).
+
+Let L := numfield p.
+Let charL : [char L] =i pred0 := char_numfield p.
+Let iota : {rmorphism L -> algC} := numfield_inC p.
+Let rp' : seq L := numfield_roots p.
+
+Hypothesis p_irr : irreducible_poly p.
+
+Let p_neq0 : p != 0.
+Proof.
+have := p_irr; rewrite /irreducible_poly => -[+ _].
+by apply: contraTneq => ->; rewrite size_poly0.
+Qed.
+
+Let ratr_p' : map_poly ratr p %= \prod_(x <- rp') ('X - x%:P).
+Proof.
+by have := poly_numfield_eqp p_neq0; rewrite (eq_map_poly (fmorph_eq_rat _)).
+Qed.
+
+Let rp'_uniq : uniq rp'.
+Proof.
+rewrite -separable_prod_XsubC -(eqp_separable ratr_p').
+rewrite -char0_ratrE separable_map.
+apply/coprimepP => d; have [sp_gt1 eqp] := p_irr => /eqp.
+rewrite size_poly_eq1; have [//|dN1 /(_ isT)] := boolP (d %= 1).
+move=> /eqp_dvdl-> /dvdp_leq; rewrite -size_poly_eq0 polyorder.size_deriv.
+by case: (size p) sp_gt1 => [|[|n]]//= _; rewrite ltnn; apply.
+Qed.
+
+Let d := (size p).-1.
+Hypothesis d_prime : prime d.
+Hypothesis count_rp' : count [pred x | iota x \isn't Num.real] rp' = 2%N.
+
+Let rp := [seq x <- rp' | iota x \isn't Num.real]
+          ++ [seq x <- rp' | iota x \is Num.real].
+
+Let rp_perm : perm_eq rp rp'. Proof. by rewrite perm_catC perm_filterC. Qed.
+Let rp_uniq : uniq rp. Proof. by rewrite (perm_uniq rp_perm). Qed.
+Let ratr_p : map_poly ratr p %= \prod_(x <- rp) ('X - x%:P).
+Proof.
+rewrite (eqp_trans ratr_p')// eqp_monic ?monic_prod_XsubC//.
+exact/eqP/esym/perm_big.
+Qed.
+
+Lemma nth_rp_real i : (iota rp`_i \is Num.real) = (i > 1)%N.
+Proof.
+rewrite nth_cat size_filter count_rp'; case: ltnP => // iP; [apply/negbTE|].
+  apply: (allP (filter_all [predC (mem Creal) \o iota] _)) _ (mem_nth 0 _).
+  by rewrite size_filter count_rp'.
+have [i_big|i_small] := leqP (size [seq x <- rp' | iota x \is Creal]) (i - 2).
+  by rewrite nth_default// rmorph0 rpred0.
+exact: (allP (filter_all (mem Creal \o iota) _)) _ (mem_nth 0 _).
+Qed.
+
+Let K := <<1 & rp'>>%AS.
+Let K_eq : K = <<1 & rp>>%AS :> {vspace _}.
+Proof. exact/esym/eq_adjoin/perm_mem. Qed.
+
+Let K_split_p : splittingFieldFor 1%AS (map_poly ratr p) K.
+Proof. by exists rp => //; rewrite ratr_p eqpxx. Qed.
+
+Let p_sep : separable_poly p.
+Proof.
+rewrite -(separable_map [rmorphism of char0_ratr charL]).
+by rewrite (eqp_separable ratr_p) separable_prod_XsubC.
+Qed.
+
+Let d_gt0 : (d > 0)%N.
+Proof. by rewrite prime_gt0. Qed.
+
+Let d_gt1 : (d > 1)%N.
+Proof. by rewrite prime_gt1. Qed.
+
+Lemma size_rp : size rp = d.
+Proof.
+have /eqp_size := ratr_p; rewrite -char0_ratrE size_map_poly.
+by rewrite size_prod_XsubC polySpred// => -[].
+Qed.
+
+Let i0 := Ordinal d_gt0.
+Let i1 := Ordinal d_gt1.
+
+Lemma ratr_p_over : map_poly (ratr : rat -> L) p \is a polyOver 1%AS.
+Proof.
+apply/polyOverP => i; rewrite -char0_ratrE coef_map /=.
+by rewrite char0_ratrE -alg_num_field rpredZ ?mem1v.
+Qed.
+
+Lemma galois1K : galois 1%VS K.
+Proof.
+apply/splitting_galoisField; exists (map_poly ratr p); split => //.
+  exact: ratr_p_over.
+by rewrite -char0_ratrE separable_map.
+Qed.
+
+Lemma all_rpK : all (mem K) rp.
+Proof. by rewrite K_eq; apply/allP/seqv_sub_adjoin. Qed.
+
+Lemma root_p : root (p ^^ ratr) =i rp.
+Proof. by move=> x; rewrite -topredE/= (eqp_root ratr_p) root_prod_XsubC. Qed.
+
+Lemma rp_roots : all (root (map_poly ratr p)) rp.
+Proof. by apply/allP => x; rewrite -root_p. Qed.
+
+Lemma ratr_p_rp i : (i < d)%N -> (map_poly ratr p).[rp`_i] = 0.
+Proof. by move=> ltid; apply/eqP; rewrite [_ == _]root_p mem_nth ?size_rp. Qed.
+
+Lemma rpK i : (i < d)%N -> rp`_i \in K.
+Proof. by move=> ltid; rewrite [_ \in _](allP all_rpK) ?mem_nth ?size_rp. Qed.
+
+Lemma eq_size_rp : size rp == d. Proof. exact/eqP/size_rp. Qed.
+Let trp := Tuple eq_size_rp.
+
+Lemma gal_perm_eq (g : gal_of K) : perm_eq [seq g x | x <- trp] trp.
+Proof.
+apply: prod_XsubC_eq; apply/eqP; rewrite -eqp_monic ?monic_prod_XsubC//.
+rewrite -(eqp_rtrans ratr_p) big_map.
+apply: (@eqp_trans _ (map_poly (g \o ratr) p)); last first.
+  apply/eqpW/eq_map_poly => x /=; rewrite (fixed_gal _ (gal1 g)) ?sub1v//.
+  by rewrite -alg_num_field rpredZ ?mem1v.
+rewrite map_poly_comp/=; have := ratr_p; rewrite -(eqp_map [rmorphism of g])/=.
+move=> /eqp_rtrans/=->; apply/eqpW; rewrite rmorph_prod.
+by apply: eq_bigr => x; rewrite rmorphB/= map_polyX map_polyC/=.
+Qed.
+
+Definition gal_perm g : 'S_d := projT1 (sig_eqW (tuple_permP (gal_perm_eq g))).
+
+Lemma gal_permP g i : rp`_(gal_perm g i) = g (rp`_i).
+Proof.
+rewrite /gal_perm; case: sig_eqW => /= s.
+move=> /(congr1 (((@nth _ 0))^~ i)); rewrite (nth_map 0) ?size_rp// => ->.
+by rewrite (nth_map i) ?size_enum_ord// (tnth_nth 0)/= nth_ord_enum.
+Qed.
+
+(** N/A **)
+Lemma gal_perm_is_morphism :
+  {in ('Gal(K / 1%AS))%G &, {morph gal_perm : x y / (x * y)%g >-> (x * y)%g}}.
+Proof.
+move=> u v _ _; apply/permP => i; apply/val_inj.
+apply: (uniqP 0 rp_uniq); rewrite ?inE ?size_rp ?ltn_ord//=.
+by rewrite permM !gal_permP galM// ?rpK.
+Qed.
+Canonical gal_perm_morphism :=  Morphism gal_perm_is_morphism.
+
+Lemma minPoly_rp x : x \in rp -> minPoly 1%VS x %= map_poly ratr p.
+Proof.
+move=> xrp; have : minPoly 1 x %| map_poly ratr p.
+  by rewrite minPoly_dvdp ?ratr_p_over ?[root _ _]root_p//=.
+have : size (minPoly 1 x) != 1%N by rewrite size_minPoly.
+have /polyOver1P[q ->] := minPolyOver 1 x.
+have /eq_map_poly -> : in_alg L =1 ratr.
+  by move=> r; rewrite in_algE alg_num_field.
+by rewrite -char0_ratrE /eqp !dvdp_map -/(_ %= _) size_map_poly; apply: p_irr.
+Qed.
+
+Lemma injm_gal_perm : ('injm gal_perm)%g.
+Proof.
+apply/subsetP => u /mker/= gu1; apply/set1gP/eqP/gal_eqP => x Kx.
+have fixrp : all (fun r => frel u r r) rp.
+  apply/allP => r/= /(nthP 0)[i]; rewrite size_rp => ltid <-.
+  have /permP/(_ (Ordinal ltid))/(congr1 val)/= := gu1.
+  by rewrite perm1/= => {2}<-; rewrite gal_permP.
+rewrite K_eq /= in Kx.
+elim/last_ind: rp x Kx fixrp => [|s r IHs] x.
+  rewrite adjoin_nil subfield_closed => x1 _.
+  by rewrite (fixed_gal _ (gal1 u)) ?sub1v ?gal_id.
+rewrite adjoin_rcons => /Fadjoin_poly_eq <-.
+rewrite all_rcons => /andP[/eqP ur /IHs us].
+rewrite gal_id -horner_map/= ur map_poly_id//=.
+move=> a /(nthP 0)[i i_lt <-]; rewrite us ?gal_id//.
+exact/polyOverP/Fadjoin_polyOver.
+Qed.
+
+Lemma dvd_dG : (d %| #|'Gal(K / 1%VS)%g|)%N.
+Proof.
+rewrite dim_fixedField (galois_fixedField _) ?galois1K ?dimv1 ?divn1//.
+rewrite (@dvdn_trans (\dim_(1%VS : {vspace L}) <<1; rp`_0>>%VS))//.
+  rewrite -adjoin_degreeE -[X in (_ %| X)%N]/(_.+1.-1).
+  rewrite -size_minPoly (eqp_size (minPoly_rp _)) ?mem_nth ?size_rp//.
+  by rewrite -char0_ratrE size_map_poly.
+rewrite dimv1 divn1 K_eq field_dimS//= -adjoin_seq1 adjoin_seqSr//.
+have: (0 < size rp)%N by rewrite size_rp.
+by case: rp => //= x l _ y; rewrite inE => /eqP->; rewrite inE eqxx.
+Qed.
+
+Definition gal_cycle : gal_of K := projT1 (Cauchy d_prime dvd_dG).
+
+Lemma gal_cycle_order : #[gal_cycle]%g = d.
+Proof. by rewrite /gal_cycle; case: Cauchy. Qed.
+
+Lemma gal_perm_cycle_order : #[(gal_perm gal_cycle)]%g = d.
+Proof. by rewrite order_injm ?gal_cycle_order ?injm_gal_perm ?gal1. Qed.
+
+Definition conjL : {lrmorphism L -> L} :=
+  projT1 (restrict_aut_to_normal_num_field iota conjC).
+
+Definition iotaJ : {morph iota : x / conjL x >-> x^*} :=
+  projT2 (restrict_aut_to_normal_num_field _ _).
+
+Lemma conjLK : involutive conjL.
+Proof. by move=> x; apply: (fmorph_inj iota); rewrite !iotaJ conjCK. Qed.
+
+Lemma conjL_rp : {mono conjL : x / x \in rp}.
+Proof.
+suff rpJ : {homo conjL : x / x \in rp}.
+  by move=> x; apply/idP/idP => /rpJ//; rewrite conjLK.
+move=> ?/(nthP 0)[i]; rewrite size_rp => ltid <-.
+rewrite -!root_p -!topredE /root/=.
+have /eq_map_poly<- : conjL \o char0_ratr charL =1 _ := fmorph_eq_rat _.
+by rewrite map_poly_comp horner_map ratr_p_rp ?rmorph0.
+Qed.
+
+Lemma conjL_K : {mono conjL : x / x \in K}.
+Proof.
+suff rpJ : {homo conjL : x / x \in K}.
+  by move=> x; apply/idP/idP => /rpJ//; rewrite conjLK.
+move=> x; rewrite K_eq => xK.
+have : conjL x \in (linfun conjL @:  <<1 & rp>>)%VS.
+  by apply/memv_imgP; exists x => //; rewrite lfunE.
+rewrite aimg_adjoin_seq aimg1/= (@eq_adjoin _ _ _ _ rp)// => y.
+apply/mapP/idP => [[z zrp->]|yrp]; first by rewrite lfunE conjL_rp.
+by exists (conjL y); rewrite ?conjL_rp//= !lfunE [RHS]conjLK.
+Qed.
+
+Lemma conj_rp0 : conjL rp`_i0 = rp`_i1.
+Proof.
+have /(nthP 0)[j jlt /esym rpj_eq]: conjL rp`_i0 \in rp.
+  by rewrite conjL_rp mem_nth ?size_rp.
+rewrite size_rp in jlt; rewrite rpj_eq; congr nth.
+have: j != i0.
+  apply: contra_eq_neq rpj_eq => ->.
+  by rewrite -(inj_eq (fmorph_inj iota)) iotaJ -CrealE nth_rp_real.
+have: (j < 2)%N by rewrite ltnNge -nth_rp_real -rpj_eq iotaJ CrealJ nth_rp_real.
+by case: j {jlt rpj_eq} => [|[|[]]].
+Qed.
+
+Lemma conj_rp1 : conjL rp`_i1 = rp`_i0.
+Proof. by apply: (canLR conjLK); rewrite conj_rp0. Qed.
+
+Lemma conj_nth_rp (i : 'I_d) : conjL (rp`_i) = rp`_(tperm i0 i1 i).
+Proof.
+rewrite permE/=; case: eqVneq => [->|Ni0]; first by rewrite conj_rp0.
+case: eqVneq => [->|Ni1]; first by rewrite conj_rp1.
+have i_gt : (i > 1)%N by case: i Ni0 Ni1 => [[|[|[]]]].
+apply: (fmorph_inj iota); rewrite iotaJ.
+by rewrite conj_Creal ?nth_rp_real// tpermD// -val_eqE/= ltn_eqF// ltnW.
+Qed.
+
+Definition galJ : gal_of K := gal K (AHom (linfun_is_ahom conjL)).
+
+Lemma galJ_tperm : gal_perm galJ = tperm i0 i1.
+Proof.
+apply/permP => i; apply/val_inj.
+apply: (uniqP 0 rp_uniq); rewrite ?inE ?size_rp ?ltn_ord//=.
+rewrite gal_permP /galJ/= galK ?rpK//= ?lfunE ?[LHS]conj_nth_rp//.
+by apply/subvP => /= _/memv_imgP[x Ex ->]; rewrite lfunE conjL_K.
+Qed.
+
+Lemma surj_gal_perm : (gal_perm @* 'Gal (K / 1%AS) = 'Sym_('I_d))%g.
+Proof.
+apply/eqP; rewrite eqEsubset subsetT/=.
+rewrite -(@gen_tperm_cycle _ i0 i1 (gal_perm gal_cycle));
+  do ?by rewrite ?dpair_ij0 ?card_ord ?gal_perm_cycle_order.
+ rewrite gen_subG; apply/subsetP => s /set2P[]->;
+   rewrite -?galJ_tperm ?mem_morphim ?gal1//.
+Qed.
+
+Lemma isog_gal_perm : 'Gal (K / 1%AS) \isog ('Sym_('I_d)).
+Proof.
+apply/isogP; exists gal_perm_morphism; first exact: injm_gal_perm.
+exact: surj_gal_perm.
+Qed.
+
+Lemma isog_gal : 'Gal ({:numfield p} / 1%AS) \isog ('Sym_('I_d)).
+Proof. by rewrite -adjoin_numfield_roots isog_gal_perm. Qed.
+
+End PrimeDegreeTwoNonRealRoots.
+End PrimeDegreeTwoNonRealRoots.
+Module PDTNRR := PrimeDegreeTwoNonRealRoots.
+
+Section Example1.
+
+Definition poly_example_int : {poly int} := 'X^5 - 4 *: 'X + 2.
+Definition poly_example : {poly rat} := 'X^5 - 4 *: 'X + 2.
+
+Local Definition pesimp := (coefD, coefN, coefB, coefZ, coefXn, coefX, coefC,
+  hornerD, hornerN, hornerC, hornerZ, hornerX, hornerXn, rmorph_nat).
+
+Lemma polyCn (R : ringType) n : n%:R%:P = n%:R :> {poly R}.
+Proof. by rewrite rmorph_nat. Qed.
+
+Lemma poly_exampleEint : poly_example = map_poly intr poly_example_int.
+Proof.
+pose simp := (rmorphB, rmorphD, map_polyZ, map_polyXn, map_polyX, map_polyC).
+by do !rewrite [map_poly _ _]simp/= ?natz.
+Qed.
+
+Lemma size_poly_example_int : size poly_example_int = 6.
+Proof.
+rewrite /poly_example_int -addrA size_addl ?size_polyXn//.
+by rewrite size_addl ?size_opp ?size_scale ?size_polyX -?polyCn ?size_polyC.
+Qed.
+
+Lemma size_poly_example : size poly_example = 6.
+Proof.
+rewrite /poly_example -addrA size_addl ?size_polyXn//.
+by rewrite size_addl ?size_opp ?size_scale ?size_polyX -?polyCn ?size_polyC.
+Qed.
+
+Lemma poly_example_int_neq0 : poly_example_int != 0.
+Proof. by rewrite -size_poly_eq0 size_poly_example_int. Qed.
+
+Lemma poly_example_neq0 : poly_example != 0.
+Proof. by rewrite -size_poly_eq0 size_poly_example. Qed.
+Hint Resolve poly_example_neq0 : core.
+
+Lemma poly_example_monic : poly_example \is monic.
+Proof. by rewrite monicE lead_coefE !pesimp size_poly_example. Qed.
+Hint Resolve poly_example_monic : core.
+
+Lemma irreducible_example : irreducible_poly poly_example.
+Proof.
+rewrite poly_exampleEint; apply: (@eisenstein 2) => // [|||i];
+  rewrite ?lead_coefE ?size_poly_example_int ?pesimp//.
+by move: i; do 6!case=> //.
+Qed.
+Hint Resolve irreducible_example : core.
+
+Lemma separable_example : separable_poly poly_example.
+Proof.
+apply/coprimepP => q /(irredp_XsubCP irreducible_example) [//| eqq].
+have size_deriv_example : size poly_example^`() = 5%N.
+  rewrite !derivCE addr0 alg_polyC -scaler_nat addr0.
+  by rewrite size_addl ?size_scale ?size_opp ?size_polyXn ?size_polyC.
+rewrite gtNdvdp -?size_poly_eq0 ?size_deriv_example//.
+by rewrite (eqp_size eqq) ?size_poly_example.
+Qed.
+Hint Resolve separable_example : core.
+
+Lemma prime_example : prime (size poly_example).-1.
+Proof. by rewrite size_poly_example. Qed.
+
+(* Using the package real_closed, we should be able to monitor the sign of    *)
+(* the derivative, and find that the polynomial has exactly three real roots. *)
+Definition example_roots : seq algC :=
+  map (numfield_inC poly_example) (numfield_roots poly_example).
+
+Lemma ratr_example_poly :
+  poly_example ^^ ratr = \prod_(x <- example_roots) ('X - x%:P).
+Proof.
+rewrite /example_roots -map_prod_XsubC/=.
+have := poly_numfield_eqp poly_example_neq0.
+rewrite eqp_monic ?monic_prod_XsubC ?monic_map// => /eqP<-.
+by rewrite -map_poly_comp [in RHS](eq_map_poly (fmorph_eq_rat _)).
+Qed.
+
+Lemma size_example_roots : size example_roots = 5%N.
+Proof.
+have /(congr1 (fun p : {poly _} => size p)) := ratr_example_poly.
+by rewrite size_map_poly size_poly_example size_prod_XsubC => -[].
+Qed.
+
+Lemma example_roots_uniq : uniq example_roots.
+Proof.
+rewrite -separable_prod_XsubC -ratr_example_poly.
+by rewrite separable_map separable_example.
+Qed.
+
+Lemma deriv_poly_example : poly_example^`() = 5%:R *: 'X^4 - 4%:R%:P.
+Proof. by rewrite /poly_example !derivE addr0 alg_polyC scaler_nat ?addr0. Qed.
+
+Lemma deriv_poly_example_neq0 : poly_example^`() != 0.
+Proof.
+apply/eqP => /(congr1 (fun p => p.[0])).
+by rewrite deriv_poly_example !pesimp => /eqP; compute.
+Qed.
+Hint Resolve deriv_poly_example_neq0 : core.
+
+Definition alpha : algR := Num.sqrt (2%:R / Num.sqrt 5%:R).
+
+Lemma alpha_gt0 : alpha > 0.
+Proof. by rewrite sqrtr_gt0 mulr_gt0 ?invr_gt0 ?sqrtr_gt0 ?ltr0n. Qed.
+
+Lemma rootsR_deriv_poly_example :
+  rootsR (poly_example^`() ^^ ratr) = [:: - alpha; alpha].
+Proof.
+apply: eq_sorted_lt; rewrite ?sorted_roots//.
+ by rewrite /= andbT -subr_gt0 opprK ?addr_gt0 ?alpha_gt0.
+move=> x; rewrite mem_rootsR ?map_poly_eq0// !inE -topredE/= orbC.
+rewrite deriv_poly_example /root.
+rewrite rmorphB linearZ/= map_polyC/= map_polyXn !pesimp.
+rewrite -[5%:R]sqr_sqrtr ?ler0n// (exprM _ 2 2) -exprMn (natrX _ 2 2) subr_sqr.
+rewrite mulf_eq0 [_ + 2%:R == 0]gt_eqF ?orbF; last first.
+  by rewrite ltr_spaddr ?ltr0n// mulr_ge0 ?sqrtr_ge0// exprn_even_ge0.
+have sqrt5N0 : Num.sqrt (5%:R : algR) != 0 by rewrite gt_eqF// sqrtr_gt0 ?ltr0n.
+rewrite subr_eq0 (can2_eq (mulKf _) (mulVKf _))// mulrC -subr_eq0.
+rewrite -[X in _ - X]sqr_sqrtr; last first.
+  by rewrite mulr_ge0 ?invr_ge0 ?sqrtr_ge0 ?ler0n.
+by rewrite subr_sqr mulf_eq0 subr_eq0 addr_eq0.
+Qed.
+
+Lemma count_roots_ex : count [predC Creal] example_roots = 2%N.
+Proof.
+rewrite -!sum1_count; pose pR : {poly algR} := poly_example ^^ ratr.
+have pR0 : pR != 0 by rewrite map_poly_eq0.
+suff cR : (\sum_(j <- example_roots | j \is Num.real) 1)%N = 3%N.
+  have := size_example_roots; rewrite -sum1_size (bigID (mem Num.real))/=.
+  by rewrite cR => -[->].
+rewrite -big_filter (perm_big (map algRval (rootsR pR))); last first.
+  rewrite uniq_perm ?filter_uniq ?example_roots_uniq//.
+    by rewrite (map_inj_uniq (fmorph_inj _)) uniq_roots.
+  move=> x; rewrite mem_filter -root_prod_XsubC -ratr_example_poly.
+  rewrite -(eq_map_poly (fmorph_eq_rat [rmorphism of algRval \o ratr]))/=.
+  rewrite map_poly_comp/=.
+  apply/andP/mapP => [[xR xroot]|[y + ->]].
+    exists (in_algR xR); rewrite // mem_rootsR// -topredE/=.
+    by rewrite -(mapf_root algRval_rmorphism)/=.
+  rewrite mem_rootsR// -[y \in _]topredE/=.
+  by split; [apply/algRvalP|rewrite mapf_root].
+apply/eqP; rewrite sum1_size size_map eqn_leq.
+rewrite (leq_trans (size_root_leSderiv _))//=; last first.
+  by rewrite deriv_map rootsR_deriv_poly_example.
+have pRE x : Num.sg pR.[x%:~R] = locked ratr (Num.sg poly_example.[x%:~R]).
+  by rewrite -lock ratr_sg -horner_map/= ratr_int.
+have pN2 : Num.sg pR.[(- 2%:Z)%:~R] = - 1 by rewrite pRE !pesimp -lock rmorphN1.
+have pN1 : Num.sg pR.[(- 1%:Z)%:~R] =   1 by rewrite pRE !pesimp -lock rmorph1.
+have p1  : Num.sg pR.[1%:~R]        = - 1 by rewrite pRE !pesimp -lock rmorphN1.
+have p2  : Num.sg pR.[2%:~R]        =   1 by rewrite pRE !pesimp -lock rmorph1.
+have simp := (pN2, pN1, p1, p2, mulN1r, mulrN1).
+have [||x0 /andP[_ x0N1] rx0] := @ivt_sign _ pR (- 2%:R) (- 1); rewrite ?simp//.
+  by rewrite -subr_ge0 opprK addKr ler01.
+have [||x1 /andP[x10 x11] rx1] := @ivt_sign _ pR (-1) 1; rewrite ?simp//.
+  by rewrite -subr_ge0 opprK addr_ge0 ?ler01.
+have [||x2 /andP[/= x21 _] rx2] := @ivt_sign _ pR 1 2%:R; rewrite ?simp//.
+  by rewrite -subr_ge0 addrK ler01.
+have: sorted <%R [:: x0; x1; x2] by rewrite /= (lt_trans x0N1) ?(lt_trans x11).
+rewrite lt_sorted_uniq_le => /andP[uniqx012 _].
+apply: (@uniq_leq_size _ [:: x0; x1; x2]) => //.
+by move=> x; rewrite !inE => /or3P[]/eqP->/=; rewrite mem_rootsR.
+Qed.
+
+Lemma example_not_solvable_by_radicals :
+  ~ solvable_by_radical_poly ('X^5 - 4 *: 'X + 2 : {poly rat}).
+Proof.
+move=> /AbelGaloisPolyRat; pose sol_gal := isog_sol (PDTNRR.isog_gal _ _ _).
+rewrite sol_gal ?size_poly_example ?solvable_SymF ?card_ord//.
+by rewrite -(count_map _ [predC Creal]) count_roots_ex.
+Qed.
+
+End Example1.
 
 Section Formula.
 Definition prim_unity_root_ n := projT1 (@C_prim_root_exists n.-1.+1 isT).
@@ -1116,449 +1670,3 @@ elim: f => //= [x|c|u f1 IHf1|b f1 IHf1 f2 IHf2] in k {r fr} als1 als1E *.
 Qed.
 
 End Formula.
-
-Module PrimeDegreeTwoNonRealRoots.
-Section PrimeDegreeTwoNonRealRoots.
-
-Variables (L : splittingFieldType rat) (iota : {rmorphism L -> algC}).
-Let charL := char_ext L.
-
-Variables (p : {poly rat}) (rp' : seq L).
-Hypothesis p_irr : irreducible_poly p.
-Hypothesis rp'_uniq : uniq rp'.
-Hypothesis ratr_p' : map_poly ratr p = \prod_(x <- rp') ('X - x%:P).
-Let d := (size p).-1.
-Hypothesis d_prime : prime d.
-Hypothesis count_rp' : count [pred x | iota x \isn't Num.real] rp' = 2%N.
-
-Let rp := [seq x <- rp' | iota x \isn't Num.real]
-          ++ [seq x <- rp' | iota x \is Num.real].
-
-Let rp_perm : perm_eq rp rp'. Proof. by rewrite perm_catC perm_filterC. Qed.
-Let rp_uniq : uniq rp. Proof. by rewrite (perm_uniq rp_perm). Qed.
-Let ratr_p : map_poly ratr p = \prod_(x <- rp) ('X - x%:P).
-Proof. by symmetry; rewrite ratr_p'; apply: perm_big. Qed.
-
-Lemma nth_rp_real i : (iota rp`_i \is Num.real) = (i > 1)%N.
-Proof.
-rewrite nth_cat size_filter count_rp'; case: ltnP => // iP; [apply/negbTE|].
-  apply: (allP (filter_all [predC (mem Creal) \o iota] _)) _ (mem_nth 0 _).
-  by rewrite size_filter count_rp'.
-have [i_big|i_small] := leqP (size [seq x <- rp' | iota x \is Creal]) (i - 2).
-  by rewrite nth_default// rmorph0 rpred0.
-exact: (allP (filter_all (mem Creal \o iota) _)) _ (mem_nth 0 _).
-Qed.
-
-Let K := <<1 & rp'>>%AS.
-Let K_eq : K = <<1 & rp>>%AS :> {vspace _}.
-Proof. exact/esym/eq_adjoin/perm_mem. Qed.
-
-Let K_split_p : splittingFieldFor 1%AS (map_poly ratr p) K.
-Proof. by exists rp => //; rewrite ratr_p eqpxx. Qed.
-
-Let p_monic : p \is monic.
-Proof.
-by rewrite -(map_monic [rmorphism of char0_ratr charL]) ratr_p monic_prod_XsubC.
-Qed.
-
-Let p_sep : separable_poly p.
-Proof.
-rewrite -(separable_map [rmorphism of char0_ratr charL]) ratr_p.
-by rewrite separable_prod_XsubC.
-Qed.
-
-Let p_neq0 : p != 0. Proof. exact: irredp_neq0. Qed.
-
-Let d_gt0 : (d > 0)%N.
-Proof. by rewrite prime_gt0. Qed.
-
-Let d_gt1 : (d > 1)%N.
-Proof. by rewrite prime_gt1. Qed.
-
-Lemma size_rp : size rp = d.
-Proof.
-have /(congr1 (size \o val))/= := ratr_p; rewrite -char0_ratrE size_map_poly.
-by rewrite size_prod_XsubC polySpred// => -[].
-Qed.
-
-Let i0 := Ordinal d_gt0.
-Let i1 := Ordinal d_gt1.
-
-Lemma ratr_p_over : map_poly (ratr : rat -> L) p \is a polyOver 1%AS.
-Proof.
-apply/polyOverP => i; rewrite -char0_ratrE coef_map /=.
-by rewrite char0_ratrE -alg_num_field rpredZ ?mem1v.
-Qed.
-
-Lemma galois1K : galois 1%VS K.
-Proof.
-apply/splitting_galoisField; exists (map_poly ratr p); split => //.
-  exact: ratr_p_over.
-by rewrite -char0_ratrE separable_map.
-Qed.
-
-Lemma all_rpK : all (mem K) rp.
-Proof. by rewrite K_eq; apply/allP/seqv_sub_adjoin. Qed.
-
-Lemma root_p : root (map_poly ratr p) =i rp.
-Proof. by move=> x; rewrite ratr_p [x \in root _]root_prod_XsubC. Qed.
-
-Lemma rp_roots : all (root (map_poly ratr p)) rp.
-Proof. by apply/allP => x; rewrite -root_p. Qed.
-
-Lemma ratr_p_rp i : (i < d)%N -> (map_poly ratr p).[rp`_i] = 0.
-Proof. by move=> ltid; apply/eqP; rewrite [_ == _]root_p mem_nth ?size_rp. Qed.
-
-Lemma rpK i : (i < d)%N -> rp`_i \in K.
-Proof. by move=> ltid; rewrite [_ \in _](allP all_rpK) ?mem_nth ?size_rp. Qed.
-
-Lemma eq_size_rp : size rp == d. Proof. exact/eqP/size_rp. Qed.
-Let trp := Tuple eq_size_rp.
-
-Lemma gal_perm_eq (g : gal_of K) : perm_eq [seq g x | x <- trp] trp.
-Proof.
-apply: prod_XsubC_eq; rewrite -ratr_p big_map.
-transitivity (map_poly (g \o ratr) p).
-  rewrite map_poly_comp/= ratr_p rmorph_prod/=.
-  by apply: eq_bigr => x; rewrite rmorphB/= map_polyX map_polyC/=.
-apply: eq_map_poly => x /=; rewrite (fixed_gal _ (gal1 g)) ?sub1v//.
-by rewrite -alg_num_field rpredZ ?mem1v.
-Qed.
-
-Definition gal_perm g : 'S_d := projT1 (sig_eqW (tuple_permP (gal_perm_eq g))).
-
-Lemma gal_permP g i : rp`_(gal_perm g i) = g (rp`_i).
-Proof.
-rewrite /gal_perm; case: sig_eqW => /= s.
-move=> /(congr1 (((@nth _ 0))^~ i)); rewrite (nth_map 0) ?size_rp// => ->.
-by rewrite (nth_map i) ?size_enum_ord// (tnth_nth 0)/= nth_ord_enum.
-Qed.
-
-(** N/A **)
-Lemma gal_perm_is_morphism :
-  {in ('Gal(K / 1%AS))%G &, {morph gal_perm : x y / (x * y)%g >-> (x * y)%g}}.
-Proof.
-move=> u v _ _; apply/permP => i; apply/val_inj.
-apply: (uniqP 0 rp_uniq); rewrite ?inE ?size_rp ?ltn_ord//=.
-by rewrite permM !gal_permP galM// ?rpK.
-Qed.
-Canonical gal_perm_morphism :=  Morphism gal_perm_is_morphism.
-
-Lemma minPoly_rp x : x \in rp -> minPoly 1%VS x = map_poly ratr p.
-Proof.
-move=> xrp; apply/eqP; rewrite -eqp_monic ?monic_minPoly//; last first.
-  by rewrite ratr_p monic_prod_XsubC.
-have : minPoly 1 x %| map_poly ratr p.
-  by rewrite minPoly_dvdp ?ratr_p_over ?[root _ _]root_p//=.
-have : size (minPoly 1 x) != 1%N by rewrite size_minPoly.
-have /polyOver1P[q ->] := minPolyOver 1 x.
-have /eq_map_poly -> : in_alg L =1 ratr.
-  by move=> r; rewrite in_algE alg_num_field.
-by rewrite -char0_ratrE /eqp !dvdp_map -/(_ %= _) size_map_poly; apply: p_irr.
-Qed.
-
-Lemma injm_gal_perm : ('injm gal_perm)%g.
-Proof.
-apply/subsetP => u /mker/= gu1; apply/set1gP/eqP/gal_eqP => x Kx.
-have fixrp : all (fun r => frel u r r) rp.
-  apply/allP => r/= /(nthP 0)[i]; rewrite size_rp => ltid <-.
-  have /permP/(_ (Ordinal ltid))/(congr1 val)/= := gu1.
-  by rewrite perm1/= => {2}<-; rewrite gal_permP.
-rewrite K_eq /= in Kx.
-elim/last_ind: rp x Kx fixrp => [|s r IHs] x.
-  rewrite adjoin_nil subfield_closed => x1 _.
-  by rewrite (fixed_gal _ (gal1 u)) ?sub1v ?gal_id.
-rewrite adjoin_rcons => /Fadjoin_poly_eq <-.
-rewrite all_rcons => /andP[/eqP ur /IHs us].
-rewrite gal_id -horner_map/= ur map_poly_id//=.
-move=> a /(nthP 0)[i i_lt <-]; rewrite us ?gal_id//.
-exact/polyOverP/Fadjoin_polyOver.
-Qed.
-
-Lemma dvd_dG : (d %| #|'Gal(K / 1%VS)%g|)%N.
-Proof.
-rewrite dim_fixedField (galois_fixedField _) ?galois1K ?dimv1 ?divn1//.
-rewrite (@dvdn_trans (\dim_(1%VS : {vspace L}) <<1; rp`_0>>%VS))//.
-  rewrite -adjoin_degreeE -[X in (_ %| X)%N]/(_.+1.-1).
-  rewrite -size_minPoly minPoly_rp ?mem_nth ?size_rp//.
-  by rewrite -char0_ratrE size_map_poly.
-rewrite dimv1 divn1 K_eq field_dimS//= -adjoin_seq1 adjoin_seqSr//.
-have: (0 < size rp)%N by rewrite size_rp.
-by case: rp => //= x l _ y; rewrite inE => /eqP->; rewrite inE eqxx.
-Qed.
-
-Definition gal_cycle : gal_of K := projT1 (Cauchy d_prime dvd_dG).
-
-Lemma gal_cycle_order : #[gal_cycle]%g = d.
-Proof. by rewrite /gal_cycle; case: Cauchy. Qed.
-
-Lemma gal_perm_cycle_order : #[(gal_perm gal_cycle)]%g = d.
-Proof. by rewrite order_injm ?gal_cycle_order ?injm_gal_perm ?gal1. Qed.
-
-Definition conjL : {lrmorphism L -> L} :=
-  projT1 (restrict_aut_to_normal_num_field iota conjC).
-
-Definition iotaJ : {morph iota : x / conjL x >-> x^*} :=
-  projT2 (restrict_aut_to_normal_num_field _ _).
-
-Lemma conjLK : involutive conjL.
-Proof. by move=> x; apply: (fmorph_inj iota); rewrite !iotaJ conjCK. Qed.
-
-Lemma conjL_rp : {mono conjL : x / x \in rp}.
-Proof.
-suff rpJ : {homo conjL : x / x \in rp}.
-  by move=> x; apply/idP/idP => /rpJ//; rewrite conjLK.
-move=> ?/(nthP 0)[i]; rewrite size_rp => ltid <-.
-rewrite -!root_p -!topredE /root/=.
-have /eq_map_poly<- : conjL \o char0_ratr charL =1 _ := fmorph_eq_rat _.
-by rewrite map_poly_comp horner_map ratr_p_rp ?rmorph0.
-Qed.
-
-Lemma conjL_K : {mono conjL : x / x \in K}.
-Proof.
-suff rpJ : {homo conjL : x / x \in K}.
-  by move=> x; apply/idP/idP => /rpJ//; rewrite conjLK.
-move=> x; rewrite K_eq => xK.
-have : conjL x \in (linfun conjL @:  <<1 & rp>>)%VS.
-  by apply/memv_imgP; exists x => //; rewrite lfunE.
-rewrite aimg_adjoin_seq aimg1/= (@eq_adjoin _ _ _ _ rp)// => y.
-apply/mapP/idP => [[z zrp->]|yrp]; first by rewrite lfunE conjL_rp.
-by exists (conjL y); rewrite ?conjL_rp//= !lfunE [RHS]conjLK.
-Qed.
-
-Lemma conj_rp0 : conjL rp`_i0 = rp`_i1.
-Proof.
-have /(nthP 0)[j jlt /esym rpj_eq]: conjL rp`_i0 \in rp.
-  by rewrite conjL_rp mem_nth ?size_rp.
-rewrite size_rp in jlt; rewrite rpj_eq; congr nth.
-have: j != i0.
-  apply: contra_eq_neq rpj_eq => ->.
-  by rewrite -(inj_eq (fmorph_inj iota)) iotaJ -CrealE nth_rp_real.
-have: (j < 2)%N by rewrite ltnNge -nth_rp_real -rpj_eq iotaJ CrealJ nth_rp_real.
-by case: j {jlt rpj_eq} => [|[|[]]].
-Qed.
-
-Lemma conj_rp1 : conjL rp`_i1 = rp`_i0.
-Proof. by apply: (canLR conjLK); rewrite conj_rp0. Qed.
-
-Lemma conj_nth_rp (i : 'I_d) : conjL (rp`_i) = rp`_(tperm i0 i1 i).
-Proof.
-rewrite permE/=; case: eqVneq => [->|Ni0]; first by rewrite conj_rp0.
-case: eqVneq => [->|Ni1]; first by rewrite conj_rp1.
-have i_gt : (i > 1)%N by case: i Ni0 Ni1 => [[|[|[]]]].
-apply: (fmorph_inj iota); rewrite iotaJ.
-by rewrite conj_Creal ?nth_rp_real// tpermD// -val_eqE/= ltn_eqF// ltnW.
-Qed.
-
-Definition galJ : gal_of K := gal K (AHom (linfun_is_ahom conjL)).
-
-Lemma galJ_tperm : gal_perm galJ = tperm i0 i1.
-Proof.
-apply/permP => i; apply/val_inj.
-apply: (uniqP 0 rp_uniq); rewrite ?inE ?size_rp ?ltn_ord//=.
-rewrite gal_permP /galJ/= galK ?rpK//= ?lfunE ?[LHS]conj_nth_rp//.
-by apply/subvP => /= _/memv_imgP[x Ex ->]; rewrite lfunE conjL_K.
-Qed.
-
-Lemma surj_gal_perm : (gal_perm @* 'Gal (K / 1%AS) = 'Sym_('I_d))%g.
-Proof.
-apply/eqP; rewrite eqEsubset subsetT/=.
-rewrite -(@gen_tperm_cycle _ i0 i1 (gal_perm gal_cycle));
-  do ?by rewrite ?dpair_ij0 ?card_ord ?gal_perm_cycle_order.
- rewrite gen_subG; apply/subsetP => s /set2P[]->;
-   rewrite -?galJ_tperm ?mem_morphim ?gal1//.
-Qed.
-
-Lemma isog_gal_perm : 'Gal (K / 1%AS) \isog ('Sym_('I_d)).
-Proof.
-apply/isogP; exists gal_perm_morphism; first exact: injm_gal_perm.
-exact: surj_gal_perm.
-Qed.
-
-End PrimeDegreeTwoNonRealRoots.
-End PrimeDegreeTwoNonRealRoots.
-Module PDTNRR := PrimeDegreeTwoNonRealRoots.
-
-Section Example1.
-
-Definition poly_example_int : {poly int} := 'X^5 - 4 *: 'X + 2.
-Definition poly_example : {poly rat} := 'X^5 - 4 *: 'X + 2.
-
-Local Definition pesimp := (coefD, coefN, coefB, coefZ, coefXn, coefX, coefC,
-  hornerD, hornerN, hornerC, hornerZ, hornerX, hornerXn, rmorph_nat).
-
-Lemma polyCn (R : ringType) n : n%:R%:P = n%:R :> {poly R}.
-Proof. by rewrite rmorph_nat. Qed.
-
-Lemma poly_exampleEint : poly_example = map_poly intr poly_example_int.
-Proof.
-pose simp := (rmorphB, rmorphD, map_polyZ, map_polyXn, map_polyX, map_polyC).
-by do !rewrite [map_poly _ _]simp/= ?natz.
-Qed.
-
-Lemma size_poly_example_int : size poly_example_int = 6.
-Proof.
-rewrite /poly_example_int -addrA size_addl ?size_polyXn//.
-by rewrite size_addl ?size_opp ?size_scale ?size_polyX -?polyCn ?size_polyC.
-Qed.
-
-Lemma size_poly_example : size poly_example = 6.
-Proof.
-rewrite /poly_example -addrA size_addl ?size_polyXn//.
-by rewrite size_addl ?size_opp ?size_scale ?size_polyX -?polyCn ?size_polyC.
-Qed.
-
-Lemma poly_example_int_neq0 : poly_example_int != 0.
-Proof. by rewrite -size_poly_eq0 size_poly_example_int. Qed.
-
-Lemma poly_example_neq0 : poly_example != 0.
-Proof. by rewrite -size_poly_eq0 size_poly_example. Qed.
-Hint Resolve poly_example_neq0 : core.
-
-Lemma poly_example_monic : poly_example \is monic.
-Proof. by rewrite monicE lead_coefE !pesimp size_poly_example. Qed.
-Hint Resolve poly_example_monic : core.
-
-Lemma irreducible_example : irreducible_poly poly_example.
-Proof.
-rewrite poly_exampleEint; apply: (@eisenstein 2) => // [|||i];
-  rewrite ?lead_coefE ?size_poly_example_int ?pesimp//.
-by move: i; do 6!case=> //.
-Qed.
-Hint Resolve irreducible_example : core.
-
-Lemma separable_example : separable_poly poly_example.
-Proof.
-apply/coprimepP => q /(irredp_XsubCP irreducible_example) [//| eqq].
-have size_deriv_example : size poly_example^`() = 5%N.
-  rewrite !derivCE addr0 alg_polyC -scaler_nat addr0.
-  by rewrite size_addl ?size_scale ?size_opp ?size_polyXn ?size_polyC.
-rewrite gtNdvdp -?size_poly_eq0 ?size_deriv_example//.
-by rewrite (eqp_size eqq) ?size_poly_example.
-Qed.
-Hint Resolve separable_example : core.
-
-Lemma prime_example : prime (size poly_example).-1.
-Proof. by rewrite size_poly_example. Qed.
-
-(* Using the package real_closed, we should be able to monitor the sign of    *)
-(* the derivative, and find that the polynomial has exactly three real roots. *)
-Definition example_roots :=
-  sval (closed_field_poly_normal ((map_poly ratr poly_example) : {poly algC})).
-
-Lemma ratr_example_poly :
-  poly_example ^^ ratr = \prod_(x <- example_roots) ('X - x%:P).
-Proof.
-rewrite /example_roots; case: closed_field_poly_normal => //= rs ->.
-by rewrite lead_coef_map/= (eqP poly_example_monic) rmorph1 scale1r.
-Qed.
-
-Lemma size_example_roots : size example_roots = 5%N.
-Proof.
-have /(congr1 (fun p : {poly _} => size p)) := ratr_example_poly.
-by rewrite size_map_poly size_poly_example size_prod_XsubC => -[].
-Qed.
-
-Lemma example_roots_uniq : uniq example_roots.
-Proof.
-rewrite -separable_prod_XsubC -ratr_example_poly.
-by rewrite separable_map separable_example.
-Qed.
-
-Lemma deriv_poly_example : poly_example^`() = 5%:R *: 'X^4 - 4%:R%:P.
-Proof. by rewrite /poly_example !derivE addr0 alg_polyC scaler_nat ?addr0. Qed.
-
-Lemma deriv_poly_example_neq0 : poly_example^`() != 0.
-Proof.
-apply/eqP => /(congr1 (fun p => p.[0])).
-by rewrite deriv_poly_example !pesimp => /eqP; compute.
-Qed.
-Hint Resolve deriv_poly_example_neq0 : core.
-
-Definition alpha : algR := Num.sqrt (2%:R / Num.sqrt 5%:R).
-
-Lemma alpha_gt0 : alpha > 0.
-Proof. by rewrite sqrtr_gt0 mulr_gt0 ?invr_gt0 ?sqrtr_gt0 ?ltr0n. Qed.
-
-Lemma rootsR_deriv_poly_example :
-  rootsR (poly_example^`() ^^ ratr) = [:: - alpha; alpha].
-Proof.
-apply: eq_sorted_lt; rewrite ?sorted_roots//.
- by rewrite /= andbT -subr_gt0 opprK ?addr_gt0 ?alpha_gt0.
-move=> x; rewrite mem_rootsR ?map_poly_eq0// !inE -topredE/= orbC.
-rewrite deriv_poly_example /root.
-rewrite rmorphB linearZ/= map_polyC/= map_polyXn !pesimp.
-rewrite -[5%:R]sqr_sqrtr ?ler0n// (exprM _ 2 2) -exprMn (natrX _ 2 2) subr_sqr.
-rewrite mulf_eq0 [_ + 2%:R == 0]gt_eqF ?orbF; last first.
-  by rewrite ltr_spaddr ?ltr0n// mulr_ge0 ?sqrtr_ge0// exprn_even_ge0.
-have sqrt5N0 : Num.sqrt (5%:R : algR) != 0 by rewrite gt_eqF// sqrtr_gt0 ?ltr0n.
-rewrite subr_eq0 (can2_eq (mulKf _) (mulVKf _))// mulrC -subr_eq0.
-rewrite -[X in _ - X]sqr_sqrtr; last first.
-  by rewrite mulr_ge0 ?invr_ge0 ?sqrtr_ge0 ?ler0n.
-by rewrite subr_sqr mulf_eq0 subr_eq0 addr_eq0.
-Qed.
-
-Lemma count_roots_ex : count [predC Creal] example_roots = 2%N.
-Proof.
-rewrite -!sum1_count; pose pR : {poly algR} := poly_example ^^ ratr.
-have pR0 : pR != 0 by rewrite map_poly_eq0.
-suff cR : (\sum_(j <- example_roots | j \is Num.real) 1)%N = 3%N.
-  have := size_example_roots; rewrite -sum1_size (bigID (mem Num.real))/=.
-  by rewrite cR => -[->].
-rewrite -big_filter (perm_big (map algRval (rootsR pR))); last first.
-  rewrite uniq_perm ?filter_uniq ?example_roots_uniq//.
-    by rewrite (map_inj_uniq (fmorph_inj _)) uniq_roots.
-  move=> x; rewrite mem_filter -root_prod_XsubC -ratr_example_poly.
-  rewrite -(eq_map_poly (fmorph_eq_rat [rmorphism of algRval \o ratr]))/=.
-  rewrite map_poly_comp/=.
-  apply/andP/mapP => [[xR xroot]|[y + ->]].
-    exists (in_algR xR); rewrite // mem_rootsR// -topredE/=.
-    by rewrite -(mapf_root algRval_rmorphism)/=.
-  rewrite mem_rootsR// -[y \in _]topredE/=.
-  by split; [apply/algRvalP|rewrite mapf_root].
-apply/eqP; rewrite sum1_size size_map eqn_leq.
-rewrite (leq_trans (size_root_leSderiv _))//=; last first.
-  by rewrite deriv_map rootsR_deriv_poly_example.
-have pRE x : Num.sg pR.[x%:~R] = locked ratr (Num.sg poly_example.[x%:~R]).
-  by rewrite -lock ratr_sg -horner_map/= ratr_int.
-have pN2 : Num.sg pR.[(- 2%:Z)%:~R] = - 1 by rewrite pRE !pesimp -lock rmorphN1.
-have pN1 : Num.sg pR.[(- 1%:Z)%:~R] =   1 by rewrite pRE !pesimp -lock rmorph1.
-have p1  : Num.sg pR.[1%:~R]        = - 1 by rewrite pRE !pesimp -lock rmorphN1.
-have p2  : Num.sg pR.[2%:~R]        =   1 by rewrite pRE !pesimp -lock rmorph1.
-have simp := (pN2, pN1, p1, p2, mulN1r, mulrN1).
-have [||x0 /andP[_ x0N1] rx0] := @ivt_sign _ pR (- 2%:R) (- 1); rewrite ?simp//.
-  by rewrite -subr_ge0 opprK addKr ler01.
-have [||x1 /andP[x10 x11] rx1] := @ivt_sign _ pR (-1) 1; rewrite ?simp//.
-  by rewrite -subr_ge0 opprK addr_ge0 ?ler01.
-have [||x2 /andP[/= x21 _] rx2] := @ivt_sign _ pR 1 2%:R; rewrite ?simp//.
-  by rewrite -subr_ge0 addrK ler01.
-have: sorted <%R [:: x0; x1; x2] by rewrite /= (lt_trans x0N1) ?(lt_trans x11).
-rewrite lt_sorted_uniq_le => /andP[uniqx012 _].
-apply: (@uniq_leq_size _ [:: x0; x1; x2]) => //.
-by move=> x; rewrite !inE => /or3P[]/eqP->/=; rewrite mem_rootsR.
-Qed.
-
-Lemma example_not_solvable_by_radicals :
-  ~ solvable_by_radical_poly ('X^5 - 4 *: 'X + 2 : {poly rat}).
-Proof.
-move=> /(solvable_poly_rat poly_example_neq0)[L [iota [rs []]]].
-have charL := char_ext L.
-rewrite (eq_map_poly (fmorph_eq_rat _)) -char0_ratrE.
-rewrite eqp_monic ?map_monic ?poly_example_monic ?monic_prod_XsubC//.
-move=> /eqP poly_ex_eq_prod.
-have perm_rs : perm_eq (map iota rs) example_roots.
-  apply: prod_XsubC_eq; rewrite -ratr_example_poly -map_prod_XsubC.
-  by rewrite -poly_ex_eq_prod -map_poly_comp (eq_map_poly (fmorph_eq_rat _)).
-have rs_uniq : uniq rs.
-  rewrite -separable_prod_XsubC -poly_ex_eq_prod.
-  by rewrite separable_map separable_example.
-move=> /(radical_ext_solvable_ext charL (sub1v _)) /=.
-have gal1rs : galois 1 <<1 & rs>> by apply: (@PDTNRR.galois1K _ iota poly_example).
-rewrite /solvable_ext galoisClosure_id//.
-have := PDTNRR.isog_gal_perm irreducible_example rs_uniq poly_ex_eq_prod _.
-move=> /(_ iota); rewrite size_poly_example => /(_ isT)/(_ _)/isog_sol->//.
-  by move=> /andP[_ /not_solvable_Sym]; rewrite card_ord/=; apply.
-by rewrite -(count_map _ [predC Creal]) (seq.permP perm_rs) count_roots_ex.
-Qed.
-
-End Example1.
