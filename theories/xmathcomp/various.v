@@ -1144,11 +1144,11 @@ Local Open Scope nat_scope.
 
 Variable T : finType.
 
-Lemma not_solvable_Alt : 4 < #|T| -> ~ solvable 'Alt_T.
+Lemma solvable_AltF : 4 < #|T| -> solvable 'Alt_T = false.
 Proof.
-move=> card_T Alt_solvable.
+move=> card_T; apply/negP => Alt_solvable.
 have/simple_Alt5 Alt_simple := card_T.
-have:= simple_sol_prime Alt_solvable Alt_simple.
+have := simple_sol_prime Alt_solvable Alt_simple.
 have lt_T n : n <= 4 -> n < #|T| by move/leq_ltn_trans; apply.
 have -> : #|('Alt_T)%G| = #|T|`! %/ 2 by rewrite -card_Alt ?mulKn ?lt_T.
 move/even_prime => [/eqP|]; apply/negP.
@@ -1157,10 +1157,7 @@ move/even_prime => [/eqP|]; apply/negP.
 by rewrite -dvdn2 dvdn_divRL dvdn_fact //=; apply/ltnW/lt_T.
 Qed.
 
-Lemma not_solvable_Sym : 4 < #|T| -> ~ solvable 'Sym_T.
-Proof.
-move=> /not_solvable_Alt /negP/negbTE Alt_solvN.
-by rewrite (series_sol (Alt_normal T)) Alt_solvN.
-Qed.
+Lemma solvable_SymF : 4 < #|T| -> solvable 'Sym_T = false.
+Proof. by rewrite (series_sol (Alt_normal T)) => /solvable_AltF->. Qed.
 
 End Perm_solvable.
