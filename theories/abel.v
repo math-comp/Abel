@@ -839,6 +839,19 @@ exists (SplittingFieldType rat L' splitaxL'), L'toC; split => //.
 by move=> p_eq0; rewrite p_eq0 eqxx in p_neq0.
 Qed.
 
+Lemma solvable_poly_ratP (p : {poly rat}) : p != 0 ->
+  solvable_by_radical_poly p <->
+  exists L : splittingFieldType rat, exists2 K : {subfield L},
+    splittingFieldFor 1 (p ^^ in_alg L) K & solvable_by radical 1 K.
+Proof.
+move=> p_neq0; split.
+  move=> /(solvable_poly_rat p_neq0)[L [_ [rs [prs rssol]]]].
+  by exists L, <<1 & rs>>%AS; first by exists rs.
+have charrat : [char rat] =i pred0 by exact: char_num.
+move=> [L [K [rs prs <-] solK]]; apply/solvable_by_radical_polyP => //.
+by apply/classicW; exists L, rs.
+Qed.
+
 Definition numfield (p : {poly rat}) : splittingFieldType rat :=
   projT1 (splitting_num_field p).
 
