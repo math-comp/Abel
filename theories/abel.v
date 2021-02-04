@@ -1375,21 +1375,21 @@ Qed.
 End Example1.
 
 Section Formula.
-Definition prim_unity_root_ n := projT1 (@C_prim_root_exists n.-1.+1 isT).
+Definition prim1root_ n := projT1 (@C_prim_root_exists n.-1.+1 isT).
 
-Lemma prim_unity_rootP n : (n > 0)%N -> n.-primitive_root (prim_unity_root_ n).
+Lemma prim1rootP n : (n > 0)%N -> n.-primitive_root (prim1root_ n).
 Proof.
-by case: n => [|n]// _; rewrite /prim_unity_root_; case: C_prim_root_exists.
+by case: n => [|n]// _; rewrite /prim1root_; case: C_prim_root_exists.
 Qed.
 
 Inductive const := Zero | One | URoot of nat.
 Inductive binOp := Add | Mul.
 Inductive unOp := Opp | Inv | Exp of nat | Root of nat.
-Inductive algformula (F : Type) : Type :=
+Inductive algterm (F : Type) : Type :=
 | Base of F
 | Const of const
-| UnOp of unOp & algformula F
-| BinOp of binOp & algformula F & algformula F.
+| UnOp of unOp & algterm F
+| BinOp of binOp & algterm F & algterm F.
 Arguments Const {F}.
 
 Definition encode_const (c : const) : nat :=
@@ -1433,80 +1433,80 @@ Canonical unOp_choiceType := ChoiceType unOp unOp_choiceMixin.
 Definition unOp_countMixin := CanCountMixin code_unOpK.
 Canonical unOp_countType := CountType unOp unOp_countMixin.
 
-Fixpoint encode_algf F (f : algformula F) : GenTree.tree (F + const) :=
+Fixpoint encode_algT F (f : algterm F) : GenTree.tree (F + const) :=
   let T_ isbin := if isbin then binOp else unOp in
   match f with
   | Base x => GenTree.Leaf (inl x)
   | Const c => GenTree.Leaf (inr c)
   | UnOp u f1 => GenTree.Node (pickle (inl u : unOp + binOp))
-                              [:: encode_algf f1]
+                              [:: encode_algT f1]
   | BinOp b f1 f2 => GenTree.Node (pickle (inr b : unOp + binOp))
-                                  [:: encode_algf f1; encode_algf f2]
+                                  [:: encode_algT f1; encode_algT f2]
   end.
-Fixpoint decode_algf F (t : GenTree.tree (F + const)) : algformula F :=
+Fixpoint decode_algT F (t : GenTree.tree (F + const)) : algterm F :=
   match t with
   | GenTree.Leaf (inl x) => Base x
   | GenTree.Leaf (inr c) => Const c
   | GenTree.Node n fs =>
     match locked (unpickle n), fs with
-    | Some (inl u), f1 :: _ => UnOp u (decode_algf f1)
-    | Some (inr b), f1 :: f2 :: _ => BinOp b (decode_algf f1) (decode_algf f2)
+    | Some (inl u), f1 :: _ => UnOp u (decode_algT f1)
+    | Some (inr b), f1 :: f2 :: _ => BinOp b (decode_algT f1) (decode_algT f2)
     | _, _ => Const Zero
     end
   end.
-Lemma code_algfK F : cancel (@encode_algf F) (@decode_algf F).
+Lemma code_algTK F : cancel (@encode_algT F) (@decode_algT F).
 Proof.
 by elim => // [u f IHf|b f IHf f' IHf']/=; rewrite pickleK -lock ?IHf ?IHf'.
 Qed.
-Definition algf_eqMixin (F : eqType) := CanEqMixin (@code_algfK F).
-Canonical algf_eqType (F : eqType) := EqType (algformula F) (@algf_eqMixin F).
-Definition algf_choiceMixin (F : choiceType) := CanChoiceMixin (@code_algfK F).
-Canonical algf_choiceType (F : choiceType) :=
-  ChoiceType (algformula F) (@algf_choiceMixin F).
-Definition algf_countMixin (F : countType) := CanCountMixin (@code_algfK F).
-Canonical algf_countType (F : countType) :=
-  CountType (algformula F) (@algf_countMixin F).
+Definition algT_eqMixin (F : eqType) := CanEqMixin (@code_algTK F).
+Canonical algT_eqType (F : eqType) := EqType (algterm F) (@algT_eqMixin F).
+Definition algT_choiceMixin (F : choiceType) := CanChoiceMixin (@code_algTK F).
+Canonical algT_choiceType (F : choiceType) :=
+  ChoiceType (algterm F) (@algT_choiceMixin F).
+Definition algT_countMixin (F : countType) := CanCountMixin (@code_algTK F).
+Canonical algT_countType (F : countType) :=
+  CountType (algterm F) (@algT_countMixin F).
 
-Declare Scope algf_scope.
-Delimit Scope algf_scope with algf.
-Bind Scope algf_scope with algformula.
-Local Notation "0" := (Const Zero) : algf_scope.
-Local Notation "1" := (Const One) : algf_scope.
-Local Notation "- x" := (UnOp Opp x) : algf_scope.
-Local Notation "- 1" := (- (1)) : algf_scope.
-Local Infix "+" := (BinOp Add) : algf_scope.
-Local Notation "x ^-1" := (UnOp Inv x) : algf_scope.
-Local Infix "*" := (BinOp Mul) : algf_scope.
-Local Notation "x ^+ n" := (UnOp (Exp n) x) : algf_scope.
+Declare Scope algT_scope.
+Delimit Scope algT_scope with algT.
+Bind Scope algT_scope with algterm.
+Local Notation "0" := (Const Zero) : algT_scope.
+Local Notation "1" := (Const One) : algT_scope.
+Local Notation "- x" := (UnOp Opp x) : algT_scope.
+Local Notation "- 1" := (- (1)) : algT_scope.
+Local Infix "+" := (BinOp Add) : algT_scope.
+Local Notation "x ^-1" := (UnOp Inv x) : algT_scope.
+Local Infix "*" := (BinOp Mul) : algT_scope.
+Local Notation "x ^+ n" := (UnOp (Exp n) x) : algT_scope.
 Local Notation "n '.+1-root'" := (UnOp (Root n))
-  (at level 2, format "n '.+1-root'") : algf_scope.
-Local Notation "n '.+1-prim_unity_root'" := (Const (URoot n))
-  (at level 2, format "n '.+1-prim_unity_root'") : algf_scope.
+  (at level 2, format "n '.+1-root'") : algT_scope.
+Local Notation "n '.+1-prim1root'" := (Const (URoot n))
+  (at level 2, format "n '.+1-prim1root'") : algT_scope.
 
 Section eval.
 Variables (F : fieldType) (iota : F -> algC).
-Fixpoint alg_eval (f : algformula F) : algC :=
+Fixpoint algT_eval (f : algterm F) : algC :=
   match f with
   | Base x => iota x
-  | 0%algf => 0
-  | 1%algf  => 1
-  | (f1 + f2)%algf => alg_eval f1 + alg_eval f2
-  | (- f1)%algf => - alg_eval f1
-  | (f1 * f2)%algf => alg_eval f1 * alg_eval f2
-  | (f1 ^-1)%algf => (alg_eval f1)^-1
-  | (f1 ^+ n)%algf => (alg_eval f1) ^+ n
-  | (n.+1-root f1)%algf => n.+1.-root (alg_eval f1)
-  | (j.+1-prim_unity_root)%algf => prim_unity_root_ j.+1
+  | 0%algT => 0
+  | 1%algT  => 1
+  | (f1 + f2)%algT => algT_eval f1 + algT_eval f2
+  | (- f1)%algT => - algT_eval f1
+  | (f1 * f2)%algT => algT_eval f1 * algT_eval f2
+  | (f1 ^-1)%algT => (algT_eval f1)^-1
+  | (f1 ^+ n)%algT => (algT_eval f1) ^+ n
+  | (n.+1-root f1)%algT => n.+1.-root (algT_eval f1)
+  | (j.+1-prim1root)%algT => prim1root_ j.+1
   end.
 
-Fixpoint subeval (f : algformula F) : seq algC :=
-  alg_eval f :: match f with
+Fixpoint subeval (f : algterm F) : seq algC :=
+  algT_eval f :: match f with
   | UnOp _ f1 => subeval f1
   | BinOp _ f1 f2 => subeval f1 ++ subeval f2
   | _ => [::]
   end.
 
-Lemma subevalE f : subeval f = alg_eval f :: behead (subeval f).
+Lemma subevalE f : subeval f = algT_eval f :: behead (subeval f).
 Proof. by case: f => *. Qed.
 
 End eval.
@@ -1514,7 +1514,7 @@ End eval.
 Lemma solvable_formula (p : {poly rat}) : p != 0 ->
   solvable_by_radical_poly p <->
   {in root (p ^^ ratr), forall x,
-     exists f : algformula rat, alg_eval ratr f = x}.
+     exists f : algterm rat, algT_eval ratr f = x}.
 Proof.
 have Cchar := Cchar => p_neq0; split.
   move=> /solvable_poly_rat[]// L [iota [rs [prs [E rE KE]]]] x.
@@ -1522,8 +1522,8 @@ have Cchar := Cchar => p_neq0; split.
     have := prs; rewrite -(eqp_map iota) map_prod_XsubC => /eqp_rtrans<-.
     by rewrite -map_poly_comp (eq_map_poly (fmorph_eq_rat _)) eqpxx.
   rewrite -topredE/= (eqp_root pirs) root_prod_XsubC => /mapP[{}r rrs ->].
-  suff [f <- /=]: exists f : algformula (subvs_of (1%VS : {vspace L})),
-      alg_eval (iota \o vsval) f = iota r.
+  suff [f <- /=]: exists f : algterm (subvs_of (1%VS : {vspace L})),
+      algT_eval (iota \o vsval) f = iota r.
     elim: f => //= [[/= _/vlineP[s ->]]|cst|op|op].
     - exists (Base s) => /=.
       by rewrite [RHS](fmorph_eq_rat [rmorphism of iota \o in_alg L]).
@@ -1550,29 +1550,29 @@ have Cchar := Cchar => p_neq0; split.
   pose v := i.+1.-root (iota (u ^+ i.+1)).
   have : ('X ^+ i.+1 - (v ^+ i.+1)%:P).[iota u] == 0.
     by rewrite !hornerE hornerXn rootCK// rmorphX subrr.
-  have /Xn_sub_xnE->// := prim_unity_rootP (isT : 0 < i.+1)%N.
+  have /Xn_sub_xnE->// := prim1rootP (isT : 0 < i.+1)%N.
   rewrite horner_prod prodf_seq_eq0/= => /hasP[/= l _].
   rewrite hornerXsubC subr_eq0 => /eqP u_eq.
-  pose fu := (i.+1-root (Base (Subvs uik)) * (i.+1-prim_unity_root ^+ l))%algf.
-  rewrite -horner_map; have -> : iota u = alg_eval (iota \o vsval) fu by [].
+  pose fu := (i.+1-root (Base (Subvs uik)) * (i.+1-prim1root ^+ l))%algT.
+  rewrite -horner_map; have -> : iota u = algT_eval (iota \o vsval) fu by [].
   move: fu => fu; elim/poly_ind: q qk => //= [|q c IHq] qXDck.
-    by exists 0%algf; rewrite rmorph0 horner0.
+    by exists 0%algT; rewrite rmorph0 horner0.
   have ck : c \in k.
     by have /polyOverP/(_ 0%N) := qXDck; rewrite coefD coefMX coefC/= add0r.
   have qk : q \is a polyOver k.
     apply/polyOverP => j; have /polyOverP/(_ j.+1) := qXDck.
     by rewrite coefD coefMX coefC/= addr0.
   case: IHq => // fq fq_eq.
-  exists (fq * fu + Base (Subvs ck))%algf => /=.
+  exists (fq * fu + Base (Subvs ck))%algT => /=.
   by rewrite rmorphD rmorphM/= map_polyX map_polyC !hornerE fq_eq.
 move=> mkalg; apply/solvable_by_radical_polyP => //=; first exact: char_num.
 have [/= rsalg pE] := closed_field_poly_normal (p ^^ (ratr : _ -> algC)).
 have {}pE : p ^^ ratr %= \prod_(z <- rsalg) ('X - z%:P).
   rewrite pE (eqp_trans (eqp_scale _ _)) ?eqpxx//.
   by rewrite lead_coef_map//= fmorph_eq0 lead_coef_eq0.
-have [fs fsE] : exists fs, map (alg_eval ratr) fs = rsalg.
+have [fs fsE] : exists fs, map (algT_eval ratr) fs = rsalg.
   have /(_ _ _)/sig_eqW-/(all_sig_cond (Base 0)) [h hE] :
-      forall x : algC, x \in rsalg -> exists f, alg_eval ratr f = x.
+      forall x : algC, x \in rsalg -> exists f, algT_eval ratr f = x.
     by move=> *; apply: mkalg; rewrite -topredE/= (eqp_root pE) root_prod_XsubC.
   by exists (map h rsalg); rewrite -map_comp map_id_in//.
 pose algs := flatten (map (subeval ratr) fs).
@@ -1646,7 +1646,7 @@ elim: f => //= [x|c|u f1 IHf1|b f1 IHf1 f2 IHf2] in k {r fr} als1 als1E *.
     exact: rext_refl.
   + apply/(@rext_r _ _ _ n.+1)/radicalP; split => //.
     rewrite prim_expr_order ?rpred1//.
-    by rewrite -(fmorph_primitive_root iota) yomega prim_unity_rootP.
+    by rewrite -(fmorph_primitive_root iota) yomega prim1rootP.
 - case: als1 als1E => //= a l [IHl IHlu].
   rewrite -(eq_adjoin _ (mem_rcons _ _)) adjoin_rcons.
   apply: rext_trans (IHf1 k l IHlu) _ => /=.
