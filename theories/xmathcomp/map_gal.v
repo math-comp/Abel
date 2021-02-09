@@ -644,7 +644,7 @@ Lemma normalField_aimg (K : {subfield L}) : (K <= E)%VS ->
 Proof.
 move=> KE; have iotaKS : (iota @: K <= iota @: E)%VS by rewrite limgS.
 apply/splitting_normalField/splitting_normalField => //= -[p pK [rs peq Krs]].
-  have /polyOver_img [q qK pE] := pK.
+  have /polyOver_aimg [q qK pE] := pK.
   have /subset_limgP [rs' _ rsE] : {subset rs <= (iota @: E)%VS}.
     by rewrite -Krs; apply/seqv_sub_adjoin.
   exists q => //; exists rs'.
@@ -652,13 +652,13 @@ apply/splitting_normalField/splitting_normalField => //= -[p pK [rs peq Krs]].
   by do [rewrite rsE -aimg_adjoin_seq => /eqP;
          rewrite eq_limg_ker0// => /eqP] in Krs.
 exists (map_poly iota p) => //; first by rewrite mapf_polyOver.
-by apply/splittingFieldFor_img; exists rs.
+by apply/splittingFieldFor_aimg; exists rs.
 Qed.
 
 Lemma galois_aimg (K : {subfield L}) :
    galois (iota @: K) (iota @: E) = galois K E.
 Proof.
-rewrite /galois limg_ker0 ?AHom_lker0// separable_img.
+rewrite /galois limg_ker0 ?AHom_lker0// separable_aimg.
 by case: (boolP (K <= E)%VS) => // /normalField_aimg->.
 Qed.
 
@@ -670,10 +670,10 @@ Section normalClosure.
 Variable (F0 : fieldType) (L : splittingFieldType F0).
 Implicit Types (K E F : {subfield L}).
 
-Lemma separable_imgr E F s : s \in kAEndf E ->
+Lemma separable_aimgr E F s : s \in kAEndf E ->
    separable E (s @: F) = separable E F.
 Proof.
-rewrite inE => /kHom_kAut_sub/kAHomP s_id; rewrite -(separable_img _ _ s).
+rewrite inE => /kHom_kAut_sub/kAHomP s_id; rewrite -(separable_aimg _ _ s).
 suff /eq_in_limg->: {in E, s =1 \1%VF} by rewrite lim1g.
 by move=> x xE; rewrite lfunE/= s_id.
 Qed.
@@ -718,7 +718,7 @@ Lemma normalClosure_separable E F : separable E F ->
    separable E (normalClosure E F).
 Proof.
 move=> sepEF; rewrite separable_big_prodv big_andE; apply/forall_inP => g ggal.
-by rewrite separable_imgr// separable_prodv separable_refl.
+by rewrite separable_aimgr// separable_prodv separable_refl.
 Qed.
 
 Lemma normalClosure_galois E F : separable E F -> galois E (normalClosure E F).
@@ -859,10 +859,10 @@ rewrite -ME limgS// normalClosureP//.
 by rewrite -(normalField_aimg iota)// ME// normalClosure_normal.
 Qed.
 
-Lemma solvable_ext_img (F0 : fieldType) (L L' : splittingFieldType F0)
+Lemma solvable_ext_aimg (F0 : fieldType) (L L' : splittingFieldType F0)
   (iota : 'AHom(L, L')) (E F : {subfield L}) :
   solvable_ext (iota @: E) (iota @: F) = solvable_ext E F.
 Proof.
-rewrite /solvable_ext separable_img; have [sepEF|]//= := boolP (separable _ _).
+rewrite /solvable_ext separable_aimg; have [sepEF|]//= := boolP (separable _ _).
 by rewrite -aimg_normalClosure// -img_map_gal injm_sol ?map_gal_inj ?subsetT.
 Qed.
