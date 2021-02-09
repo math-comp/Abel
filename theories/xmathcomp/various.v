@@ -911,7 +911,7 @@ apply/andP => /=; split.
 by apply/prodvP => u v; rewrite -!memv_preim => uF vF; rewrite rmorphM rpredM.
 Qed.
 
-Lemma polyOver_img (K : fieldType) (L L' : fieldExtType K)
+Lemma polyOver_aimg (K : fieldType) (L L' : fieldExtType K)
     (E : {vspace L}) (f : 'AHom(L, L')) (p' : {poly L'}) :
   reflect (exists2 p, p \is a polyOver E & p' = p ^^ f)
           (p' \is a polyOver (f @: E)%VS).
@@ -925,7 +925,7 @@ exists (\poly_(i < size p') p_ i).
 apply/polyP => i; rewrite coef_map/= coef_poly.
 by case: ltnP => ip'; [case: (pP i) | rewrite nth_default ?rmorph0].
 Qed.
-Arguments polyOver_img {K L L' E f p'}.
+Arguments polyOver_aimg {K L L' E f p'}.
 
 Lemma mapf_polyOver (K : fieldType) (L L' : fieldExtType K)
     (E : {vspace L}) (f : 'AHom(L, L')) (p : {poly L}) :
@@ -935,12 +935,12 @@ apply/polyOverP/polyOverP => piE i; last by rewrite coef_map/= memv_img.
 by have := piE i; rewrite coef_map/= memvE -limg_line limg_ker0 ?AHom_lker0.
 Qed.
 
-Lemma separable_img  (F0 : fieldType) (L L' : fieldExtType F0)
+Lemma separable_aimg  (F0 : fieldType) (L L' : fieldExtType F0)
   (E F : {subfield L}) (f : 'AHom(L, L')) :
    separable (f @: E) (f @: F) = separable E F.
 Proof.
 apply/separableP/separableP => [sepEF x xF|sepEF _ /memv_imgP[x xF ->]].
-  have /separable_elementP[_ [/polyOver_img[p pE ->]]] :=
+  have /separable_elementP[_ [/polyOver_aimg[p pE ->]]] :=
     sepEF (f x) (memv_img f xF).
   rewrite mapf_root separable_map => root_p sep_p.
   by apply/separable_elementP; exists p; split.
@@ -959,7 +959,7 @@ exists (map f' r'); first by apply/allP => _ /mapP [x /f'P[? ?] ->].
 by symmetry; rewrite -map_comp; apply: map_id_in => x /f'P[].
 Qed.
 
-Lemma splittingFieldFor_img  (F0 : fieldType) (L L' : fieldExtType F0)
+Lemma splittingFieldFor_aimg  (F0 : fieldType) (L L' : fieldExtType F0)
   (E F : {subfield L}) p (f : 'AHom(L, L')) :
    splittingFieldFor (f @: E) (p ^^ f) (f @: F) <-> splittingFieldFor E p F.
 Proof.

@@ -574,7 +574,7 @@ Proof.
 move=> p_prime p_neq0 xpE; have p_gt0 := prime_gt0 p_prime.
 wlog [r r_root] : L E x xpE / {r : L | p.-primitive_root r} => [hwlog|].
   apply: (@classic_cycloSplitting _ L p p_neq0) => -[L' [r [f rf rr]]].
-  rewrite -(solvable_ext_img f) aimg_adjoin hwlog -?rmorphX ?memv_img//.
+  rewrite -(solvable_ext_aimg f) aimg_adjoin hwlog -?rmorphX ?memv_img//.
   by exists r.
 have galEr := galois_Fadjoin_cyclotomic E r_root.
 have solEr := solvable_Fadjoin_cyclotomic E r_root.
@@ -671,7 +671,7 @@ have nFN0 : n%:R != 0 :> F by have /charf0P-> := charF; rewrite -lt0n adim_gt0.
 apply: (@classic_cycloSplitting _ L _ nFN0) => - [L' [r [iota rL' r_prim]]].
 suff: solvable_ext 1 <<1 & rs>>.
   by rewrite /solvable_ext seprs normalClosure_id ?sub1v.
-rewrite -(solvable_ext_img iota).
+rewrite -(solvable_ext_aimg iota).
 have charL' : [char L'] =i pred0 by move=> i; rewrite char_lalg.
 apply/(@AbelGalois _ _ r) => //.
 - by rewrite limgS// sub1v.
