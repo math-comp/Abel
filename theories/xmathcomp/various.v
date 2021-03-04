@@ -34,30 +34,22 @@ Qed.
 (* seq *)
 (*******)
 
-Lemma sortedP T x0 (s : seq T) (r : rel T) :
-  reflect (forall i, (i < (size s).-1)%N -> r (nth x0 s i) (nth x0 s i.+1))
-          (sorted r s).
-Proof.
-elim: s => [|x [|y s]//= IHs]/=; do ?by constructor.
-apply: (iffP andP) => [[rxy rys] [|i]// /IHs->//|rS].
-by rewrite (rS 0%N); split=> //; apply/IHs => i /(rS i.+1).
-Qed.
-
-Lemma subset_mapP (X Y : choiceType) (x0 : X) (s : seq X) (s' : seq Y) (f : X -> Y) :
-    {subset s' <= map f s} <-> (exists2 t, all (mem s) t & s' = map f t).
+Lemma subset_mapP (X Y : eqType) (f : X -> Y) (s : seq X) (s' : seq Y) :
+    {subset s' <= map f s} <-> exists2 t, all (mem s) t & s' = map f t.
 Proof.
 split => [|[r /allP/= rE ->] _ /mapP[x xr ->]]; last by rewrite map_f ?rE.
-move=> /(_ _ _)/mapP/sig2_eqW -/(all_sig_cond x0)[f' f'P].
-exists (map f' s'); first by apply/allP => _ /mapP [x /f'P[? ?] ->].
-by symmetry; rewrite -map_comp; apply: map_id_in => x /f'P[].
+elim: s' => [|x s' IHs'] subss'; first by exists [::].
+have /mapP[y ys ->] := subss' _ (mem_head _ _).
+have [x' x's'|t st ->] := IHs'; first by rewrite subss'// inE x's' orbT.
+by exists (y :: t); rewrite //= ys st.
 Qed.
-Arguments subset_mapP {X Y} x0.
+Arguments subset_mapP {X Y}.
 
 (*********)
 (* bigop *)
 (*********)
 
-Lemma big_rcons (R : Type) (idx : R) (op : R -> R -> R) (I : Type)
+Lemma big_rcons_idx (R : Type) (idx : R) (op : R -> R -> R) (I : Type)
     (i : I) (r : seq I) (P : pred I) (F : I -> R)
     (idx' := if P i then op (F i) idx else idx) :
   \big[op/idx]_(j <- rcons r i | P j) F j = \big[op/idx']_(j <- r | P j) F j.
@@ -65,10 +57,27 @@ Proof. by elim: r => /= [|j r]; rewrite ?(big_nil, big_cons)// => ->. Qed.
 
 Lemma big_change_idx (R : Type) (idx : R) (op : Monoid.law idx) (I : Type)
     (x : R)  (r : seq I) (P : pred I) (F : I -> R) :
-  \big[op/x]_(j <- r | P j) F j = op (\big[op/idx]_(j <- r | P j) F j) x.
+   op (\big[op/idx]_(j <- r | P j) F j) x = \big[op/x]_(j <- r | P j) F j.
 Proof.
-elim: r => [|i r]; rewrite ?(big_nil, big_cons, Monoid.mul1m)// => ->.
+elim: r => [|i r]; rewrite ?(big_nil, big_cons, Monoid.mul1m)// => <-.
 by case: ifP => // Pi; rewrite Monoid.mulmA.
+Qed.
+Lemma big_rcons (R : Type) (idx : R) (op : Monoid.law idx) (I : Type)
+   i r (P : pred I) F :
+  \big[op/idx]_(j <- rcons r i | P j) F j =
+  op (\big[op/idx]_(j <- r | P j) F j) (if P i then F i else idx).
+Proof. by rewrite big_rcons_idx -big_change_idx Monoid.mulm1. Qed.
+
+(********)
+(* path *)
+(********)
+
+Lemma sortedP T x (s : seq T) (r : rel T) :
+  reflect (forall i, i.+1 < size s -> r (nth x s i) (nth x s i.+1)) (sorted r s).
+Proof.
+elim: s => [|y [|z s]//= IHs]/=; do ?by constructor.
+apply: (iffP andP) => [[ryz rzs] [|i]// /IHs->//|rS].
+by rewrite (rS 0); split=> //; apply/IHs => i /(rS i.+1).
 Qed.
 
 (*********)
@@ -623,15 +632,14 @@ elim/last_ind: r => [|r i IHr] //= in U W * => [_|].
   move=> WP; apply/subvP => u /(WP _ (fun=> 0)); rewrite big_nil; apply.
   by move=> i; rewrite mem0v.
 rewrite rcons_uniq => /andP[iNr r_uniq].
-apply: (iffP idP) => [+ u v uU vV|WP]; rewrite !big_rcons.
+apply: (iffP idP) => [+ u v uU vV|WP]; rewrite !big_rcons_idx.
   by move=> /IHr; apply => //; case: ifP => Pi//; rewrite memv_mul// vV.
 case: ifP => Pi; last first.
-  by apply/IHr => // u v uU vV; have := WP _  _ uU vV; rewrite big_rcons Pi.
+  by apply/IHr => // u v uU vV; have := WP _  _ uU vV; rewrite big_rcons_idx Pi.
 apply/IHr => //w v /memv_mulP[n [vs [us [/allP/= vsP /allP/= usP ->]]]] vV.
-rewrite big_change_idx/= mulr_sumr rpred_sum// => j _.
-rewrite -big_change_idx/=.
+rewrite -big_change_idx/= mulr_sumr rpred_sum// => j _; rewrite big_change_idx.
 have := WP (tnth us j) (fun k : I => if k == i then tnth vs j else v k).
-rewrite big_rcons Pi eqxx big_seq_cond.
+rewrite big_rcons_idx Pi eqxx big_seq_cond.
 under eq_bigr => k /andP[kr]
    do [rewrite ifN; last by apply: contraNneq iNr => <-].
 rewrite -big_seq_cond; apply; first by rewrite usP ?mem_tnth.
@@ -669,7 +677,7 @@ Lemma big_prod_subfield_seqP (I : eqType) (r : seq I) (r_uniq : uniq r)
 Proof.
 apply: (iffP (big_prodv_seqP _ _ _ _ _)) => // [WP u uU|WP u v uU vV].
   by apply: WP; rewrite ?mem1v.
-by rewrite big_change_idx/= memvM ?WP//; apply/subvP: uU; rewrite sub1v.
+by rewrite -big_change_idx/= memvM ?WP//; apply/subvP: uU; rewrite sub1v.
 Qed.
 
 Lemma big_prod_subfieldP (I : finType) (D : {pred I}) (K : fieldType)
