@@ -1603,8 +1603,8 @@ have algsW: {subset rsalg <= algs}.
 have rsmpW: {subset algs <= rsmpalg}.
   move=> x xalgs; rewrite -root_prod_XsubC -mpE mpratr.
   by rewrite (big_rem _ xalgs)/= rootM root_minCpoly.
-have := rsmpW; rewrite -iota_rs => /(subset_mapP 0)[als _ /esym alsE].
-have := algsW; rewrite -alsE => /(subset_mapP 0)[rs _ /esym rsE].
+have := rsmpW; rewrite -iota_rs => /subset_mapP[als _ /esym alsE].
+have := algsW; rewrite -alsE => /subset_mapP[rs _ /esym rsE].
 have prs : p ^^ in_alg S %= \prod_(x <- rs) ('X - x%:P).
   rewrite -(eqp_map iota) -map_poly_comp (eq_map_poly (fmorph_eq_rat _)).
   by rewrite map_prod_XsubC rsE.
