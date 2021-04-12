@@ -227,9 +227,8 @@ move=> u Hu; have := xP (normalField_cast _ u).
 by rewrite /normalField_cast galK ?KF//; apply; apply/morphimP; exists u.
 Qed.
 
-Lemma galois_isog (k K F : {subfield L})
-  (H := 'Gal((K * F) / F)%g) (H' := 'Gal (K / (K :&: F))%g) :
-  galois k K -> (k <= F)%VS -> H \isog H'.
+Lemma galois_isog (k K F : {subfield L}) : galois k K -> (k <= F)%VS ->
+  'Gal((K * F) / F) \isog 'Gal (K / K :&: F).
 Proof. by move=> galkK /(galois_misom galkK) /misom_isog. Qed.
 
 Lemma subv_big_prodv_seq I r (P : {pred I}) (k : {subfield L})
