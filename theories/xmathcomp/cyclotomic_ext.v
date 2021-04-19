@@ -45,13 +45,13 @@ Variable (F : fieldType).
 Local Notation ZtoF := (intr : int -> F).
 Local Notation pZtoF := (map_poly ZtoF).
 
-Lemma Phi_cyclotomic (n : nat) (z : F) : n.-primitive_root z ->
-   pZtoF 'Phi_n = cyclotomic z n.
+Lemma Phi_cyclotomic (n : nat) (w : F) : n.-primitive_root w ->
+   pZtoF 'Phi_n = cyclotomic w n.
 Proof.
-elim/ltn_ind: n z => n ihn z prim_z.
-have n_gt0 := prim_order_gt0 prim_z.
+elim/ltn_ind: n w => n ihn w prim_w.
+have n_gt0 := prim_order_gt0 prim_w.
 pose P k := pZtoF 'Phi_k.
-pose Q k := cyclotomic (z ^+ (n %/ k)) k.
+pose Q k := cyclotomic (w ^+ (n %/ k)) k.
 have eP : \prod_(d <- divisors n) P d = 'X^n - 1.
   by rewrite -rmorph_prod /= prod_Cyclotomic // rmorphB /= map_polyC map_polyXn.
 have eQ : \prod_(d <- divisors n) Q d = 'X^n - 1 by rewrite -prod_cyclotomic.
@@ -80,27 +80,27 @@ End PhiCyclotomic.
 Section CyclotomicExt.
 
 Variables (F0 : fieldType) (L : fieldExtType F0).
-Variables (E : {subfield L}) (r : L) (n : nat).
-Hypothesis r_is_nth_root : n.-primitive_root r.
+Variables (E : {subfield L}) (w : L) (n : nat).
+Hypothesis w_is_nth_root : n.-primitive_root w.
 
 Lemma splitting_Fadjoin_cyclotomic :
-  splittingFieldFor E (cyclotomic r n) <<E; r>>.
+  splittingFieldFor E (cyclotomic w n) <<E; w>>.
 Proof.
-exists [seq r ^+ val k | k <- enum 'I_n & coprime (val k) n].
+exists [seq w ^+ val k | k <- enum 'I_n & coprime (val k) n].
   by rewrite /cyclotomic big_map big_filter big_enum_cond/= eqpxx.
 rewrite map_comp -(filter_map _ (fun i => coprime i n)) val_enum_ord.
 have [n_gt1|] := ltnP 1 n; last first.
-  case: n r_is_nth_root (prim_order_gt0 r_is_nth_root) => [|[|]]//= rnth _ _.
-  by rewrite adjoin_seq1 expr0 -[r]expr1 prim_expr_order.
-set s := (X in <<_ & X>>%VS); suff /eq_adjoin-> : s =i r :: s.
+  case: n w_is_nth_root (prim_order_gt0 w_is_nth_root) => [|[|]]//= wnth _ _.
+  by rewrite adjoin_seq1 expr0 -[w]expr1 prim_expr_order.
+set s := (X in <<_ & X>>%VS); suff /eq_adjoin-> : s =i w :: s.
   rewrite adjoin_cons (Fadjoin_seq_idP _)//.
   by apply/allP => _/mapP[i _ ->]/=; rewrite rpredX// memv_adjoin.
 move=> x; rewrite in_cons orbC; symmetry; have []//= := boolP (_ \in _).
-apply: contraNF => /eqP ->; rewrite -[r]expr1 map_f//.
+apply: contraNF => /eqP ->; rewrite -[w]expr1 map_f//.
 by rewrite mem_filter mem_iota// coprime1n.
 Qed.
 
-Lemma cyclotomic_over : cyclotomic r n \is a polyOver E.
+Lemma cyclotomic_over : cyclotomic w n \is a polyOver E.
 Proof.
 by apply/polyOverP=> i; rewrite -Phi_cyclotomic // coef_map /= rpred_int.
 Qed.
@@ -111,62 +111,58 @@ End CyclotomicExt.
 
 Section Cyclotomic.
 
-Variables (F0 : fieldType) (L : splittingFieldType F0).
-Variables (E : {subfield L}) (r : L) (n : nat).
-Hypothesis r_is_nth_root : n.-primitive_root r.
-
 (* MISSING *)
-Lemma root_dvdp (F : idomainType) (p q : {poly F}) (x : F) :
-  root p x -> p %| q -> root q x.
-Proof. rewrite -!dvdp_XsubCl; exact: dvdp_trans. Qed.
-
-(* MISSING *)
-Lemma primitive_root_pow (F : fieldType) (m : nat) (s z : F) :
-  m.-primitive_root s -> m.-primitive_root z -> exists2 k, coprime k m & z = s ^+ k.
+Lemma primitive_root_pow (F : fieldType) (m : nat) (w w' : F) :
+    m.-primitive_root w' -> m.-primitive_root w ->
+  exists2 k, coprime k m & w = w' ^+ k.
 Proof.
 move/root_cyclotomic<-.
 rewrite /cyclotomic -big_filter; have [t et [uniqs tP /= perms]] := big_enumP.
-pose rs := [seq s ^+ (val i) | i <- t]; set p := (X in root X).
-have {p} -> :  p = \prod_(z <- rs) ('X - z%:P) by rewrite /p big_map.
-rewrite root_prod_XsubC; case/mapP=> [[i ltim]]; rewrite tP /= => copim ez.
+pose rs := [seq w' ^+ (val i) | i <- t]; set p := (X in root X).
+have {p} -> :  p = \prod_(w <- rs) ('X - w%:P) by rewrite /p big_map.
+rewrite root_prod_XsubC; case/mapP=> [[i ltim]]; rewrite tP /= => coprim ew.
 by exists i.
 Qed.
 
+Variables (F0 : fieldType) (L : splittingFieldType F0).
+Variables (E : {subfield L}) (w : L) (n : nat).
+Hypothesis w_is_nth_root : n.-primitive_root w.
+
 (** Easy **)
 (*     - E(x) is Galois                                                       *)
-Lemma galois_Fadjoin_cyclotomic : galois E <<E; r>>.
+Lemma galois_Fadjoin_cyclotomic : galois E <<E; w>>.
 Proof.
-apply/splitting_galoisField; exists (cyclotomic r n).
+apply/splitting_galoisField; exists (cyclotomic w n).
 split; rewrite ?cyclotomic_over//; last exact: splitting_Fadjoin_cyclotomic.
 rewrite /cyclotomic -(big_image _ _ _ (fun x => 'X - x%:P))/=.
 rewrite separable_prod_XsubC map_inj_uniq ?enum_uniq// => i j /eqP.
-by rewrite (eq_prim_root_expr r_is_nth_root) !modn_small// => /eqP/val_inj.
+by rewrite (eq_prim_root_expr w_is_nth_root) !modn_small// => /eqP/val_inj.
 Qed.
 
-Lemma abelian_cyclotomic : abelian 'Gal(<<E; r>> / E)%g.
+Lemma abelian_cyclotomic : abelian 'Gal(<<E; w>> / E)%g.
 Proof.
-case: (boolP (r \in E)) => [r_in_E |r_notin_E].
-  suff -> : ('Gal(<<E; r>> / E) = 1)%g by apply: abelian1.
+case: (boolP (w \in E)) => [w_in_E |w_notin_E].
+  suff -> : ('Gal(<<E; w>> / E) = 1)%g by apply: abelian1.
   apply/eqP; rewrite -subG1; apply/subsetP => x x_in.
-  rewrite inE gal_adjoin_eq ?group1 // (fixed_gal _ x_in r_in_E) ?gal_id //.
-  by have /Fadjoin_idP H := r_in_E; rewrite -{1}H subvv.
+  rewrite inE gal_adjoin_eq ?group1 // (fixed_gal _ x_in w_in_E) ?gal_id //.
+  by have /Fadjoin_idP H := w_in_E; rewrite -{1}H subvv.
 rewrite card_classes_abelian /classes.
 apply/eqP; apply: card_in_imset => f g f_in g_in; rewrite -!orbitJ.
 move/orbit_eqP/orbitP => [] h h_in <- {f f_in}; apply/eqP.
 rewrite gal_adjoin_eq //= /conjg /= ?groupM ?groupV //.
 rewrite ?galM ?memv_gal ?memv_adjoin //.
-have hg_gal f : f \in 'Gal(<<E; r>> / E)%g -> ((f r) ^+ n = 1)%R.
+have hg_gal f : f \in 'Gal(<<E; w>> / E)%g -> f w ^+ n = 1.
   by move=> f_in; apply/prim_expr_order; rewrite fmorph_primitive_root.
-have := svalP (prim_rootP r_is_nth_root (hg_gal _ g_in)).
-have h1_in : (h^-1)%g \in 'Gal(<<E; r>> / E)%g by rewrite ?groupV.
-have := svalP (prim_rootP r_is_nth_root (hg_gal _ h1_in)).
+have := svalP (prim_rootP w_is_nth_root (hg_gal _ g_in)).
+have h1_in : (h ^-1)%g \in 'Gal(<<E; w>> / E)%g by rewrite ?groupV.
+have := svalP (prim_rootP w_is_nth_root (hg_gal _ h1_in)).
 set ih1 := sval _ => hh1; set ig := sval _ => hg.
-rewrite hh1 GRing.rmorphX /= hg GRing.exprAC -hh1 GRing.rmorphX /=.
+rewrite hh1 rmorphX /= hg exprAC -hh1 rmorphX /=.
 by rewrite -galM ?memv_adjoin // mulVg gal_id.
 Qed.
 
 (*     - Gal(E(x) / E) is then solvable                                       *)
-Lemma solvable_Fadjoin_cyclotomic : solvable 'Gal(<<E; r>> / E).
+Lemma solvable_Fadjoin_cyclotomic : solvable 'Gal(<<E; w>> / E).
 Proof. exact/abelian_sol/abelian_cyclotomic. Qed.
 
 End Cyclotomic.

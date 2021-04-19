@@ -569,6 +569,10 @@ Proof.
 by move=> /eqP qx0; rewrite [p in RHS](divp_eq p q) !hornerE qx0 mulr0 add0r.
 Qed.
 
+Lemma root_dvdp (F : idomainType) (p q : {poly F}) (x : F) :
+  root p x -> p %| q -> root q x.
+Proof. rewrite -!dvdp_XsubCl; exact: dvdp_trans. Qed.
+
 (**********)
 (* vector *)
 (**********)
