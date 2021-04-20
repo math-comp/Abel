@@ -241,8 +241,8 @@ Qed.
 (*******************)
 
 Import GRing.Theory.
-
 Local Open Scope ring_scope.
+Notation has_char0 L := ([char L] =i pred0).
 
 (**********)
 (* ssralg *)

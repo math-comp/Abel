@@ -751,7 +751,7 @@ Proof. by move=> /and3P[EF _ /normalClosure_id->]. Qed.
 Definition solvable_ext (E F : {vspace L}) :=
   separable E F && solvable 'Gal(normalClosure E F / E).
 
-Lemma char0_solvable_extE E F : [char L] =i pred0 ->
+Lemma char0_solvable_extE E F : has_char0 L ->
   solvable_ext E F = solvable 'Gal(normalClosure E F / E).
 Proof. by rewrite /solvable_ext => /char0_separable->. Qed.
 
