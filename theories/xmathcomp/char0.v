@@ -8,10 +8,12 @@ Import GRing.Theory.
 
 Local Open Scope ring_scope.
 
+Local Notation has_char0 L := ([char L] =i pred0).
+
 Section Char0MorphismsIdomain.
 
 Variable (R : idomainType).
-Hypothesis charR0 : [char R] =i pred0.
+Hypothesis charR0 : has_char0 R.
 
 Implicit Type z : int.
 
@@ -30,16 +32,16 @@ Qed.
 
 End Char0MorphismsIdomain.
 
-Definition char0_ratr (F : fieldType) (charF0 : [char F] =i pred0) := (@ratr F).
+Definition char0_ratr (F : fieldType) (charF0 : has_char0 F) := (@ratr F).
 
-Lemma char0_ratrE (F : fieldType) (charF0 : [char F] =i pred0) :
+Lemma char0_ratrE (F : fieldType) (charF0 : has_char0 F) :
   char0_ratr charF0 = ratr.
 Proof. by []. Qed.
 
 Section Char0MorphismsField.
 
 Variable (F : fieldType).
-Hypothesis charF0 : [char F] =i pred0.
+Hypothesis charF0 : has_char0 F.
 
 Local Notation ratrF := (char0_ratr charF0).
 
@@ -70,7 +72,7 @@ Section NumberFieldsProps.
 
 Variable (L : fieldExtType rat).
 
-Lemma char_ext : [char L] =i pred0. (* this works more generally for `lalgType rat` *)
+Lemma char_ext : has_char0 L. (* this works more generally for `lalgType rat` *)
 Proof. by move=> x; rewrite char_lalg Num.Theory.char_num. Qed.
 Hint Resolve char_ext : core.
 
@@ -134,7 +136,7 @@ End NumberFieldsProps.
 Section FieldExtChar0.
 
 Variables (F0 : fieldType) (L : splittingFieldType F0).
-Variables (charL : [char L] =i pred0).
+Variables (charL : has_char0 L).
 Implicit Types (E F : {subfield L}) (p : {poly L}) (x : L).
 
 (** Ok **)

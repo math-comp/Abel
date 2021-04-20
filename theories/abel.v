@@ -48,7 +48,7 @@ Local Notation "5" := 5%:R : ring_scope.
 Section RadicalExtension.
 
 Variables (F0 : fieldType) (L : splittingFieldType F0).
-Hypothesis (charL : [char L] =i pred0).
+Hypothesis (charL : has_char0 L).
 
 Section Defs.
 
@@ -590,7 +590,7 @@ by rewrite (isog_sol (normalField_isog _ _ _)) ?galois_normalW ?subv_adjoin.
 Qed.
 
 Lemma radical_ext_solvable_ext (F0 : fieldType) (L : splittingFieldType F0)
-    (E F : {subfield L}) : [char L] =i pred0 -> (E <= F)%VS ->
+    (E F : {subfield L}) : has_char0 L -> (E <= F)%VS ->
   solvable_by radical E F -> solvable_ext E F.
 Proof.
 move=> charL EF.
@@ -618,7 +618,7 @@ Qed.
 
 (** Ok **)
 Lemma AbelGalois  (F0 : fieldType) (L : splittingFieldType F0) (w : L)
-  (E F : {subfield L}) : (E <= F)%VS -> [char L] =i pred0 ->
+  (E F : {subfield L}) : (E <= F)%VS -> has_char0 L ->
   (\dim_E (normalClosure E F)).-primitive_root w ->
   solvable_by radical E F <-> solvable_ext E F.
 Proof.
@@ -647,21 +647,21 @@ by move=> /and3P[EF sEF nEF]; rewrite /solvable_ext sEF normalClosure_id.
 Qed.
 
 Lemma normal_solvable  (F0 : fieldType) (L : splittingFieldType F0)
-      (E F : {subfield L}) : [char L] =i pred0 ->
+      (E F : {subfield L}) : has_char0 L ->
   (E <= F)%VS -> normalField E F -> solvable_ext E F = solvable 'Gal(F / E).
 Proof. by move=> charL EF /(char0_galois charL EF)/galois_solvable. Qed.
 
-Lemma AbelGaloisPoly (F : fieldType) (p : {poly F}) : [char F] =i pred0 ->
+Lemma AbelGaloisPoly (F : fieldType) (p : {poly F}) : has_char0 F ->
   solvable_ext_poly p <-> solvable_by_radical_poly p.
 Proof.
 move=> charF; split=> + L rs pE => [/(_ L rs pE) + w w_prim|solrs]/=.
-  have charL : [char L] =i pred0 by move=> i; rewrite char_lalg.
+  have charL : has_char0 L by move=> i; rewrite char_lalg.
   have normal_rs : normalField 1 <<1 & rs>>.
     apply/splitting_normalField; rewrite ?sub1v//.
     by exists (p ^^ in_alg _); [apply/polyOver1P; exists p | exists rs].
   by move=> solrs; apply/(@AbelGalois _ _ w);
      rewrite ?char0_solvable_extE ?normalClosure_id ?sub1v ?dimv1 ?divn1.
-have charL : [char L] =i pred0 by move=> i; rewrite char_lalg.
+have charL : has_char0 L by move=> i; rewrite char_lalg.
 have seprs: separable 1 <<1 & rs>> by apply/char0_separable.
 have normal_rs : normalField 1 <<1 & rs>>.
   apply/splitting_normalField; rewrite ?sub1v//.
@@ -684,7 +684,7 @@ by rewrite -map_poly_comp/= (eq_map_poly (rmorph_alg _)) map_prod_XsubC.
 Qed.
 
 Lemma solvable_ext_polyP (F : fieldType) (p : {poly F}) : p != 0 ->
-    [char F] =i pred0 ->
+    has_char0 F ->
   solvable_ext_poly p <->
   classically (exists (L : splittingFieldType F) (rs : seq L),
                 p ^^ in_alg L %= \prod_(x <- rs) ('X - x%:P) /\
@@ -705,8 +705,8 @@ apply: classic_bind (@classic_fieldExtFor _ _ (p : {poly F^o}) p_neq0).
   exists S, rs; split => //=; first by rewrite -(eq_map_poly iotaF).
   by apply: (sol_p S rs); rewrite -(eq_map_poly iotaF).
 move=> L rs prs; apply: sol_p => -[M [rs' [prs']]].
-have charL : [char L] =i pred0 by move=> n; rewrite char_lalg charF.
-have charM : [char M] =i pred0 by move=> n; rewrite char_lalg charF.
+have charL : has_char0 L by move=> n; rewrite char_lalg charF.
+have charM : has_char0 M by move=> n; rewrite char_lalg charF.
 pose K := [fieldExtType F of subvs_of <<1 & rs>>%VS].
 pose rsK := map (vsproj <<1 & rs>>%VS) rs.
 have pKrs : p ^^ in_alg K %= \prod_(x <- rsK) ('X - x%:P).
@@ -737,7 +737,7 @@ by rewrite -imgg -(aimg1 g)/= -img_map_gal injm_sol ?map_gal_inj ?subsetT//.
 Qed.
 
 Lemma solvable_by_radical_polyP (F : fieldType) (p : {poly F}) : p != 0 ->
-    [char F] =i pred0 ->
+    has_char0 F ->
   solvable_by_radical_poly p <->
   classically (exists (L : splittingFieldType F) (rs : seq L),
                 p ^^ in_alg L %= \prod_(x <- rs) ('X - x%:P) /\
@@ -750,7 +750,7 @@ split => sol_p; last first.
   exists L, rs; split => //; rewrite -galois_solvable.
     apply: radical_ext_solvable_ext; rewrite ?sub1v// => v.
     by rewrite char_lalg charF0.
-  have charL : [char L] =i pred0 by move=> n; rewrite char_lalg charF0.
+  have charL : has_char0 L by move=> n; rewrite char_lalg charF0.
   rewrite char0_galois// ?sub1v//.
   apply/splitting_normalField; rewrite ?sub1v//.
   by exists (p ^^ in_alg _); [apply/polyOver1P; exists p | exists rs].
@@ -925,7 +925,7 @@ Section PrimeDegreeTwoNonRealRoots.
 Variables (p : {poly rat}).
 
 Let L := numfield p.
-Let charL : [char L] =i pred0 := char_numfield p.
+Let charL : has_char0 L := char_numfield p.
 Let iota : {rmorphism L -> algC} := numfield_inC p.
 Let rp' : seq L := numfield_roots p.
 
@@ -1589,7 +1589,7 @@ have mp_neq0 : mp != 0.
 have {}mpE : mp ^^ ratr = \prod_(z <- rsmpalg) ('X - z%:P).
   by rewrite mpE lead_coef_map/= (eqP mp_monic) rmorph1 scale1r.
 have [L [iota [rsmp iota_rs rsf]]] := num_field_exists rsmpalg.
-have charL : [char L] =i pred0 by move=> x; rewrite char_lalg char_num.
+have charL : has_char0 L by move=> x; rewrite char_lalg char_num.
 have mprs : mp ^^ in_alg L %= \prod_(z <- rsmp) ('X - z%:P).
   rewrite -(eqp_map iota) map_prod_XsubC iota_rs -map_poly_comp -mpE.
   by rewrite -char0_ratrE// (eq_map_poly (fmorph_eq_rat _)) eqpxx.
