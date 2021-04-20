@@ -1186,17 +1186,17 @@ Proof.
 apply/eqP; rewrite eqEsubset subsetT/=.
 rewrite -(@gen_tperm_cycle _ i0 i1 (gal_perm gal_cycle));
   do ?by rewrite ?dpair_ij0 ?card_ord ?gal_perm_cycle_order.
- rewrite gen_subG; apply/subsetP => s /set2P[]->;
-   rewrite -?galJ_tperm ?mem_morphim ?gal1//.
+by rewrite gen_subG; apply/subsetP => s /set2P[]->;
+   rewrite -?galJ_tperm ?mem_morphim ?gal1.
 Qed.
 
-Lemma isog_gal_perm : 'Gal (K / 1%AS) \isog ('Sym_('I_d)).
+Lemma isog_gal_perm : 'Gal (K / 1%AS) \isog 'Sym_('I_d).
 Proof.
 apply/isogP; exists gal_perm_morphism; first exact: injm_gal_perm.
 exact: surj_gal_perm.
 Qed.
 
-Lemma isog_gal : 'Gal ({:numfield p} / 1%AS) \isog ('Sym_('I_d)).
+Lemma isog_gal : 'Gal ({:numfield p} / 1%AS) \isog 'Sym_('I_d).
 Proof. by rewrite -adjoin_numfield_roots isog_gal_perm. Qed.
 
 End PrimeDegreeTwoNonRealRoots.
@@ -1487,15 +1487,15 @@ Section eval.
 Variables (F : fieldType) (iota : F -> algC).
 Fixpoint algT_eval (f : algterm F) : algC :=
   match f with
-  | Base x => iota x
-  | 0%algT => 0
-  | 1%algT  => 1
-  | (f1 + f2)%algT => algT_eval f1 + algT_eval f2
-  | (- f1)%algT => - algT_eval f1
-  | (f1 * f2)%algT => algT_eval f1 * algT_eval f2
-  | (f1 ^-1)%algT => (algT_eval f1)^-1
-  | (f1 ^+ n)%algT => (algT_eval f1) ^+ n
-  | (n.+1-root f1)%algT => n.+1.-root (algT_eval f1)
+  | Base x                => iota x
+  | 0%algT                => 0
+  | 1%algT                => 1
+  | (f1 + f2)%algT        => algT_eval f1 + algT_eval f2
+  | (- f1)%algT           => - algT_eval f1
+  | (f1 * f2)%algT        => algT_eval f1 * algT_eval f2
+  | (f1 ^-1)%algT         => (algT_eval f1)^-1
+  | (f1 ^+ n)%algT        => (algT_eval f1) ^+ n
+  | (n.+1-root f1)%algT   => n.+1.-root (algT_eval f1)
   | (j.+1-prim1root)%algT => prim1root_ j.+1
   end.
 
