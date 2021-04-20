@@ -35,7 +35,9 @@ Mathematical Components library.
   - [MathComp field 1.11 and 1.12](https://math-comp.github.io)
   - [MathComp real closed >= 1.11.1](https://github.com/math-comp/real-closed)
 - Coq namespace: `Abel`
-- Related publication(s): none
+- Related publication(s):
+  - [Unsolvability of the Quintic Formalized in Dependent Type Theory
+](https://hal.inria.fr/hal-03136002) 
 
 ## Building and installation instructions
 

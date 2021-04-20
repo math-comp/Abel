@@ -25,6 +25,12 @@ authors:
 - name: Pierre-Yves Strub
   initial: true
 
+publications:
+- pub_url: https://hal.inria.fr/hal-03136002
+  pub_title: >
+    Unsolvability of the Quintic Formalized in
+    Dependent Type Theory
+
 opam-file-maintainer: Cyril Cohen <cyril.cohen@inria.fr>
 
 opam-file-version: dev
@@ -101,7 +107,7 @@ documentation: |-
     + `radical_solvable_ext` (no mention of roots of unity),
     + `AbelGalois`, (equivalence obtained from the above two, requires
     roots of unity), and consequences on solvability of polynomial
-    + and their consequence on the example polynomial X⁵ -4X + 2X:
+    + and their consequence on the example polynomial X⁵ -4X + 2:
     `example_not_solvable_by_radicals`,
 
   - `xmathcomp/various.v` contains various (rather straightforward)
