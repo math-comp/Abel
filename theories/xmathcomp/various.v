@@ -262,8 +262,8 @@ Lemma expr_sum {R : ringType} {T : Type} (x : R) (F : T -> nat) P s :
   x ^+ (\sum_(i <- s | P i) F i) = \prod_(i <- s | P i) x ^+ (F i).
 Proof. by apply: big_morph; [exact: exprD | exact: expr0]. Qed.
 
-Lemma prim_root_natf_neq0 (F : fieldType) n (x : F) :
-  n.-primitive_root x -> (n%:R != 0 :> F).
+Lemma prim_root_natf_neq0 (F : fieldType) n (w : F) :
+  n.-primitive_root w -> (n%:R != 0 :> F).
 Proof.
 have [->//|n_gt0] := posnP n => x_prim; apply/negPf/negP => nFneq0.
 have /natf0_char[//|p char_p] := nFneq0.
@@ -480,10 +480,10 @@ Qed.
 
 End multiplicity.
 
-Lemma primitive_root_eq0 (F : fieldType) n (r : F) :
-  n.-primitive_root r -> (r == 0) = (n == 0%N).
+Lemma primitive_root_eq0 (F : fieldType) n (w : F) :
+  n.-primitive_root w -> (w == 0) = (n == 0%N).
 Proof.
-move=> rp; apply/eqP/idP => [r0|/eqP p0]; move: rp; rewrite ?r0 ?p0; last first.
+move=> wp; apply/eqP/idP => [w0|/eqP p0]; move: wp; rewrite ?w0 ?p0; last first.
   by move=> /prim_order_gt0//.
 move=> /prim_expr_order/esym/eqP.
 by rewrite expr0n; case: (n =P 0%N); rewrite ?oner_eq0.

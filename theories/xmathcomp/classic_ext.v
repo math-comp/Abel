@@ -95,8 +95,8 @@ Qed.
 
 Lemma classic_cycloExt (F0 : fieldType) (L : fieldExtType F0) n :
   (n%:R != 0 :> F0) -> classically
-  { L' : fieldExtType F0 & { r : L' & { iota : 'AHom(L, L') |
-    <<iota @: fullv; r>>%VS = fullv & n.-primitive_root r }}}.
+  { L' : fieldExtType F0 & { w : L' & { iota : 'AHom(L, L') |
+    <<iota @: fullv; w>>%VS = fullv & n.-primitive_root w }}}.
 Proof.
 case: n => [|[_|[two_neq0|n']]]//; first by rewrite eqxx.
 - apply/classicW; exists L, 1, (id_ahom _); rewrite ?prim_root1//.
@@ -126,14 +126,14 @@ have rsUroots : all n.-unity_root rs.
   apply/allP => r rrs; apply/eqP; rewrite Xnsub1E.
   by rewrite (big_rem _ rrs)/= hornerM hornerXsubC subrr mul0r.
 have /has_prim_root/(_ _ _)/hasP[]// := rsUroots.
-move=> r rrs rprim; apply/classicW; exists L', r, iota => //.
-symmetry; rewrite -rs_full; have /eq_adjoin-> : rs =i r :: rs.
+move=> w wrs wprim; apply/classicW; exists L', w, iota => //.
+symmetry; rewrite -rs_full; have /eq_adjoin-> : rs =i w :: rs.
   by move=> r'; rewrite in_cons; case: eqVneq => // -> /=.
-set K := limg iota => {rrs rs_uniq Xnsub1E rs_full rs_ge}.
+set K := limg iota => {wrs rs_uniq Xnsub1E rs_full rs_ge}.
 elim: rs rsUroots => [|r' rs IHrs /andP[r'Uroots rsUroots]].
   by rewrite adjoin_seq1.
-have r'K : r' \in <<K; r>>%VS.
-  have /unity_rootP/(prim_rootP rprim)[i ->] := r'Uroots.
+have r'K : r' \in <<K; w>>%VS.
+  have /unity_rootP/(prim_rootP wprim)[i ->] := r'Uroots.
   by rewrite rpredX// memv_adjoin.
 by rewrite !adjoin_cons (Fadjoin_idP r'K) -adjoin_cons IHrs.
 Qed.
@@ -158,34 +158,34 @@ Qed.
 
 Lemma classic_cycloSplitting (F0 : fieldType) (L : splittingFieldType F0) n :
   (n%:R != 0 :> F0) -> classically
-  { L' : splittingFieldType F0 & { r : L' & { iota : 'AHom(L, L') |
-    <<iota @: fullv; r>>%VS = fullv & n.-primitive_root r }}}.
+  { L' : splittingFieldType F0 & { w : L' & { iota : 'AHom(L, L') |
+    <<iota @: fullv; w>>%VS = fullv & n.-primitive_root w }}}.
 Proof.
 move=> /(@classic_cycloExt _ L).
-apply/classic_bind => -[M [r [iota rfull rprim]]]; apply/classicW.
+apply/classic_bind => -[M [w [iota wfull wprim]]]; apply/classicW.
 suff splitM : SplittingField.axiom M.
-  by exists (SplittingFieldType F0 M splitM), r, iota.
+  by exists (SplittingFieldType F0 M splitM), w, iota.
 apply: (@SplittingFieldExt _ L ('Phi_n ^^ intr) _ iota).
-rewrite -map_poly_comp (eq_map_poly (rmorph_int _)) -rfull.
-by rewrite (Phi_cyclotomic rprim); apply: splitting_Fadjoin_cyclotomic.
+rewrite -map_poly_comp (eq_map_poly (rmorph_int _)) -wfull.
+by rewrite (Phi_cyclotomic wprim); apply: splitting_Fadjoin_cyclotomic.
 Qed.
 
 Lemma classic_baseCycloExt (F : fieldType) (n : nat) :
   (n%:R != 0 :> F) -> classically
-   { L' : splittingFieldType F & { r : L' &
-    <<1; r>>%VS = fullv & n.-primitive_root r }}.
+   { L' : splittingFieldType F & { w : L' &
+    <<1; w>>%VS = fullv & n.-primitive_root w }}.
 Proof.
-move=> nN0; suff: classically { L' : fieldExtType F & { r : L' &
-    <<1; r>>%VS = fullv & n.-primitive_root r }}.
-  apply/classic_bind => -[L [r rfull fprim]]; apply/classicW.
+move=> nN0; suff: classically { L' : fieldExtType F & { w : L' &
+    <<1; w>>%VS = fullv & n.-primitive_root w }}.
+  apply/classic_bind => -[L [w wfull wprim]]; apply/classicW.
   have splitL : SplittingField.axiom L.
-    exists (cyclotomic r n); rewrite ?cyclotomic_over// -rfull.
+    exists (cyclotomic w n); rewrite ?cyclotomic_over// -wfull.
     exact: splitting_Fadjoin_cyclotomic.
-  by exists (SplittingFieldType F L splitL), r.
+  by exists (SplittingFieldType F L splitL), w.
 pose Fo := [splittingFieldType F of F^o].
 apply: classic_bind (@classic_cycloExt _ Fo n nN0).
-case=> [L [r [iota rfull fprim]]]; apply/classicW.
-exists L, r => //; apply/eqP; rewrite eqEsubv subvf/= -rfull.
+case=> [L [w [iota wfull wprim]]]; apply/classicW.
+exists L, w => //; apply/eqP; rewrite eqEsubv subvf/= -wfull.
 apply/subvP => x /Fadjoin_polyP[/= p pover ->].
 apply/mempx_Fadjoin/polyOverP => i /=.
 have /memv_imgP[u _ ->] := polyOverP pover i.

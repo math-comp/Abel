@@ -229,10 +229,10 @@ Lemma solvable_by_pradical_radical (E F : {subfield L}) :
   solvable_by radical E F -> solvable_by pradical E F.
 Proof. by case=> [R /pradicalext_radicalext ERe FR]; exists R. Qed.
 
-Lemma radicalext_Fadjoin_cyclotomic (E : {subfield L}) (r : L) (n : nat) :
-  n.-primitive_root r -> radical.-ext E <<E; r>>%AS.
+Lemma radicalext_Fadjoin_cyclotomic (E : {subfield L}) (w : L) (n : nat) :
+  n.-primitive_root w -> radical.-ext E <<E; w>>%AS.
 Proof.
-move=> wprim; apply: (@radical_ext_Fadjoin n r E).
+move=> wprim; apply: (@radical_ext_Fadjoin n w E).
   exact: prim_order_gt0 wprim.
 by rewrite (prim_expr_order wprim) mem1v.
 Qed.
