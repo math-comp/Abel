@@ -120,7 +120,7 @@ have [pn2|/allPn[p]] := altP (@allP _ (eq_op^~ 2%N) (primes n)); last first.
   rewrite mem_primes/=; move: p => [|[|[|p']]]//; set p := p'.+3.
   move=> /andP[p_prime dvdkn].
   have [//|[|k]// cpk ->] := (@pfactor_coprime _ n p_prime).
-  rewrite totient_coprime ?coprime_expr 1?coprime_sym//.
+  rewrite totient_coprime ?coprimeXr 1?coprime_sym//.
   rewrite totient_pfactor ?logn_gt0 ?mem_primes ?p_prime// mulnCA.
   by rewrite (@leq_trans p.-1) ?leq_pmulr ?muln_gt0 ?expn_gt0 ?totient_gt0.
 have pnNnil : primes n != [::].
@@ -207,8 +207,8 @@ Proof.
 apply/eqP; rewrite eqEsubset subsetT/=; apply/subsetP => s _.
 have [ts -> _] := prod_tpermP s; rewrite group_prod// => -[/= y z] _.
 have [<-|Nyz] := eqVneq y z; first by rewrite tperm1 group1.
-have [<-|Nxz] := eqVneq x z; first by rewrite tpermC mem_gen ?mem_imset.
-by rewrite -(tpermJt Nxz Nyz) groupJ ?mem_gen ?mem_imset.
+have [<-|Nxz] := eqVneq x z; first by rewrite tpermC mem_gen ?imset_f.
+by rewrite -(tpermJt Nxz Nyz) groupJ ?mem_gen ?imset_f.
 Qed.
 
 Lemma prime_orbit (X : finType) x c :
@@ -275,7 +275,7 @@ have /prim_expr_order/eqP := x_prim; rewrite nE exprM.
 elim: (logn p n) => [|i IHi]; last first.
   rewrite expnSr exprM -subr_eq0 -Frobenius_autE -(Frobenius_aut1 char_p).
   by rewrite -rmorphB fmorph_eq0 subr_eq0.
-rewrite -(prim_order_dvd x_prim) nE mulnC Gauss_dvd ?coprime_expl//.
+rewrite -(prim_order_dvd x_prim) nE mulnC Gauss_dvd ?coprimeXl//.
 rewrite pfactor_dvdn// ltn_geF// -[k]muln1 logn_Gauss ?logn1//.
 by rewrite logn_gt0 mem_primes p_prime dvdpn n_gt0.
 Qed.
