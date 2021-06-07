@@ -28,12 +28,12 @@ Mathematical Components library.
 - License: [CeCILL-B](CeCILL-B)
 - Compatible Coq versions: Coq 8.10 to 8.13
 - Additional dependencies:
-  - [MathComp ssreflect 1.11 and 1.12](https://math-comp.github.io)
-  - [MathComp fingroup 1.11 and 1.12](https://math-comp.github.io)
-  - [MathComp algebra 1.11 and 1.12](https://math-comp.github.io)
-  - [MathComp solvable 1.11 and 1.12](https://math-comp.github.io)
-  - [MathComp field 1.11 and 1.12](https://math-comp.github.io)
-  - [MathComp real closed >= 1.11.1](https://github.com/math-comp/real-closed)
+  - [MathComp ssreflect 1.12 and later](https://math-comp.github.io)
+  - [MathComp fingroup 1.12 and later](https://math-comp.github.io)
+  - [MathComp algebra 1.12 and later](https://math-comp.github.io)
+  - [MathComp solvable 1.12 and later](https://math-comp.github.io)
+  - [MathComp field 1.12 and later](https://math-comp.github.io)
+  - [MathComp real closed >= 1.1.1](https://github.com/math-comp/real-closed)
 - Coq namespace: `Abel`
 - Related publication(s):
   - [Unsolvability of the Quintic Formalized in Dependent Type Theory

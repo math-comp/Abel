@@ -1309,7 +1309,7 @@ Proof. by rewrite sqrtr_gt0 mulr_gt0 ?invr_gt0 ?sqrtr_gt0 ?ltr0n. Qed.
 Lemma rootsR_deriv_poly_example :
   rootsR (poly_example^`() ^^ ratr) = [:: - alpha; alpha].
 Proof.
-apply: eq_sorted_lt; rewrite ?sorted_roots//.
+apply: lt_sorted_eq; rewrite ?sorted_roots//.
  by rewrite /= andbT -subr_gt0 opprK ?addr_gt0 ?alpha_gt0.
 move=> x; rewrite mem_rootsR ?map_poly_eq0// !inE -topredE/= orbC.
 rewrite deriv_poly_example /root.
