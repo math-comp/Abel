@@ -18,7 +18,7 @@ solvable Galois group) and Abel - Ruffini Theorem (unsolvability of
 quintic equations) in the Coq proof-assistant and using the
 Mathematical Components library."""
 
-build: [make "-j%{jobs}%" ]
+build: [make "-j%{jobs}%"]
 install: [make "install"]
 depends: [
   "coq" { (>= "8.10" & < "8.14~") | = "dev" }
