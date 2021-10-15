@@ -1,5 +1,4 @@
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra all_solvable.
-From mathcomp Require Import all_field.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
