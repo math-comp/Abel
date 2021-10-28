@@ -106,16 +106,6 @@ make install
   number of real roots of a polynomial by one plus the number of
   real roots of its derivative,
 
-- `xmathcomp/diag.v` contains the theory of diagonalisation and
-  codiagonalisation with the standard criterions.
-
-- `xmathcomp/mxgal.v` represents elements of a Galois group as
-  matrices, this enables the use of `diag` to find eigenvectors and
-  eigenvalues.
-
-- `xmathcomp/mxextra.v` is a correspondance between `'M_(_,_)` and `'Hom(_, _)`
-   which is unused in the current development, we use `mxgal` instead.
-
 ## Development information
 
 [Developping with nix](NIX.md)
