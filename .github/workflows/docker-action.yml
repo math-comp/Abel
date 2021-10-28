@@ -24,6 +24,7 @@ jobs:
           - 'mathcomp/mathcomp-dev:coq-8.11'
           - 'mathcomp/mathcomp-dev:coq-8.12'
           - 'mathcomp/mathcomp-dev:coq-8.13'
+          - 'mathcomp/mathcomp-dev:coq-8.14'
           - 'mathcomp/mathcomp-dev:coq-dev'
       fail-fast: false
     steps:
