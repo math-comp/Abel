@@ -44,5 +44,4 @@
      > nix-shell --arg withEmacs true
 
      in order to get a temporary installation of emacs and
-     proof-general.  Make sure you add `(require 'proof-site)` to your
-     `$HOME/.emacs`.
+     proof-general.
