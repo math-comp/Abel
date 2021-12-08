@@ -1158,15 +1158,13 @@ Variable T : finType.
 
 Lemma solvable_AltF : 4 < #|T| -> solvable 'Alt_T = false.
 Proof.
-move=> card_T; apply/negP => Alt_solvable.
-have/simple_Alt5 Alt_simple := card_T.
-have := simple_sol_prime Alt_solvable Alt_simple.
-have lt_T n : n <= 4 -> n < #|T| by move/leq_ltn_trans; apply.
-have -> : #|('Alt_T)%G| = #|T|`! %/ 2 by rewrite -card_Alt ?mulKn ?lt_T.
-move/even_prime => [/eqP|]; apply/negP.
-  rewrite neq_ltn leq_divRL // mulnC -[2 * 3]/(3`!).
-  by apply/orP; right; apply/ltnW/fact_smonotone/lt_T.
-by rewrite -dvdn2 dvdn_divRL dvdn_fact //=; apply/ltnW/lt_T.
+move=> Tgt4; suff: ~~ prime #|'Alt_T|.
+  by apply: contraNF => /simple_sol_prime->//; apply: simple_Alt5.
+have -> : #|'Alt_T| = #|T|`! %/ 2.
+  by rewrite -card_Alt ?mulKn//; apply: leq_trans Tgt4.
+rewrite fact_prod -(subnKC Tgt4) 4?big_nat_recl// mul1n mulKn//.
+apply/primePn; right; exists 3; rewrite ?dvdn_mulr ?ltn_Pmulr//=.
+by rewrite -[4]/(2 * 2)%N -mulnA leq_pmulr// muln_gt0/= prodn_gt0.
 Qed.
 
 Lemma solvable_SymF : 4 < #|T| -> solvable 'Sym_T = false.
