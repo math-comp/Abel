@@ -31,7 +31,7 @@
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "coq8.13+mc1.12";
+  default-bundle = "coq8.14+mc1.12";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration
@@ -45,14 +45,18 @@
                mathcomp.job = false;
         } // (if (mcv == "master") then {
             mathcomp-real-closed.override.version = "master";
+            mathcomp-bigenough.override.version = "1.0.1";
         } else {});
       }; in
     gen "8.11" "1.12" //
     gen "8.12" "1.12" //
     gen "8.13" "1.12" //
+    gen "8.14" "1.12" //
     gen "8.11" "master" //
     gen "8.12" "master" //
-    gen "8.13" "master";
+    gen "8.13" "master" //
+    gen "8.14" "master" //
+    gen "master" "master";
 
   ## Cachix caches to use in CI
   ## Below we list some standard ones

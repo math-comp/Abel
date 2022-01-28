@@ -1176,13 +1176,13 @@ pose simp := (rmorphB, rmorphD, map_polyZ, map_polyXn, map_polyX, map_polyC).
 by do !rewrite [map_poly _ _]simp/= ?natz.
 Qed.
 
-Lemma size_poly_example_int : size poly_example_int = 6.
+Lemma size_poly_example_int : size poly_example_int = 6%N.
 Proof.
 rewrite /poly_example_int -addrA size_addl ?size_polyXn//.
 by rewrite size_addl ?size_opp ?size_scale ?size_polyX -?polyCn ?size_polyC.
 Qed.
 
-Lemma size_poly_example : size poly_example = 6.
+Lemma size_poly_example : size poly_example = 6%N.
 Proof.
 rewrite /poly_example -addrA size_addl ?size_polyXn//.
 by rewrite size_addl ?size_opp ?size_scale ?size_polyX -?polyCn ?size_polyC.
