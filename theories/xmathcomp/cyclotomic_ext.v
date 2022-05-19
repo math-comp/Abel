@@ -18,7 +18,7 @@ Qed.
 Lemma Cyclotomic2 : 'Phi_2 = 'X + 1.
 Proof.
 have := @prod_Cyclotomic 2%N isT; rewrite !big_cons big_nil mulr1/=.
-rewrite Cyclotomic1 -(@expr1n [ringType of {poly int}] 2%N).
+rewrite Cyclotomic1 -(@expr1n {poly int} 2%N).
 by rewrite subr_sqr expr1n => /mulfI->//; rewrite polyXsubC_eq0.
 Qed.
 
@@ -134,7 +134,7 @@ Lemma galois_Fadjoin_cyclotomic : galois E <<E; w>>.
 Proof.
 apply/splitting_galoisField; exists (cyclotomic w n).
 split; rewrite ?cyclotomic_over//; last exact: splitting_Fadjoin_cyclotomic.
-rewrite /cyclotomic -(big_image _ _ _ (fun x => 'X - x%:P))/=.
+rewrite /cyclotomic -(big_image _ _ _ _ (fun x => 'X - x%:P))/=.
 rewrite separable_prod_XsubC map_inj_uniq ?enum_uniq// => i j /eqP.
 by rewrite (eq_prim_root_expr w_is_nth_root) !modn_small// => /eqP/val_inj.
 Qed.
