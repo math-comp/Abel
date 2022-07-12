@@ -46,6 +46,9 @@
         } // (if (mcv == "master") then {
             mathcomp-real-closed.override.version = "master";
             mathcomp-bigenough.override.version = "1.0.1";
+        } else {}) // (if (mcv == "mathcomp-1.15.0") then {
+            mathcomp-real-closed.override.version = "1.1.3";
+            mathcomp-bigenough.override.version = "1.0.1";
         } else {});
       }; in
     gen "8.11" "1.12" //
@@ -61,6 +64,10 @@
     gen "8.13" "master" //
     gen "8.14" "master" //
     gen "8.15" "master" //
+    gen "8.13" "mathcomp-1.15.0" //
+    gen "8.14" "mathcomp-1.15.0" //
+    gen "8.15" "mathcomp-1.15.0" //
+    gen "8.16" "mathcomp-1.15.0" //
     gen "master" "master";
 
   ## Cachix caches to use in CI
