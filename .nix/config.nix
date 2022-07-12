@@ -31,7 +31,7 @@
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "coq8.14+mc1.12";
+  default-bundle = "coq8.15+mc1.14";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration
@@ -52,10 +52,15 @@
     gen "8.12" "1.12" //
     gen "8.13" "1.12" //
     gen "8.14" "1.12" //
-    gen "8.11" "master" //
-    gen "8.12" "master" //
+    gen "8.12" "1.13" //
+    gen "8.13" "1.13" //
+    gen "8.14" "1.13" //
+    gen "8.13" "1.14" //
+    gen "8.14" "1.14" //
+    gen "8.15" "1.14" //
     gen "8.13" "master" //
     gen "8.14" "master" //
+    gen "8.15" "master" //
     gen "master" "master";
 
   ## Cachix caches to use in CI
