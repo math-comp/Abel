@@ -358,7 +358,7 @@ rewrite -(@normalField_img _ _ E)// ?galois_normalW//.
 Qed.
 
 End Prodv.
-Hint Resolve normalField_refl : core.
+#[global] Hint Resolve normalField_refl : core.
 
 Section map_hom.
 Variables (F0 : fieldType) (L L' : splittingFieldType F0).
@@ -696,7 +696,7 @@ Lemma normalClosureSl E F : (E <= normalClosure E F)%VS.
 Proof.
 by rewrite (subv_trans (field_subvMr _ _) (prodv_sub_normalClosure _ _)).
 Qed.
-Hint Resolve normalClosureSl : core.
+#[local] Hint Resolve normalClosureSl : core.
 
 Lemma normalClosureSr E F : (F <= normalClosure E F)%VS.
 Proof. exact: subv_trans (field_subvMl _ _) (prodv_sub_normalClosure _ _). Qed.
@@ -711,7 +711,7 @@ under eq_bigr => s' do have -> : (s \o s')%VF = 'R%act s' s by [].
 have /(reindex_astabs 'R _) : s \in ('N(kAEndf E | 'R))%g by rewrite astabsR/=.
 by move/(_ _ _ _ (fun i => i @: (E * F))%AS); rewrite !big_prodv_eq_aspace => <-.
 Qed.
-Hint Resolve normalClosure_normal : core.
+#[local] Hint Resolve normalClosure_normal : core.
 
 Lemma normalClosure_separable E F : separable E F ->
    separable E (normalClosure E F).
@@ -725,7 +725,7 @@ Proof.
 move=> sepEF; rewrite /galois.
 by rewrite normalClosureSl normalClosure_separable// normalClosure_normal.
 Qed.
-Hint Resolve normalClosure_galois : core.
+#[local] Hint Resolve normalClosure_galois : core.
 
 Lemma normalClosureP E F K' : (E <= K')%VS -> (F <= K')%VS ->
   normalField E K' -> (normalClosure E F <= K')%VS.
@@ -773,7 +773,7 @@ Lemma solvable_ext_refl E : solvable_ext E E.
 Proof.
 by apply/solvable_extP; exists E; rewrite subvv galois_refl/= galvv solvable1.
 Qed.
-Hint Resolve solvable_ext_refl : core.
+#[local] Hint Resolve solvable_ext_refl : core.
 
 Lemma sub_solvable_ext F K E :
   (E <= F)%VS -> solvable_ext K F -> solvable_ext K E.
@@ -837,10 +837,10 @@ Qed.
 
 End normalClosure.
 
-Hint Resolve normalClosureSl : core.
-Hint Resolve normalClosureSr : core.
-Hint Resolve normalClosure_normal : core.
-Hint Resolve solvable_ext_refl : core.
+#[global] Hint Resolve normalClosureSl : core.
+#[global] Hint Resolve normalClosureSr : core.
+#[global] Hint Resolve normalClosure_normal : core.
+#[global] Hint Resolve solvable_ext_refl : core.
 
 Lemma aimg_normalClosure (F0 : fieldType) (L L' : splittingFieldType F0)
   (iota : 'AHom(L, L')) (K E : {subfield L}) :

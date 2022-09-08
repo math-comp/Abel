@@ -824,7 +824,7 @@ Proof. by rewrite /numfield; case: splitting_num_field => //= ? [? []]. Qed.
 
 Lemma char_numfield (p : {poly rat}) : [char (numfield p)] =i pred0.
 Proof. exact: char_ext. Qed.
-Hint Resolve char_numfield : core.
+#[global] Hint Resolve char_numfield : core.
 
 Lemma normal_numfield (p : {poly rat}) : normalField 1 {: numfield p}.
 Proof.
@@ -1193,11 +1193,11 @@ Proof. by rewrite -size_poly_eq0 size_poly_example_int. Qed.
 
 Lemma poly_example_neq0 : poly_example != 0.
 Proof. by rewrite -size_poly_eq0 size_poly_example. Qed.
-Hint Resolve poly_example_neq0 : core.
+#[local] Hint Resolve poly_example_neq0 : core.
 
 Lemma poly_example_monic : poly_example \is monic.
 Proof. by rewrite monicE lead_coefE !pesimp size_poly_example. Qed.
-Hint Resolve poly_example_monic : core.
+#[local] Hint Resolve poly_example_monic : core.
 
 Lemma irreducible_example : irreducible_poly poly_example.
 Proof.
@@ -1205,7 +1205,7 @@ rewrite poly_exampleEint; apply: (@eisenstein 2) => // [|||i];
   rewrite ?lead_coefE ?size_poly_example_int ?pesimp//.
 by move: i; do 6!case=> //.
 Qed.
-Hint Resolve irreducible_example : core.
+#[local] Hint Resolve irreducible_example : core.
 
 Lemma separable_example : separable_poly poly_example.
 Proof.
@@ -1216,7 +1216,7 @@ have size_deriv_example : size poly_example^`() = 5%N.
 rewrite gtNdvdp -?size_poly_eq0 ?size_deriv_example//.
 by rewrite (eqp_size eqq) ?size_poly_example.
 Qed.
-Hint Resolve separable_example : core.
+#[local] Hint Resolve separable_example : core.
 
 Lemma prime_example : prime (size poly_example).-1.
 Proof. by rewrite size_poly_example. Qed.
@@ -1255,7 +1255,7 @@ Proof.
 apply/eqP => /(congr1 (fun p => p.[0])).
 by rewrite deriv_poly_example !pesimp => /eqP; compute.
 Qed.
-Hint Resolve deriv_poly_example_neq0 : core.
+#[local] Hint Resolve deriv_poly_example_neq0 : core.
 
 Definition alpha : algR := Num.sqrt (2%:R / Num.sqrt 5%:R).
 
