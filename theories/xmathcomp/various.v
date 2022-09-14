@@ -433,6 +433,7 @@ apply/eqP; rewrite eqn_leq mup_leq ?mup_geq//.
 have [->|Nxy] := eqVneq x y.
   by rewrite /= dvdpp ?dvdp_Pexp2l ?size_XsubC ?ltnn.
 by rewrite dvd1p dvdp_XsubCl /root !hornerE ?horner_exp ?hornerE expf_neq0// subr_eq0.
+(* FIXME: remove ?horner_exp ?hornerE when requiring MC >= 1.16.0 *)
 Qed.
 
 Lemma mupNroot (x : L) q : ~~ root q x -> mup x q = 0%N.

@@ -417,6 +417,7 @@ rewrite [LHS](@all_roots_prod_XsubC _ _ ws).
 - by rewrite (monicP _) ?monic_XnsubC// scale1r big_map big_enum.
 - by rewrite size_XnsubC// size_map size_enum_ord.
 - rewrite all_map; apply/allP => i _ /=; rewrite /root !hornerE ?hornerXn.
+  (* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
   by rewrite exprMn exprAC [w ^+ _]prim_expr_order// expr1n mulr1 subrr.
 - by rewrite uniq_rootsE uniq_roots_Xn_sub_xn.
 Qed.
@@ -434,6 +435,7 @@ Lemma dvdp_minpoly_Xn_subn E :
 Proof using.
 move=> xpE; have [->|p_gt0] := posnP p; first by rewrite !expr0 subrr dvdp0.
 by rewrite minPoly_dvdp /root ?poly_XnsubC_over// !hornerE ?hornerXn subrr.
+(* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
 Qed.
 
 Lemma galois_cyclo_radical E : (p > 0)%N -> x ^+ p \in E ->
@@ -1506,6 +1508,7 @@ have Cchar := Cchar => p_neq0; split.
   pose v := i.+1.-root (iota (u ^+ i.+1)).
   have : ('X ^+ i.+1 - (v ^+ i.+1)%:P).[iota u] == 0.
     by rewrite !hornerE ?hornerXn rootCK// rmorphX subrr.
+    (* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
   have /Xn_sub_xnE->// := prim1rootP (isT : 0 < i.+1)%N.
   rewrite horner_prod prodf_seq_eq0/= => /hasP[/= l _].
   rewrite hornerXsubC subr_eq0 => /eqP u_eq.
