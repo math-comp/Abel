@@ -432,7 +432,7 @@ have Xxn0 : ('X - y%:P) ^+ n != 0 by rewrite ?expf_neq0 ?polyXsubC_eq0.
 apply/eqP; rewrite eqn_leq mup_leq ?mup_geq//.
 have [->|Nxy] := eqVneq x y.
   by rewrite /= dvdpp ?dvdp_Pexp2l ?size_XsubC ?ltnn.
-by rewrite dvd1p dvdp_XsubCl /root !hornerE ?horner_exp expf_neq0// subr_eq0.
+by rewrite dvd1p dvdp_XsubCl /root !hornerE ?horner_exp !hornerE expf_neq0// subr_eq0.
 Qed.
 
 Lemma mupNroot (x : L) q : ~~ root q x -> mup x q = 0%N.
