@@ -28,11 +28,11 @@ Mathematical Components library.
 - License: [CeCILL-B](CeCILL-B)
 - Compatible Coq versions: Coq 8.10 to 8.16
 - Additional dependencies:
-  - [MathComp ssreflect 1.12 and later](https://math-comp.github.io)
-  - [MathComp fingroup 1.12 and later](https://math-comp.github.io)
-  - [MathComp algebra 1.12 and later](https://math-comp.github.io)
-  - [MathComp solvable 1.12 and later](https://math-comp.github.io)
-  - [MathComp field 1.12 and later](https://math-comp.github.io)
+  - [MathComp ssreflect 1.13 and later](https://math-comp.github.io)
+  - [MathComp fingroup 1.13 and later](https://math-comp.github.io)
+  - [MathComp algebra 1.13 and later](https://math-comp.github.io)
+  - [MathComp solvable 1.13 and later](https://math-comp.github.io)
+  - [MathComp field 1.13 and later](https://math-comp.github.io)
   - [MathComp real closed >= 1.1.1](https://github.com/math-comp/real-closed)
 - Coq namespace: `Abel`
 - Related publication(s):
