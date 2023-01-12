@@ -1166,7 +1166,7 @@ have lt_T n : n <= 4 -> n < #|T| by move/leq_ltn_trans; apply.
 have -> : #|('Alt_T)%G| = #|T|`! %/ 2 by rewrite -card_Alt ?mulKn ?lt_T.
 move/even_prime => [/eqP|]; apply/negP.
   rewrite neq_ltn leq_divRL // mulnC -[2 * 3]/(3`!).
-  by apply/orP; right; apply/ltnW/fact_smonotone/lt_T.
+  by apply/orP; right; apply/ltnW/ltn_fact/lt_T.
 by rewrite -dvdn2 dvdn_divRL dvdn_fact //=; apply/ltnW/lt_T.
 Qed.
 

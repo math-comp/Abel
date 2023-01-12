@@ -51,10 +51,6 @@
             mathcomp-bigenough.override.version = "1.0.1";
         } else {});
       }; in
-    gen "8.11" "1.12" //
-    gen "8.12" "1.12" //
-    gen "8.13" "1.12" //
-    gen "8.14" "1.12" //
     gen "8.12" "1.13" //
     gen "8.13" "1.13" //
     gen "8.14" "1.13" //
