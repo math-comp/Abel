@@ -137,13 +137,15 @@ rewrite /negn inE negbK => /andP [_ p0].
 have: p \in [char L] by rewrite (char_lalg L) inE; apply/andP; split=>//.
 move=> {p0} p_char.
 move:(w1 (Ordinal (ltnSn n))) => /= /eqP.
-rewrite eqxx /root_of_unity /root 3!hornerE hornerXn.
+rewrite eqxx /root_of_unity /root !hornerE ?hornerXn.
+  (* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
 rewrite nE exprM -(@expr1n _ p).
 rewrite -(Frobenius_autE p_char (w ^+ m.+1)) -(Frobenius_autE p_char 1) subr_eq0=>/eqP/fmorph_inj wm1.
 have mn: (m.+1 < n.+1)%N.
   by rewrite nE; apply ltn_Pmulr=>//; apply prime_gt1.
   have: ((Ordinal (ltn_trans (ltnSn m) mn)).+1).-unity_root w.
-  by rewrite /root_of_unity /root/= 3!hornerE hornerXn wm1 subrr.
+  by rewrite /root_of_unity /root/= !hornerE ?hornerXn wm1 subrr.
+  (* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
 move:(w1 (Ordinal (ltn_trans (ltnSn m) mn))) => /eqP -> /= /eqP mnE.
 by move:mn; rewrite mnE ltnn.
 Qed.
@@ -647,7 +649,8 @@ apply/eqP; rewrite -eqp_monic; first last.
     by move: pchar => /andP [ /prime_gt1 ].
   apply uniq_roots_dvdp.
     apply/allP => + /mapP [i _ ->] => _.
-    rewrite/root 6!hornerE hornerXn -(Frobenius_autE nchar (x + (val i)%:R)).
+    rewrite/root !hornerE ?hornerXn -(Frobenius_autE nchar (x + (val i)%:R)).
+  (* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
     rewrite rmorphD/= rmorph_nat (Frobenius_autE nchar x).
     rewrite opprD opprB addrACA -addrA 2![x+_]addrA subrr add0r.
     by rewrite addrAC addrCA subrr addr0 addrC subrr.
