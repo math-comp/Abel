@@ -125,7 +125,7 @@ Implicit Types r : {vspace L} -> L -> nat -> bool.
 Implicit Types (U V : {subfield L}).
 
 (* TODO: rename and move to the proper place *)
-Lemma primitive_unity_root_char (w : L) (n : nat) :
+Lemma prim_root_natf_neq0 (w : L) (n : nat) :
   n.-primitive_root w -> n%:R != (0 : F0).
 Proof.
 case: n => // n /andP[_ /forallP w1].
@@ -299,7 +299,7 @@ Lemma radicalext_Fadjoin_cyclotomic (E : {subfield L}) (w : L) (n : nat) :
   n.-primitive_root w -> radical.-ext E <<E; w>>%AS.
 Proof.
 move=> wprim; apply: (@radical_ext_Fadjoin1 n w E).
-   exact: (primitive_unity_root_char wprim).
+   exact: (prim_root_natf_neq0 wprim).
 by rewrite (prim_expr_order wprim) mem1v.
 Qed.
 
@@ -349,7 +349,7 @@ Lemma cyclic_radical_ext w E F (n := \dim_E F) :
 Proof.
 set G := (X in cyclic X) => w_root wE galois_EF /cyclicP[g GE].
 have EF := galois_subW galois_EF.
-move: (primitive_unity_root_char w_root) => n_ne0.
+move: (prim_root_natf_neq0 w_root) => n_ne0.
 have n_gt0: (0 < n)%N.
    by rewrite lt0n; move: n_ne0; apply: contra_neq => ->.
 have Gg : generator G g by rewrite GE generator_cycle.
@@ -395,7 +395,7 @@ Lemma solvableWradical_ext w E F (n := \dim_E F) :
 Proof.
 move=> + + galEF; have [k] := ubnP n; elim: k => // k IHk in w E F n galEF *.
 rewrite ltnS => le_nk; have subEF : (E <= F)%VS by case/andP: galEF.
-move=> /[dup]/primitive_unity_root_char n_ne0.
+move=> /[dup]/prim_root_natf_neq0 n_ne0.
 have n_gt0: (0 < n)%N.
    by rewrite lt0n; move: n_ne0; apply: contra_neq => ->.
 move=> wn Ew solEF; have [n_le1|n_gt1] := leqP n 1%N.
@@ -712,106 +712,6 @@ apply/splitting_galoisField; exists ('X^p - 'X - (x ^+ p - x)%:P); split.
   by rewrite mul0r add0r mulN1r opprK.
 - by apply ArtinSchreier_splitting.
 Qed.
-
-
-(*** TODO: move to its proper place *********************)
-
-Lemma big_split_cond (R : Type) (idx : R) (op : Monoid.com_law idx) (I : Type)
-  (r : seq I) (P Q : pred I) (F G : I -> R) :
-  \big[op/idx]_(i <- r | P i) (if Q i then F i else G i) =
-  op (\big[op/idx]_(i <- r | P i && Q i) F i)
-     (\big[op/idx]_(i <- r | P i && ~~ Q i) G i).
-Proof.
-elim: r => [| a r IHr]; first by rewrite 3!big_nil Monoid.mulm1.
-rewrite 3!big_cons.
-case: (P a) => //=.
-case: (Q a) => /=; first by rewrite IHr Monoid.mulmA.
-by rewrite IHr Monoid.mulmCA.
-Qed.
-
-Lemma bigA_distr_bigA2 (R : Type) (zero one : R) (times : Monoid.mul_law zero)
-  (plus : Monoid.add_law zero times) (I : finType) (F G : I -> R) :
-  \big[times/one]_i plus (F i) (G i) =
-  \big[plus/zero]_(J in {set I}) \big[times/one]_i (if i \in J then F i else G i).
-Proof.
-transitivity (\big[times/one]_i \big[plus/zero]_(b : bool) if b then F i else G i); first by apply eq_bigr => i _; rewrite big_bool.
-rewrite bigA_distr_bigA.
-set f := fun J : {set I} => val J.
-transitivity (\big[plus/zero]_(f0 in (imset f (mem setT))) \big[times/one]_i (if f0 i then F i else G i)).
-  suff <-: setT = imset f (mem setT) by apply congr_big=>// i; rewrite in_setT.
-  apply/esym/eqP; rewrite -subTset; apply/subsetP => b _.
-  by apply/imsetP; exists (FinSet b).
-rewrite big_imset; last by case => g; case => h _ _; rewrite /f/= => ->.
-apply congr_big=>//; case => g; first by rewrite in_setT.
-move=>_; apply eq_bigr => i _; congr (if _ then _ else _).
-by rewrite SetDef.pred_of_setE.
-Qed.
-
-Lemma coefn_prod_XsubC {R : comRingType} (ps : seq R) (n : nat) :
-  (n <= size ps)%N ->
-  (\prod_(p <- ps) ('X - p%:P))`_n =
-  (-1) ^+ (size ps - n)%N *
-    \sum_(I in {set 'I_(size ps)} | #|I| == (size ps - n)%N)
-        \prod_(i in I) ps`_i.
-Proof.
-move=> nle.
-have psE: ps = tval (Tuple (eqxx (size ps))) by [].
-transitivity (\prod_(p <- ps) ((- p)%:P + 'X))`_n.
-  by congr ((polyseq _)`_n); apply eq_bigr => i _; rewrite addrC polyCN.
-rewrite {1}psE -(map_tnth_enum (Tuple _)) big_map enumT bigA_distr_bigA2 /=.
-rewrite coef_sum.
-transitivity (\sum_(I in {set 'I_(size ps)}) if #|I| == (size ps - n)%N then \prod_(i < size ps | i \in I) - (tnth (Tuple (eqxx (size ps))) i) else 0).
-  apply eq_bigr => I _.
-  rewrite big_split_cond/= big_const iter_mulr_1.
-  rewrite -(rmorph_prod (@polyC_rmorphism R))/= coefCM coefXn.
-  rewrite -[#|I| == _](eqn_add2l n) addnBA// [(_ + (size ps))%N]addnC -addnBA// subnn addn0 [(n + _)%N]addnC.
-  rewrite -[in X in _ = if _ == X then _ else _](card_ord (size ps)) -(cardC I) eqn_add2l.
-  by case: (n == #|[predC I]|); rewrite ?mulr1 ?mulr0.
-rewrite -big_mkcond mulr_sumr/=; apply eq_bigr => I /eqP cardI.
-rewrite prodrN cardI; congr GRing.mul; apply eq_bigr => i _.
-by rewrite (tnth_nth (GRing.zero R)) -psE.
-Qed.
-
-Lemma coefPn_prod_XsubC {R : comRingType} (ps : seq R) :
-  size ps != 0%N ->
-  (\prod_(p <- ps) ('X - p%:P))`_((size ps).-1) =
-  - \sum_(p <- ps) p.
-Proof.
-rewrite coefn_prod_XsubC ?leq_pred// => ps0.
-have ->: (size ps - (size ps).-1 = 1)%N.
-  by move: ps0; case: (size ps)=>// n _; apply subSnn.
-rewrite expr1 mulN1r; congr GRing.opp.
-set f : 'I_(size ps) -> {set 'I_(size ps)} := fun a => [set a].
-transitivity (\sum_(I in imset f (mem setT)) \prod_(i in I) ps`_i).
-  apply congr_big=>// I /=.
-  apply/cards1P/imsetP.
-    by move=>[a ->]; exists a.
-  by move=>[a _ ->]; exists a.
-rewrite big_imset/=; last by move=> i j _ _; rewrite/f => ij; apply/set1P; rewrite -ij set11.
-have psE: ps = tval (Tuple (eqxx (size ps))) by [].
-rewrite [in RHS]psE -(map_tnth_enum (Tuple _)) big_map enumT.
-apply congr_big => // i; first by rewrite in_setT.
-by move=>_; rewrite big_set1 (tnth_nth (GRing.zero R)) -psE.
-Qed.
-
-Lemma coefP0_prod_XsubC {R : comRingType} (ps : seq R) :
-  (\prod_(p <- ps) ('X - p%:P))`_0 =
-  (-1) ^+ (size ps) * \prod_(p <- ps) p.
-Proof.
-rewrite coefn_prod_XsubC// subn0; congr GRing.mul.
-transitivity (\sum_(I in [set setT : {set 'I_(size ps)}]) \prod_(i in I) ps`_i).
-  apply congr_big=>// i/=.
-  apply/idP/set1P.
-    by move=>/eqP cardE; apply/eqP; rewrite eqEcard subsetT cardsT card_ord cardE leqnn.
-  by move=>->; rewrite cardsT card_ord.
-rewrite big_set1.
-have psE: ps = tval (Tuple (eqxx (size ps))) by [].
-rewrite [in RHS]psE -(map_tnth_enum (Tuple _)) big_map enumT.
-apply congr_big => // i; first by rewrite in_setT.
-by move=>_; rewrite (tnth_nth (GRing.zero R)) -psE.
-Qed.
-
-(********************************)
 
 Lemma minPoly_ArtinSchreier : (x \notin E) ->
   minPoly E x = 'X^p - 'X - (x ^+ p - x)%:P.
