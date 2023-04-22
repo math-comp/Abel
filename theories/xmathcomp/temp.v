@@ -13,13 +13,6 @@ Local Open Scope ring_scope.
 
 Section Temp.
 
-Lemma ord_S_split n (i: 'I_n.+1): {j: 'I_n | i = lift ord0 j} + {i = ord0}.
-Proof.
-case: i; case=>[| i] ilt.
-   by right; apply val_inj.
-by left; exists (Ordinal (ltnSE ilt)); apply val_inj.
-Qed.
-
 (* NB : rpredM and mulrPred uses that 1 is in the subset, which is useless. Predicates should be defined for {aspace aT}. *)
 
 Lemma memv_mulr_2closed [K : fieldType] [aT : FalgType K] (U : {aspace aT}) : GRing.mulr_2closed U.
@@ -41,22 +34,23 @@ Lemma ahom_eq_adjoin [F0 : fieldType] [K : fieldExtType F0] [rT : FalgType F0] (
   (U : {subfield K}) (x : K) :
   {in U, f =1 g} -> f x = g x -> {in <<U; x>>%VS, f =1 g}.
 Proof.
-move=>fgU fgx y /Fadjoin_poly_eq <-.
-move:(Fadjoin_polyOver U x y); generalize (Fadjoin_poly U x y) => p /polyOverP pU.
+move=> fgU fgx y /Fadjoin_poly_eq <-.
+move: (Fadjoin_poly U x y) (Fadjoin_polyOver U x y) => p /polyOverP pU.
 rewrite -(coefK p) horner_poly 2!rmorph_sum/=; apply eq_bigr => i _.
 by rewrite 2!rmorphM /= fgU// 2!rmorphX/= fgx.
 Qed.
 
 Lemma ahom_eq_adjoin_seq [F0 : fieldType] [K : fieldExtType F0] [rT : FalgType F0] (f g : 'AHom(K, rT))
   (U : {aspace K}) (xs : seq K) :
-  {in U, f =1 g} -> all (fun x => f x == g x) xs -> {in <<U & xs>>%VS, f =1 g}.
+  {in U, f =1 g} -> {in xs, forall x, f x = g x} -> {in <<U & xs>>%VS, f =1 g}.
 Proof.
 elim: xs U => [|x xs IHxs] U fgU fgxs.
    by rewrite adjoin_nil subfield_closed.
 rewrite adjoin_cons.
 have ->: <<U; x>>%VS = ASpace (agenv_is_aspace <<U; x>>%VS) by rewrite /= agenv_id.
-move: fgxs (IHxs (ASpace (agenv_is_aspace <<U; x>>))) => /andP[/eqP fgx fgxs] /=.
-by rewrite agenv_id => /(_ (ahom_eq_adjoin fgU fgx) fgxs).
+move: fgxs (IHxs (ASpace (agenv_is_aspace <<U; x>>))) => fgxs /=.
+rewrite agenv_id; apply; first by apply/ahom_eq_adjoin/fgxs=>//; apply mem_head.
+by move=>a axs; apply fgxs; rewrite in_cons axs orbT.
 Qed.
 
 Lemma agenv_span (K : fieldType) (L : fieldExtType K) (U : {subfield L}) (X : seq L) : <<X>>%VS = U -> <<1%VS & X>>%VS = U.
@@ -67,13 +61,13 @@ rewrite -{2}(subfield_closed U) (agenvEr U) subfield_closed.
 by congr (1 + _)%VS; apply/esym/field_module_eq; rewrite sup_field_module.
 Qed.
 
-Lemma gal_ne (F0 : fieldType) (L : splittingFieldType F0) (E : {subfield L}) (f g : FinGroup.finType (gal_finGroupType E)) : f = g \/ exists x, x \in E /\ f x != g x.
+Lemma gal_ne (F0 : fieldType) (L : splittingFieldType F0) (E : {subfield L}) (f g : gal_of E) : f = g \/ exists x, x \in E /\ f x != g x.
 Proof.
 move:(vbasisP E)=>/span_basis/agenv_span LE.
-case/boolP: (all (fun x => f x == g x) (vbasis E)) => [fgE | /allPn[x] xE fgx]; [ left | right ].
+case/boolP: (all (fun x => f x == g x) (vbasis E)) => [/allP fgE | /allPn[x] xE fgx]; [ left | right ].
    2: by exists x; split=>//; apply vbasis_mem.
 apply/eqP/gal_eqP.
-rewrite -{1}LE; apply ahom_eq_adjoin_seq=>//.
+rewrite -{1}LE; apply ahom_eq_adjoin_seq=>//; last by move=>x /fgE/eqP.
 move:(gal1 f)(gal1 g).
 rewrite gal_kHom ?sub1v// gal_kHom ?sub1v// => /andP [_ /subvP f1] /andP [_ /subvP g1].
 by move=>x /[dup] /f1/fixedSpaceP -> /g1/fixedSpaceP ->.
@@ -82,7 +76,7 @@ Qed.
 Lemma tnth_cons (T : Type) (x : T) (l : seq T) (i : 'I_(size l)): tnth (in_tuple (x :: l)) (lift ord0 i) = tnth (in_tuple l) i.
 Proof. by rewrite/tnth/=; apply set_nth_default. Qed.
 
-Lemma gal_free (F0 : fieldType) (L : splittingFieldType F0) (E : {subfield L}) (f : seq (FinGroup.finType (gal_finGroupType E))) (k : 'I_(size f) -> L) : uniq f -> (forall i, k i = 0) \/ (exists a, a \in E /\ \sum_(i < size f) k i * tnth (in_tuple f) i a != 0).
+Lemma gal_free (F0 : fieldType) (L : splittingFieldType F0) (E : {subfield L}) (f : seq (gal_of E)) (k : 'I_(size f) -> L) : uniq f -> (forall i, k i = 0) \/ (exists a, a \in E /\ \sum_(i < size f) k i * tnth (in_tuple f) i a != 0).
 Proof.
 move:(Logic.eq_refl (size f)); generalize (size f) at 1 => n.
 elim: n f k => [|n IHn] f k fsize funiq.
@@ -101,27 +95,30 @@ case: (gal_ne s s0) => [/eqP ss0E | [x [xE /negPf ss0x]]].
 move:fsize=>/eqP; rewrite eqSS=>/eqP fsize.
 case: (IHn [:: s0 & f] (fun i => (k (lift ord0 i) * (tnth (in_tuple [:: s0 & f]) i x - s x))) fsize s0f).
    move=>/(_ ord0)/=/eqP; rewrite mulf_eq0 subr_eq0 [s0 x == _]eq_sym ss0x orbF => k10.
-   set k' := fun i : 'I_(size f).+1 => k (if ord_S_split i then lift ord0 i else ord0).
+   set k' := fun i : 'I_(size f).+1 => k
+      (match splitP (i : 'I_(1 + size f)%N) with
+      | SplitLo _ _ => ord0
+      | SplitHi _ _ => lift ord0 i
+      end).
    move: (IHn [:: s & f] k' fsize).
    have /[swap]/[apply]: uniq (s :: f) by apply/andP; split.
    case => [k0 | [a [aE fne0]]]; [left => i | right; exists a].
       case: i; case.
          move: (k0 ord0); rewrite/k'.
-         case: (ord_S_split _) => [[i /=/(congr1 val)//] | /= _ /[swap] ilt].
-         by congr (k _ = 0); apply val_inj.
+         by case: splitP => // + _ + ilt => _; congr (k _ = 0); apply val_inj.
       case => [|i] ilt.
          by move: k10 => /eqP; congr (k _ = 0); apply val_inj.
       have ile: (i.+1 < (size f).+1)%N by rewrite -ltnS.
       move:(k0 (Ordinal ile)); rewrite/k'.
-      case: (ord_S_split _) => [/= _| /[dup]/(congr1 val)//].
+      case: splitP => [[j]/=/[swap]<-// | /= _ _].
       by congr (k _ = 0); apply val_inj.
    split=>//.
    move:k10 fne0 => /eqP k10.
    rewrite 3!big_ord_recl/= k10 mul0r add0r.
    congr (_ * _ + _ != 0).
-      by rewrite/k'; case: (ord_S_split _) => // [[i]] /=/(congr1 val).
+      by rewrite/k'; case: splitP => // [[i]] /=/(congr1 val).
    apply eq_bigr => i _; rewrite tnth_cons (@tnth_cons _ s (s0 :: f) (lift ord0 i)) tnth_cons; congr (_ * _).
-      by rewrite/k'; case: (ord_S_split _).
+      by rewrite/k'; case: splitP => // [[j]]/=/[swap]<-.
 move=>[y [yE fne0]]; right.
 case /boolP: (\sum_(i < (size f).+2) k i * tnth (in_tuple [:: s, s0 & f]) i y == 0)  => [| yne0].
    2: by exists y.
@@ -157,12 +154,14 @@ move=> a f IHf.
 by rewrite 2!big_cons ffunE IHf.
 Qed.
 
-
-Definition Zp_succ n (i : 'I_n) := Ordinal (
-  match n with
-  | 0 => fun i0 : 'I_0 => match i0 with | @Ordinal _ _ i0 => i0 end
-  | n0.+1 => fun i0 => (ltn_pmod i0.+1 (is_true_true : (is_true (0 < n0.+1)%N)))
-  end i).
+Definition Zp_succ n (i : 'I_n) :=
+  match i with
+  | @Ordinal _ k klt => Ordinal (
+      match n as n0 return (k < n0)%N -> (k.+1 %% n0 < n0)%N with
+      | 0 => id
+      | n0.+1 => fun=> ltn_pmod k.+1 (is_true_true : 0 < n0.+1)%N
+      end klt)
+  end.
 
 Lemma cycle_imset [gT : finGroupType] (g : gT) : <[g]>%g = @Imset.imset (ordinal_finType #[g]%g) (FinGroup.finType gT) (fun i => (g ^+ (val i))%g) (mem setT).
 Proof.
@@ -192,7 +191,7 @@ Proof. by apply congr_big => // i; rewrite in_setT. Qed.
 
 Lemma Hilbert's_theorem_90_additive
   [F : fieldType] [L : splittingFieldType F] 
-    [K E : {subfield L}] [x : gal_finGroupType E] 
+    [K E : {subfield L}] [x : gal_of E] 
     [a : L] :
   galois K E ->
   generator 'Gal(E / K) x ->
@@ -320,30 +319,24 @@ have ->: ((if p \in primes m then p ^ logn p m else 1) = p ^ logn p m)%N.
 by rewrite -expnD subnK// vp_leq.
 Qed.
 
-Lemma muln_gt0 [I : Type] (r : seq I) (P : pred I) (F : I -> nat) (p : nat) :
-  all (fun n : I => P n ==> (0 < F n)%N) r ->
-  (0 < \prod_(n <- r | P n) F n)%N.
-Proof.
-elim: r => [|n r IHn /andP[Fn0 Fr0]]; first by rewrite big_nil.
-rewrite big_cons; case /boolP: (P n) => Pn; last by apply IHn.
-rewrite muln_gt0.
-by move:Fn0; rewrite Pn/= IHn ?andbT.
-Qed.
-
-Lemma logn_prod [I : Type] (r : seq I) (P : pred I) (F : I -> nat) (p : nat) :
-  all (fun n : I => P n ==> (0 < F n)%N) r ->
+Lemma logn_prod [I : eqType] (r : seq I) (P : pred I) (F : I -> nat) (p : nat) :
+  {in r, forall n,  P n -> (0 < F n)%N} ->
   (logn p (\prod_(n <- r | P n) F n) = \sum_(n <- r | P n) logn p (F n))%N.
 Proof.
-elim: r => [|n r IHn /andP[Fn0 Fr0]]; first by rewrite 2!big_nil logn1.
+elim: r => [|n r IHn Fnr0]; first by rewrite 2!big_nil logn1.
+have Fr0: {in r, forall n : I, P n -> (0 < F n)%N}.
+   by move=> i ir; apply Fnr0; rewrite in_cons ir orbT.
 rewrite 2!big_cons; case /boolP: (P n) => Pn; last by apply IHn.
-move:Fn0; rewrite Pn => /= Fn0.
-by rewrite lognM// ?muln_gt0// IHn.
+move:(Fnr0 n); rewrite mem_head Pn => /= /(_ is_true_true is_true_true) Fn0.
+rewrite lognM// ?IHn//.
+rewrite big_seq_cond big_mkcond prodn_gt0// => i.
+by case /boolP: ((i \in r) && P i) => // /andP[/Fr0].
 Qed.
 
 Lemma logn_partn (p n : nat) (pi : nat_pred) :
   logn p (n`_pi)%N = ((p \in pi) * logn p n)%N.
 Proof.
-rewrite/partn logn_prod; last by apply/allP => i _; rewrite pfactor_gt0 implybT.
+rewrite/partn logn_prod; last by move=> i _; rewrite pfactor_gt0.
 under eq_bigr do rewrite lognX.
 have logp (i : nat): (i == p) || (logn i n * logn p i == 0)%N.
    case /boolP: (i == p) => //= /negPf ip.
