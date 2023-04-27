@@ -22,112 +22,69 @@ Proof. by move: pchar => /andP[]. Qed.
 Let p0 : p%:R == 0 :> L.
 Proof. by move: pchar => /andP[_]. Qed.
 
+Let p_gt0 : (0 < p)%N.
+Proof. by apply: prime_gt0. Qed.
+
 Let p1 : (1 < p)%N.
 Proof. by apply: prime_gt1. Qed.
 
-Lemma ArtinScheier_factorize :
-  'X^p - 'X - (x ^+ p - x)%:P = \prod_(i < p) ('X - (x + i%:R)%:P).
+Let rs := [tuple x + i%:R | i < p].
+
+Let AS := 'X^p - 'X - (x ^+ p - x)%:P.
+
+Let x_rs : x \in rs.
 Proof.
-case: p pchar pprim p0 p1 => // n nchar nprim n0 n1.
-apply/eqP; rewrite -eqp_monic; first last.
-- by apply: monic_prod_XsubC.
-- apply/monicP; rewrite -addrA -opprD lead_coefDl ?lead_coefXn//.
-  by rewrite size_opp size_XaddC size_polyXn ltnS.
-- rewrite eqp_sym -dvdp_size_eqp.
-    rewrite size_prod; last first.
-      move=> [i]/= _ _; apply/negP => /eqP
-        /(congr1 (fun p : {poly L} => size p)).
-      by rewrite size_XsubC size_polyC eqxx.
-      have ->: \big[addn/0%N]_(i < n.+1) size ('X - (x + (val i)%:R)%:P)%R =
-    \big[addn/0%N]_(i < n.+1) 2%N.
-      by apply: eq_bigr => i _; rewrite size_XsubC.
-    rewrite big_const_ord iter_addn_0.
-    rewrite -add1n mul2n -addnn addnA card_ord -addnBA// subnn addn0 add1n.
-    rewrite -addrA -opprD size_addl size_polyXn// size_opp size_XaddC ltnS.
-    by move: pchar => /andP [ /prime_gt1 ].
-  have: all (root ('X^n.+1 - 'X - (x ^+ n.+1 - x)%:P))
-      [seq (x + (val i)%:R) | i : 'I_n.+1].
-    apply/allP => + /mapP [i _ ->] => _.
-    rewrite /root !hornerE ?hornerXn -(Frobenius_autE nchar (x + (val i)%:R)).
-  (* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
-    rewrite rmorphD/= rmorph_nat (Frobenius_autE nchar x).
-    rewrite opprB opprD addrACA -addrA 2![x+_]addrA subrr add0r.
-    by rewrite addrAC addrCA subrr addr0 addrC subrr.
-  move=> /uniq_roots_dvdp; rewrite big_map big_enum/=; apply.
-  rewrite uniq_rootsE; apply/(uniqP 0) => i j.
-  rewrite 2!inE size_map => ilt jlt.
-  do 2 rewrite (nth_map ord0 _ (fun i : 'I_n.+1 => x + i%:R))//.
-  move=> /addrI/esym/eqP.
-  set ip := nth ord0 (enum 'I_n.+1) i.
-  set jp := nth ord0 (enum 'I_n.+1) j.
-  move=> ijE.
-  suff: jp = ip.
-    rewrite /ip /jp => /esym ijE0.
-    by move: (enum_uniq ('I_n.+1)) => /uniqP
-      /(_ i j ilt jlt ijE0).
-  move: ijE.
-  wlog ij : {i} {j} {ilt} {jlt} ip jp / (val ip <= val jp)%N.
-    move=> h.
-    move: (Order.TotalTheory.le_total (val ip) (val jp)) => /orP; case => ij.
-       by apply: h.
-    by rewrite eq_sym => ijE; apply/esym/h.
-  rewrite -subr_eq0 -natrB// -(dvdn_charf nchar).
-  case /posnP: (val jp - val ip)%N.
-    move=> /eqP; rewrite subn_eq0 => ji _; apply/val_inj/eqP.
-    by rewrite Order.POrderTheory.eq_le; apply/andP; split.
-  move=> ij0 /(dvdn_leq ij0); rewrite ltn_subRL -addnS.
-  move=> /(leq_trans (leq_addl _ _)).
-  have: (val jp < n.+1)%N by case: jp ij ij0.
-  by rewrite ltnS => jle; move => /(leq_ltn_trans jle); rewrite ltnn.
+apply/tnthP; exists (Ordinal p_gt0).
+by rewrite tnth_map/= tnth_ord_tuple/= addr0.
 Qed.
 
-Lemma ArtinSchreier_splitting :
-   splittingFieldFor E ('X^p - 'X - (x ^+ p - x)%:P) <<E; x>>%AS.
+Lemma ArtinSchreier_factorize : AS = \prod_(i < p) ('X - (x + i%:R)%:P).
 Proof.
-exists ([seq x + (val i)%:R | i :'I_p]).
-  by rewrite ArtinScheier_factorize big_map big_enum/= eqpxx.
-apply/eqP; rewrite eqEsubv; apply/andP; split.
-   apply/Fadjoin_seqP; split; first by apply: subv_adjoin.
-   move=> + /mapP [i _ ->] => _.
-   apply: (@rpredD _ _ (memv_addrPred <<E; x>>%AS));
-     first by apply: memv_adjoin.
-   by apply: rpred_nat.
-apply/FadjoinP; split; first by apply: subv_adjoin_seq.
-case: p pchar pprim p0 p1 => // n nchar nprim n0 n1.
-apply/seqv_sub_adjoin/mapP; exists ord0; first by apply: mem_enum.
-by rewrite addr0.
+have sNXXp : (size ('X : {poly L}) < size ('X^p : {poly L}))%N.
+  by rewrite size_polyXn size_polyX.
+have sCXp (c : L) : (size c%:P < size ('X^p : {poly L}))%N.
+  by rewrite size_polyXn ltnS (leq_trans (size_polyC_leq1 _)) ?prime_gt0.
+have lcLHS : lead_coef ('X^p - 'X - (x ^+ p - x)%:P) = 1.
+  by rewrite !lead_coefDl ?lead_coefXn ?scale1r// ?size_addl ?size_opp.
+rewrite [LHS](@all_roots_prod_XsubC _ _ rs).
+- by rewrite lcLHS scale1r big_map big_enum.
+- by rewrite size_tuple ?size_addl ?size_opp// size_polyXn.
+- apply/allP => y /mapP[/= i _ ->]; rewrite rootE !hornerE hornerXn.
+  rewrite -!Frobenius_autE rmorphD rmorph_nat.
+  by rewrite opprD addrACA subrr addr0 subrr.
+- by rewrite uniq_rootsE/= map_inj_uniq ?enum_uniq// => i j /addrI/ZprI; apply.
 Qed.
 
-Lemma ArtinSchreier_polyOver :
-  'X^p - 'X - (x ^+ p - x)%:P \is a polyOver E.
+Let ASE : AS = \prod_(i <- rs) ('X - i%:P).
+Proof. by rewrite ArtinSchreier_factorize big_image/=. Qed.
+
+Lemma ArtinSchreier_splitting : splittingFieldFor E AS <<E; x>>%AS.
+Proof.
+exists rs; first by rewrite ASE eqpxx.
+have /eq_adjoin-> : rs =i x :: rem x rs by apply/perm_mem/perm_to_rem.
+rewrite adjoin_cons (Fadjoin_seq_idP _)//=.
+apply/allP => y /mem_rem /mapP[i _ ->]/=.
+by rewrite rpredD ?memv_adjoin// subvP_adjoin// rpredMn// rpred1.
+Qed.
+
+Lemma ArtinSchreier_polyOver : AS \is a polyOver E.
 Proof. by rewrite rpredB ?polyOverC// rpredB ?rpredX// polyOverX. Qed.
 
-Lemma ArtinSchreier_galois :
-  galois E <<E; x>>.
+Lemma ArtinSchreier_galois : galois E <<E; x>>.
 Proof.
 apply/splitting_galoisField; exists ('X^p - 'X - (x ^+ p - x)%:P); split.
 - exact ArtinSchreier_polyOver.
 - rewrite /separable_poly derivB derivC subr0 derivB derivXn derivX -scaler_nat.
-  move: pchar; rewrite inE => /andP[_ /eqP ->].
-  rewrite scale0r add0r.
-  apply/Bezout_eq1_coprimepP; exists (0, (-1)) => /=.
-  by rewrite mul0r add0r mulN1r opprK.
+  rewrite charf0// scale0r add0r -(@coprimepZr _ (-1)) ?oppr_eq0 ?oner_eq0//.
+  by rewrite scaleNr scale1r opprK coprimep1.
 - by apply: ArtinSchreier_splitting.
 Qed.
 
-Lemma minPoly_ArtinSchreier : (x \notin E) ->
-  minPoly E x = 'X^p - 'X - (x ^+ p - x)%:P.
+Lemma minPoly_ArtinSchreier : x \notin E -> minPoly E x = AS.
 Proof.
-move=> xE.
-have pE: ('X^p - 'X - (x ^+ p - x)%:P) =
-    \prod_(i <- [seq x + (val i)%:R | i : 'I_p]) ('X - i%:P).
-  by rewrite ArtinScheier_factorize big_map; apply: congr_big; rewrite // enumT.
-have /(minPoly_dvdp ArtinSchreier_polyOver):
-    root ('X^p - 'X - (x ^+ p - x)%:P) x.
-  rewrite pE root_prod_XsubC.
-  case: p pchar pprim p0 p1 => // n nchar nprim n0 n1.
-  by apply/mapP; exists ord0; rewrite ?mem_enum ?addr0.
-rewrite pE => /dvdp_prod_XsubC[m]; rewrite eqp_monic ?monic_minPoly//;
+move=> xE; have /(minPoly_dvdp ArtinSchreier_polyOver) : root AS x.
+  by rewrite ASE root_prod_XsubC.
+rewrite ASE => /dvdp_prod_XsubC[m]; rewrite eqp_monic ?monic_minPoly//;
   last by rewrite monic_prod// => i _; rewrite monic_XsubC.
 rewrite -map_mask.
 have [{}m sm ->] := resize_mask m (enum 'I_p).
