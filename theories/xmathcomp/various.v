@@ -296,6 +296,21 @@ by move=> x xreal; rewrite conj_Creal.
 Qed.
 End ssrnum.
 
+(*********)
+(* zmodp *)
+(*********)
+
+Lemma ZprI p (F : fieldType) : p \in [char F] ->
+   injective (GRing.natmul 1 : 'I_p -> F).
+Proof.
+move=> pchar i j; wlog leij : i j / (j <= i)%N => [hwlog|].
+   by have [/hwlog/[apply]//|/ltnW/hwlog+/esym] := leqP j i => /[apply].
+move=> /eqP; rewrite -subr_eq0 -mulrnBr// -(dvdn_charf pchar) => /eqP ijMp0.
+apply/eqP; rewrite -val_eqE eqn_leq/= leij andbT -subn_eq0.
+rewrite (divn_eq (i - j) p) ijMp0 addn0 divn_small// ltn_subLR//.
+by rewrite (@leq_trans p)// leq_addl.
+Qed.
+
 (**********)
 (* ssrint *)
 (**********)

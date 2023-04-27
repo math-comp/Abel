@@ -29,7 +29,7 @@ split => /=.
 Qed.
 
 Lemma polyOver_mulr_2closed [R : ringType] [S : {pred R}]
-  [addS : addrPred S] (kS : keyed_pred addS) : 
+  [addS : addrPred S] (kS : keyed_pred addS) :
   GRing.mulr_2closed kS -> GRing.mulr_2closed (polyOver kS).
 Proof.
 move=> SM u vz /polyOverP uS /polyOverP vS; apply/polyOverP => i.
@@ -64,7 +64,7 @@ Qed.
 Lemma agenv_span (K : fieldType) (L : fieldExtType K) (U : {subfield L})
   (X : seq L) : <<X>>%VS = U -> <<1%VS & X>>%VS = U.
 Proof.
-move=> ->. 
+move=> ->.
 suff ->: (1+U)%VS = U by rewrite subfield_closed.
 rewrite -{2}(subfield_closed U) (agenvEr U) subfield_closed.
 by congr (1 + _)%VS; apply/esym/field_module_eq; rewrite sup_field_module.
@@ -146,7 +146,7 @@ case: (IHn [:: s0 & f]
       by rewrite /k'; case: splitP => // [[j]]/=/[swap]<-.
 move=> [y [yE fne0]]; right.
 case /boolP:
-  (\sum_(i < (size f).+2) k i * tnth (in_tuple [:: s, s0 & f]) i y == 0) 
+  (\sum_(i < (size f).+2) k i * tnth (in_tuple [:: s, s0 & f]) i y == 0)
   => [| yne0]; last by exists y.
 rewrite big_ord_recl/= addrC addr_eq0 {2}/tnth/= => /eqP.
 under eq_bigr do rewrite (@tnth_cons _ s (s0 :: f)); move=> y0.
@@ -159,20 +159,24 @@ rewrite addrC [in RHS]big_ord_recl {2}/tnth/=.
 by under [in RHS]eq_bigr do rewrite (@tnth_cons _ s (s0 :: f)).
 Qed.
 
-Lemma big_setT [R : Type] [idx : R] (op : Monoid.com_law idx) 
+Lemma big_condT [R : Type] [idx : R] (op : Monoid.com_law idx)
+    [I : finType] (A : {pred I}) (F : I -> R) :
+    \big[op/idx]_(i in A | true) F i = \big[op/idx]_(i in A) F i.
+Proof. by rewrite big_mkcondr. Qed.
+
+Lemma big_setT [R : Type] [idx : R] (op : Monoid.com_law idx)
     [I : finType] (F : I -> R) :
     \big[op/idx]_(i in [set: I]) F i = \big[op/idx]_i F i.
-Proof. by apply/congr_big => // i; rewrite in_setT. Qed.
+Proof. by under eq_bigl do rewrite inE. Qed.
 
-Lemma galTrace_ne_0 (F : fieldType) (L : splittingFieldType F)
+Lemma galTrace_neq0 (F : fieldType) (L : splittingFieldType F)
   (K E : {subfield L}) : exists a, a \in E /\ galTrace K E a != 0.
 Proof.
 set l := enum [set: gal_of E].
-case: (gal_free
-  (fun i : 'I_(size l) =>
-    (1 *+ ((tnth (in_tuple l) i) \in (galoisG E K) : nat))%:A)
-  (enum_uniq _)).
-   have /[dup] l1: 1%g \in l by rewrite mem_enum.
+have [] := gal_free
+  (fun i : 'I_(size l) => (tnth (in_tuple l) i \in 'Gal(E / K)%G)%:R%:A)
+  (enum_uniq _).
+   have /[dup] l1 : 1%g \in l by rewrite mem_enum.
    rewrite -index_mem => lt1 /(_ (Ordinal lt1))/=/eqP.
    by rewrite /tnth (nth_index _ l1) group1/= scaler_eq0 2!oner_eq0.
 move=> [x [xE s0]]; exists x; split => //.
@@ -192,6 +196,8 @@ move=> a f IHf.
 by rewrite 2!big_cons ffunE IHf.
 Qed.
 
+(** Alternative: *)
+(* Definition Zp_succ n : 'I_n -> 'I_n := if n is n.+1 then +%R ord_max else id. *)
 
 Definition Zp_succ n (i : 'I_n) :=
   match i with
@@ -206,7 +212,7 @@ Definition Zp_succ n (i : 'I_n) :=
 (* Ah non, je change le domaine d'indexation, ce lemme est spécifique aux
  * éléments d'ordre fini d'un groupe. *)
 Lemma cycle_imset [gT : finGroupType] (g : gT) :
-  <[g]>%g = ([set g ^+ (val i) | i : 'I_#[g]])%g.
+  (<[g]> = [set g ^+ i | i : 'I_#[g]])%g.
 Proof.
 apply/eqP; rewrite eqEsubset; apply/andP; split; apply/subsetP => x.
    move=> /cycleP [i ->]; apply/imsetP.
@@ -216,23 +222,16 @@ by move=> /imsetP [i] _ ->; apply/cycleP; exists i.
 Qed.
 
 Lemma cycle_imset_inj [gT : finGroupType] (g : gT) :
-  injective (fun i : 'I_(#[g]) => (g ^+ i))%g.
+  injective (fun i : 'I_#[g] => g ^+ i)%g.
 Proof.
 move=> [i ilt] [j jlt] /eqP; rewrite eq_expg_mod_order.
 rewrite modn_small// modn_small// => /eqP ijE.
 by apply/val_inj.
 Qed.
 
-Lemma big_condT [R : Type] [idx : R] (op : Monoid.com_law idx) 
-    [I : finType] (A : {pred I}) (F : I -> R) :
-    \big[op/idx]_(i in A | true) F i = \big[op/idx]_(i in A) F i.
-Proof.
-rewrite big_mkcondr.
-by apply/congr_big => // i; rewrite andbT. Qed.
-
 Lemma Hilbert's_theorem_90_additive
-  [F : fieldType] [L : splittingFieldType F] 
-    [K E : {subfield L}] [x : gal_of E] 
+  [F : fieldType] [L : splittingFieldType F]
+    [K E : {subfield L}] [x : gal_of E]
     [a : L] :
   galois K E ->
   generator 'Gal(E / K) x ->
@@ -240,66 +239,40 @@ Lemma Hilbert's_theorem_90_additive
   reflect (exists2 b : L, b \in E & a = b - x b)
     (galTrace K E a == 0).
 Proof.
-move=> Egal /(_ =P <[x]>%g) DgalE Ea.
+move=> Egal /eqP DgalE Ea.
 have galEx: x \in 'Gal(E / K)%g by rewrite DgalE cycle_id.
-apply: (iffP eqP) => [normEa1 | [b Eb ->]]; last first.
+apply: (iffP eqP) => [normEa0 | [b Eb ->]]; last first.
    by rewrite raddfB/= galTrace_gal// subrr.
-move: (galTrace_ne_0 K E) => [b [bE tb]].
-remember (\dim_K E) as n.
+have [b [bE tb]] := galTrace_neq0 K E.
+move Heqn : (\dim_K E) => n.
 have ordx: #[x]%g = n by rewrite orderE -DgalE -(galois_dim Egal).
-move: (expg_order x); rewrite ordx => xord.
-move: (Egal) => /galois_subW/field_dimS/ltn_divRL/[dup]/(_ 0%N). 
+have xXn : (x ^+ n = 1)%g by rewrite -ordx orderE expg_order.
+move: (Egal) => /galois_subW/field_dimS/ltn_divRL/[dup]/(_ 0%N).
 rewrite mul0n adim_gt0 => dimgt0 /(_ 1%N); rewrite mul1n => dimgt1.
-case: n => [|n] in Heqn ordx xord *; first by move: dimgt0; rewrite -Heqn.
-case: n => [|n] in Heqn ordx xord *.
-   move:  dimgt1; rewrite -Heqn ltnn => /esym/negbT; rewrite -leqNgt => dimEK.
-   move: (eqEdim K E); rewrite dimEK (galois_subW Egal) => /=/eqP KE.
-   move: normEa1; rewrite /galTrace.
-   have ->: \sum_(x0 in ('Gal(E / K))%g) x0 a = \sum_(x0 in ('Gal(E / K))%g) a.
-      apply/eq_bigr => f fgal.
-      move: Egal => /galois_fixedField Kfix.
-      by move: (Ea); rewrite -{1}KE -Kfix => /fixedFieldP => /(_ Ea f fgal).
-   rewrite sumr_const; rewrite -(galois_dim Egal) -Heqn mulr1n => a0.
-   by exists a => //; rewrite a0 rmorph0 subr0.
-set c := (galTrace K E b)^-1
-  * \sum_(i < n.+1) (\sum_(j < i.+1) (x ^+ j)%g a) * (x ^+ i.+1)%g b. 
-have tbE: galTrace K E b \in E.
-   by rewrite /galTrace rpred_sum// => f _; apply/memv_gal.
+case: n => [|n] in Heqn ordx xXn *; first by move: dimgt0; rewrite Heqn.
+have trE d : d \in E -> galTrace K E d = \sum_(0 <= i < n.+1) (x ^+ i)%g d.
+   move=> dE; rewrite /galTrace DgalE cycle_imset => /=.
+   by rewrite (big_imset _ (in2W (@cycle_imset_inj _ x))) /= ordx big_mkord.
+have trI d : d \in E -> \sum_(0 <= i < n) (x ^+ i.+1)%g d = galTrace K E d - d.
+  by move=> dE; rewrite trE// [in RHS]big_nat_recl//= expg0 gal_id addrC addKr.
+set c : L := (galTrace K E b)^-1
+  * \sum_(0 <= i < n) (\sum_(0 <= j < i.+1) (x ^+ j)%g a) * (x ^+ i.+1)%g b.
+have tr_b_E : galTrace K E b \in E by rewrite rpred_sum// => * /[!memv_gal].
 exists c.
-   apply/rpredM; first by rewrite rpredV.
-   rewrite rpred_sum// => i _.
-   apply/rpredM; last by apply/memv_gal.
-   by rewrite rpred_sum// => j _; apply/memv_gal.
-rewrite /c rmorphM/= rmorphV/= ?unitfE//.
-move: (galTrace_fixedField K bE) => /fixedFieldP => /(_ tbE x galEx) ->.
-rewrite -mulrBr rmorph_sum/=.
-rewrite big_ord_recl big_ord1 expg0 gal_id expg1 big_ord_recr/=.
-rewrite opprD addrAC [_ - x _]addrC addrA -addrA [- _ + _]addrC -sumrB.
-have ->: \sum_(i < n)
-  ((\sum_(j < (bump 0 i).+1) (x ^+ j)%g a) * (x ^+ (bump 0 i).+1)%g b -
-     x ((\sum_(j < i.+1) (x ^+ j)%g a) * (x ^+ i.+1)%g b)) =
-  \sum_(i < n) a * (x ^+ i.+2)%g b.
-   apply/eq_bigr; case => i ilt _ /=.
-   rewrite /bump/= add1n rmorphM/= rmorph_sum/= expgSr galM// -mulrBl.
-   congr *%R.
-   rewrite big_ord_recl/= -addrA -sumrB expg0 gal_id -[in RHS](addr0 a).
-   congr (a + _).
-   transitivity (\sum_(j < i.+1) (0 : L)); last by rewrite sumr_const mul0rn.
-   by apply/eq_bigr => j _; rewrite /bump/= add1n expgSr galM// subrr.
-rewrite -mulr_sumr rmorphM/= rmorph_sum/=.
-have tE: forall d, d \in E -> galTrace K E d = \sum_(i < n.+2) (x ^+ i)%g d.
-   move=> d dE.
-   rewrite /galTrace DgalE cycle_imset => /=.
-   by rewrite (big_imset _ (in2W (@cycle_imset_inj _ x))) /= ordx.
-move: normEa1; rewrite tE// big_ord_recl expg0 gal_id => /eqP.
-under [in X in X -> _]eq_bigr do rewrite /= /bump/= add1n expgSr galM//.
-rewrite addrC addr_eq0 => /eqP ->.
-rewrite mulNr opprK -2!mulrDr mulrCA -(galM _ x bE).
-rewrite -expgSr xord gal_id [x b + b]addrC.
-have <-: galTrace K E b = b + x b + \sum_(i < n) (x ^+ i.+2)%g b.
-   rewrite (tE b bE) big_ord_recl/= expg0 gal_id big_ord_recl/= expg1 addrA.
-   by under eq_bigr do rewrite /bump/= 2!add1n.
-by rewrite mulVf// mulr1.
+   rewrite rpredM// ?rpredV// ?rpred_sum// => i _.
+   by rewrite rpredM//= ?memv_gal// rpred_sum// => j _; rewrite memv_gal.
+rewrite rmorphM/= rmorphV/= ?unitfE//.
+rewrite (fixedFieldP _ (galTrace_fixedField K bE))// -mulrBr rmorph_sum/=.
+pose f i := (\sum_(1 <= j < i.+1) (x ^+ j)%g a) * (x ^+ i.+1)%g b.
+have := @telescope_sumr _ 0 n f isT.
+rewrite /f (@big_geq _ _ _ 1 1)// mul0r subr0 sumrB => /(canRL (addrK _)).
+rewrite big_add1/= trI// normEa0 sub0r opprK addrC.
+under eq_bigr => i.
+  rewrite big_add1; under eq_bigr => j do rewrite expgSr galM//.
+  by rewrite expgSr galM// -rmorph_sum/= -rmorphM /=; over.
+move->; rewrite opprD addrA -sumrB xXn gal_id mulNr opprK.
+under eq_bigr do rewrite big_nat_recl// expg0 gal_id big_add1/= mulrDl addrK.
+by rewrite -mulr_sumr trI// mulrBr addrNK mulrCA mulVf ?mulr1.
 Qed.
 
 Lemma natf_partn_ne0 (R : idomainType) n :
@@ -329,89 +302,38 @@ Qed.
 Lemma primes_dvdn (m n : nat) :
   (0 < n)%N -> (m %| n)%N -> primes m = [seq p <- primes n | p \in primes m].
 Proof.
-move=> n0 mn.
-apply/Order.POrderTheory.lt_sorted_eq.
-- apply/sorted_primes.
-- apply/sorted_filter.
-   apply/Order.POrderTheory.lt_trans.
-apply/sorted_primes.
-- move=> p; rewrite mem_filter; apply/idP/idP => [/[dup] + -> /= | /andP[->//]].
-rewrite 2!mem_primes => /andP[->/=]/andP[m0 pm].
-by rewrite n0/=; apply/(dvdn_trans pm).
+move=> n0 mn; apply/(irr_sorted_eq ltn_trans ltnn (sorted_primes _)).
+  by rewrite sorted_filter ?sorted_primes//; apply: ltn_trans.
+move=> p; rewrite mem_filter; case: (boolP (_ \in _)) => //.
+rewrite !mem_primes => /and3P[p_prime m_gt0 dvd_pm]/=.
+by rewrite p_prime n0//= (dvdn_trans dvd_pm).
 Qed.
 
-Lemma dvdn_leq_logP (m n : nat) :
-  (0 < n)%N -> (0 < m)%N ->
+Lemma dvdn_leq_logP (m n : nat) : (0 < m)%N -> (0 < n)%N ->
   reflect (forall p, prime p -> logn p m <= logn p n)%N (m %| n)%N.
 Proof.
-move=> n0 m0; apply/(iffP idP) => [mn p prim | vp_leq].
-   by apply/dvdn_leq_log.
-apply/dvdnP; exists (\prod_(p <- primes n) p ^ (logn p n - logn p m))%N.
-rewrite {1}(prod_prime_decomp n0) {2}(prod_prime_decomp m0).
-rewrite 2!prime_decompE 2!big_map/=.
-have ->: primes m = [seq i <- primes n | i \in primes m].
-   apply/Order.POrderTheory.lt_sorted_eq.
-   - apply/sorted_primes.
-   - apply/sorted_filter.
-      apply/Order.POrderTheory.lt_trans.
-   apply/sorted_primes.
-   - move=> p; rewrite mem_filter.
-     apply/idP/idP => [/[dup] + -> /= | /andP[->//]].
-     move=> /[dup]; rewrite {1}mem_primes => /andP[pprim _].
-     rewrite -2!logn_gt0 => pm.
-     apply/(leq_trans pm (vp_leq p pprim)).
-rewrite big_filter [in X in (_ * X)%N]big_mkcond/= -big_split/= 2!big_seq.
-apply/eq_bigr => p; rewrite mem_primes => /andP[pprim _].
-have ->: ((if p \in primes m then p ^ logn p m else 1) = p ^ logn p m)%N.
-   case/boolP: (p \in primes m) => //.
-   by rewrite -logn_gt0 lt0n negbK => /eqP ->; rewrite expn0.
-by rewrite -expnD subnK// vp_leq.
+move=> m0 n0; apply/(iffP idP) => [mn p prim | vp_le]; first exact/dvdn_leq_log.
+apply/dvdn_partP => // p /[!(inE, mem_primes)]/and3P[p_prime _ pm].
+by rewrite p_part pfactor_dvdn// vp_le.
 Qed.
 
-Lemma logn_prod [I : eqType] (r : seq I) (P : pred I) (F : I -> nat) (p : nat) :
-  {in r, forall n,  P n -> (0 < F n)%N} ->
+Lemma logn_prod [I : Type] (r : seq I) (P : pred I) (F : I -> nat) (p : nat) :
+  (forall n,  P n -> (0 < F n)%N) ->
   (logn p (\prod_(n <- r | P n) F n) = \sum_(n <- r | P n) logn p (F n))%N.
 Proof.
-elim: r => [|n r IHn Fnr0]; first by rewrite 2!big_nil logn1.
-have Fr0: {in r, forall n : I, P n -> (0 < F n)%N}.
-   by move=> i ir; apply/Fnr0; rewrite in_cons ir orbT.
-rewrite 2!big_cons; case /boolP: (P n) => Pn; last by apply/IHn.
-move: (Fnr0 n); rewrite mem_head Pn => /= /(_ is_true_true is_true_true) Fn0.
-rewrite lognM// ?IHn//.
-rewrite big_seq_cond big_mkcond prodn_gt0// => i.
-by case /boolP: ((i \in r) && P i) => // /andP[/Fr0].
+move=> F_gt0; elim/(big_load (fun n => (n > 0)%N)): _.
+elim/big_rec2: _; first by rewrite logn1.
+by move=> i m n Pi [n_gt0 <-]; rewrite muln_gt0 lognM ?F_gt0.
 Qed.
 
 Lemma logn_partn (p n : nat) (pi : nat_pred) :
   logn p (n`_pi)%N = ((p \in pi) * logn p n)%N.
 Proof.
-rewrite /partn logn_prod; last by move=> i _; rewrite pfactor_gt0.
-under eq_bigr do rewrite lognX.
-have logp (i : nat): (i == p) || (logn i n * logn p i == 0)%N.
-   case /boolP: (i == p) => //= /negPf ip.
-   case /boolP: (prime i) => [|/negPf] iprim; last first.
-      by rewrite /logn iprim mul0n.
-   by rewrite (logn_prime _ iprim) [p == i]eq_sym ip muln0.
-case /boolP: (p < n.+1)%N => [plt |]; last first.
-   rewrite -leqNgt => np.
-   suff ->: (\sum_(0 <= i < n.+1 | i \in pi) logn i n * logn p i
-            = \sum_(0 <= i < n.+1 | i \in pi) 0)%N. 
-      by rewrite big_const_seq iter_addn_0 mul0n ltn_log0// muln0.
-   apply/eq_bigr => i _.
-   move: (logp i) => /orP [|]/eqP ->//.
-   by rewrite ltn_log0// mul0n.
-suff ->: (\sum_(0 <= i < n.+1 | i \in pi) logn i n * logn p i
-         = \sum_(i < n.+1 | pred1 (Ordinal plt) i) (p \in pi) * logn i n)%N. 
-   by rewrite (big_pred1 (Ordinal plt)).
-rewrite big_mkord big_mkcond/= [in RHS]big_mkcond/=.
-apply/eq_bigr => i _.
-have ->: (i == Ordinal plt = (val i == p)).
-   by apply/eqP/eqP => [/(congr1 val)// | ] ip; apply/val_inj.
-move: (logp i); case /boolP: (val i == p)%N => /= [|_] /eqP ->.
-   2: by case: (val i \in pi).
-move=> _; case: (p \in pi); rewrite ?mul0n// mul1n.
-case /boolP: (prime p) => [| /negPf] pprim; last by rewrite /logn pprim.
-by rewrite -{3}(expn1 p) pfactorK// muln1.
+have [p_prime|pNprime] := boolP (prime p); last first.
+  by rewrite /logn !ifN// muln0.
+have [ppi|pNpi] := boolP (p \in pi); last first.
+  by rewrite mul0n logn_coprime// (@p'nat_coprime pi) ?part_pnat// pnatE.
+by rewrite mul1n -logn_part partn_part ?logn_part// => i /eqP->.
 Qed.
 
 End Temp.
