@@ -1,12 +1,13 @@
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field polyrcf.
 From Abel Require Import various classic_ext map_gal algR.
-From Abel Require Import char0 cyclotomic_ext real_closed_ext artin_scheier temp.
+From Abel Require Import char0 cyclotomic_ext real_closed_ext artin_scheier.
+From Abel Require Import temp.
 
 (*****************************************************************************)
 (* We work inside a enclosing splittingFieldType L over a base field F0      *)
 (*                                                                           *)
-(*     radical U x n := x is a radical elemen,ct of degree n over U            *)
+(*     radical U x n := x is a radical element of degree n over U            *)
 (*    pradical U x p := x is a radical element of prime degree p over U      *)
 (*   r.-tower U e pw := e is a chain of elements of L such that              *)
 (*                      forall i, r <<U & take i e>> e`_i pw`_i              *)
@@ -71,14 +72,14 @@ Lemma radicalP U x n : reflect  [\/
   [/\ n%:R != 0 :> F0 & x ^+ n \in U] |
   [/\ n \in [char L] & x ^+ n - x \in U]]
                                 (radical U x n).
-Proof. by apply(iffP orP); (case=>/andP h; [ left | right ]). Qed.
+Proof. by apply: (iffP orP); (case=> /andP h; [ left | right ]). Qed.
 
 Lemma pradicalP U x p : reflect  [\/
   [/\ prime p, p%:R != 0 :> F0 & x ^+ p \in U] |
   [/\ p \in [char L] & x ^+ p - x \in U]]
                                 (pradical U x p).
 Proof.
-by apply(iffP orP); (case=> h; [ left; apply/and3P | right; apply/andP ]).
+by apply: (iffP orP); (case=> h; [ left; apply/and3P | right; apply/andP ]).
 Qed.
 
 Implicit Types r : {vspace L} -> L -> nat -> bool.
@@ -129,25 +130,26 @@ Lemma prim_root_natf_neq0 (w : L) (n : nat) :
   n.-primitive_root w -> n%:R != (0 : F0).
 Proof.
 case: n => // n /andP[_ /forallP w1].
-rewrite natf_neq0; apply/andP; split=>//.
+rewrite natf_neq0; apply/andP; split=> //.
 rewrite -(negbK (all _ _)) -has_predC.
 apply/negP => /hasP[p]; rewrite mem_primes => /and3P[p_prime _ /dvdnP][].
-case=>// m nE.
+case=> // m nE.
 rewrite /negn inE negbK => /andP [_ p0].
-have: p \in [char L] by rewrite (char_lalg L) inE; apply/andP; split=>//.
+have: p \in [char L] by rewrite (char_lalg L) inE; apply/andP; split=> //.
 move=> {p0} p_char.
-move:(w1 (Ordinal (ltnSn n))) => /= /eqP.
+move: (w1 (Ordinal (ltnSn n))) => /= /eqP.
 rewrite eqxx /root_of_unity /root !hornerE ?hornerXn.
   (* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
 rewrite nE exprM -(@expr1n _ p).
-rewrite -(Frobenius_autE p_char (w ^+ m.+1)) -(Frobenius_autE p_char 1) subr_eq0=>/eqP/fmorph_inj wm1.
+rewrite -(Frobenius_autE p_char (w ^+ m.+1)) -(Frobenius_autE p_char 1).
+rewrite subr_eq0 => /eqP/fmorph_inj wm1.
 have mn: (m.+1 < n.+1)%N.
-  by rewrite nE; apply ltn_Pmulr=>//; apply prime_gt1.
+  by rewrite nE; apply: ltn_Pmulr => //; apply: prime_gt1.
   have: ((Ordinal (ltn_trans (ltnSn m) mn)).+1).-unity_root w.
   by rewrite /root_of_unity /root/= !hornerE ?hornerXn wm1 subrr.
   (* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
-move:(w1 (Ordinal (ltn_trans (ltnSn m) mn))) => /eqP -> /= /eqP mnE.
-by move:mn; rewrite mnE ltnn.
+move: (w1 (Ordinal (ltn_trans (ltnSn m) mn))) => /eqP -> /= /eqP mnE.
+by move: mn; rewrite mnE ltnn.
 Qed.
 
 Lemma rext_refl r (E : {subfield L}) : r.-ext E E.
@@ -221,15 +223,15 @@ Proof. by move=> nL xnE; apply/rext_r/(pradical_Fadjoin2 nL xnE). Qed.
 Lemma pradicalext_radical n (x : L) (E : {subfield L}) :
   radical E x n -> pradical.-ext E << E; x >>%VS.
 Proof.
-move=> /radicalP; case=>[[n_gt0] | [nL]] xnE; last first.
-  by apply (pradical_ext_Fadjoin2 nL xnE).
+move=> /radicalP; case=> [[n_gt0] | [nL]] xnE; last first.
+  by apply: (pradical_ext_Fadjoin2 nL xnE).
 have [k] := ubnP n.
 elim: k => // k IHk in n x E n_gt0 xnE *; rewrite ltnS => lenk.
 have [prime_n|primeN_n] := boolP (prime n).
   by apply: (@pradical_ext_Fadjoin1 n).
 case/boolP: (2 <= n)%N; last first.
   case: n {lenk primeN_n} => [|[]]// in xnE n_gt0 * => _.
-    by move:n_gt0; rewrite eqxx.
+    by move: n_gt0; rewrite eqxx.
   suff ->:  <<E; x>>%VS = E by apply: rext_refl.
   by rewrite (Fadjoin_idP _).
 move: primeN_n => /primePn[|[d /andP[d_gt1 d_ltn] dvd_dn n_gt1]].
@@ -256,13 +258,13 @@ Qed.
 Lemma tower_sub r1 r2 n E (e : n.-tuple L) (pw : n.-tuple nat) :
   (forall U x n, r1 U x n -> r2 U x n) ->
     r1.-tower E e pw -> r2.-tower E e pw.
-Proof. by move=> sub_r /forallP /= h; apply/forallP=> /= i; apply/sub_r/h. Qed.
+Proof. by move=> sub_r /forallP /= h; apply/forallP => /= i; apply/sub_r/h. Qed.
 
 Lemma radical_pradical U x p : pradical U x p -> radical U x p.
 Proof.
-move=>/pradicalP x_rad; apply/radicalP.
-case:x_rad=>x_rad; last by right.
-by case:x_rad=> prime_p xpU; left; split.
+move=> /pradicalP x_rad; apply/radicalP.
+case: x_rad => x_rad; last by right.
+by case: x_rad => prime_p xpU; left; split.
 Qed.
 
 Lemma radicalext_pradicalext (E F : {subfield L}) :
@@ -282,7 +284,7 @@ apply: (@rext_trans _ << E; tnth e 0 >>).
   by move/forallP/(_ ord0): Ee; rewrite take0 Fadjoin_nil.
 apply: (ih [tuple of behead e] [tuple of behead pw]) => /=; last first.
   by rewrite -adjoin_cons -drop1 (tnth_nth 0) -drop_nth 1?(drop0, size_tuple).
-apply/forallP=> /= i; move/forallP/(_ (rshift 1 i)): Ee => /=.
+apply/forallP => /= i; move/forallP/(_ (rshift 1 i)): Ee => /=.
 rewrite !(tnth_nth 0, tnth_nth 0%N) !nth_behead [_ (rshift 1 i)]/=.
 by rewrite -adjoin_cons takeD drop1 (take_nth 0) 1?size_tuple // take0.
 Qed.
@@ -343,11 +345,11 @@ Lemma radical_aimg (F0 : fieldType) (L L' : splittingFieldType F0)
   (x : Falgebra.vect_ringType L) (n : nat) :
   radical (iota @: U) (iota x) n = radical U x n.
 Proof.
-rewrite/radical (fmorph_char (ahom_rmorphism iota))/=-rmorphX/= -rmorphB/=.
+rewrite /radical (fmorph_char (ahom_rmorphism iota))/=-rmorphX/= -rmorphB/=.
 have inE: forall y, iota y \in (iota @: U)%VS = (y \in U).
-  move=>y; apply/idP/idP.
-    by move=>/memv_imgP [u uU] /fmorph_inj ->.
-  by move=>/(memv_img iota).
+  move=> y; apply/idP/idP.
+    by move=> /memv_imgP [u uU] /fmorph_inj ->.
+  by move=> /(memv_img iota).
 by rewrite 2!inE.
 Qed.
 
@@ -358,7 +360,7 @@ Lemma radical_tower_aimg  (F0 : fieldType) (L L' : splittingFieldType F0)
   radical.-tower (ext_size e) E (ext_ep e) (ext_pw e).
 Proof.
 apply/forallP/forallP => tower i /=.
-  move:(tower i).
+  move: (tower i).
   by rewrite -map_take -aimg_adjoin_seq tnth_map radical_aimg.
 by rewrite -map_take -aimg_adjoin_seq tnth_map radical_aimg.
 Qed.
@@ -368,7 +370,7 @@ Lemma radical_ext_aimg (F0 : fieldType) (L L' : splittingFieldType F0)
   radical.-ext (iota @: E) (iota @: F) <-> radical.-ext E F.
 Proof.
 split => [[]|[]] e tower img; last first.
-  exists (ExtData [tuple of [seq iota x | x <- ext_ep e]] (ext_pw e))=>/=.
+  exists (ExtData [tuple of [seq iota x | x <- ext_ep e]] (ext_pw e))=> /=.
     by rewrite radical_tower_aimg.
   by rewrite -aimg_adjoin_seq img.
 have /subset_limgP [f fF ef]: {subset (ext_ep e) <= (iota @: F)%VS}.
@@ -378,7 +380,7 @@ set e' := ExtData (Tuple sizef) (ext_pw e).
 exists e'.
   rewrite -(radical_tower_aimg iota)/=.
   suff <-: ext_ep e = [tuple of [seq iota x | x <- ext_ep e']] by [].
-  by apply val_inj.
+  by apply: val_inj.
 apply/eqP; rewrite -(@eq_limg_ker0 _ _ _ iota) ?AHom_lker0// aimg_adjoin_seq/=.
 by rewrite -ef img.
 Qed.
@@ -387,98 +389,114 @@ Section Part1.
 Variables (F0 : fieldType) (L : splittingFieldType F0).
 Implicit Types (E F K : {subfield L}) (w : L) (n : nat).
 
-Lemma cyclic_radical_ext w E F :
-  ((\dim_E F)`_[char L]^').-primitive_root w -> w \in E -> galois E F -> cyclic 'Gal(F / E) -> radical.-ext E F.
+Lemma cyclic_radical_ext w E F : ((\dim_E F)`_[char L]^').-primitive_root w ->
+  w \in E -> galois E F -> cyclic 'Gal(F / E) -> radical.-ext E F.
 Proof.
 case /boolP: (E == F :> {vspace L}) => [/eqP -> _ _ _ _ | EneF].
-   by apply rext_refl.
+   by apply: rext_refl.
 remember (\dim_E F) as n.
 move: w E F Heqn EneF.
-refine (@ltn_ind (fun n => forall (w : L) (E F : {subfield L}), n = \dim_E F -> ((E : {vspace L}) != F)%VS -> (n`_[char L]^').-primitive_root w -> w \in E -> galois E F -> cyclic 'Gal(F / E) -> radical.-ext E F) _ n).
+refine (@ltn_ind
+  (fun n => forall (w : L) (E F : {subfield L}),
+    n = \dim_E F ->
+    ((E : {vspace L}) != F)%VS ->
+    (n`_[char L]^').-primitive_root w ->
+    w \in E ->
+    galois E F ->
+    cyclic 'Gal(F / E) ->
+    radical.-ext E F)
+  _ n).
 move: n => _ n IHn w E F dimEF EneF wroot wE galEF /[dup] cycEF /cyclicP[g GE].
 have ggen : generator ('Gal(F / E))%g g by rewrite GE generator_cycle.
 have ggal : g \in ('Gal(F / E))%g by rewrite GE cycle_id.
 have EF := galois_subW galEF.
 have n_gt0: (0 < n)%N by rewrite dimEF divn_gt0 ?adim_gt0//; apply/dimvS.
-have [k [a [k0 [aE [aF /rext_r arad]]]]]: exists (k : nat) (a : L), (0 < k)%N /\ a \notin E /\ a \in F /\ radical E a k.
-   case /boolP: (n%:R == (0 : L)) => [n0 | n_ne0].
-      move:(natf0_char n_gt0 n0) => [p pchar]; exists p.
-      have /eqP: galTrace E F (-1) = 0.
-         rewrite/galTrace.
-         transitivity (\sum_(x in ('Gal(F / E))%g) (-1 : L)).
-            apply eq_bigr => x xgal.
-            by rewrite (fixed_gal EF) ?rpredN1.
-         move: n0 => /eqP n0.
-         by rewrite sumr_const -(galois_dim galEF) -dimEF -mulr_natl n0 mul0r.
-      have FN1: -1 \in F by rewrite rpredN1.
-      move=>/(Hilbert's_theorem_90_additive galEF ggen FN1) [a] aF /(congr1 (@GRing.opp L))/(congr1 (GRing.add a)).
-      rewrite opprK opprB addrCA subrr addr0 => /esym ga.
-      have apF: a ^+ p - a \in F by rewrite rpredB// rpredX.
-      have: a ^+ p - a \in fixedField ('Gal(F / E))%g.
-         apply/fixedFieldP => //. 
-         move=> x; rewrite GE => /cycleP[+ ->]; elim => [|m IHm].
-            by  rewrite expg0 gal_id.
-         rewrite expgSr galM// IHm rmorphB/= rmorphX/= ga.
-         rewrite -(Frobenius_autE pchar (a+1)) rmorphD/= (Frobenius_autE pchar a).
-         by rewrite rmorph1 opprD addrACA subrr addr0.
-      move:(galEF) => /galois_fixedField -> apE.
-      case /boolP: (a \in E) => aE.
-         move: ga; rewrite (fixed_gal EF)//.
-         move=> /(congr1 (fun x => x-a))/esym/eqP.
-         by rewrite addrAC subrr add0r oner_eq0.
-      exists a; repeat split => //.
-         by move:pchar => /andP [/prime_gt0].
-      by apply/orP; right; apply/andP.
-   move:(n_ne0) wroot => /negPf; rewrite natf0_partn//.
-   move=>/negbT; rewrite negbK => /eqP/(congr1 (fun x => (x * n`_[char L]^'))%N).
-   rewrite mul1n partnC => // <- wroot.
-   exists n.
-   have HT90g := Hilbert's_theorem_90 ggen (subvP EF _ wE).
-   have /eqP/HT90g[x [xF xN0]] : galNorm E F w = 1.
-      rewrite /galNorm; under eq_bigr => g' g'G. rewrite (fixed_gal EF g'G)//. over.
-      by rewrite prodr_const -galois_dim// -dimEF (prim_expr_order wroot).
-   have gxN0 : g x != 0 by rewrite fmorph_eq0.
-   have wN0 : w != 0. rewrite (primitive_root_eq0 wroot) -lt0n //.
-   move=> /(canLR (mulfVK gxN0))/(canRL (mulKf wN0)) gx.
-   have gXx i : (g ^+ i)%g x = w ^- i * x.
-      elim: i =>  [|i IHi].
-         by rewrite expg0 expr0 invr1 mul1r gal_id.
-      rewrite expgSr exprSr invfM galM// IHi rmorphM/= gx mulrA.
-      by rewrite (fixed_gal EF ggal) ?rpredV ?rpredX.
-   exists x; repeat split=>//.
-   - apply/negP=>xE.
-   move:gx; rewrite (fixed_gal EF)// => /(congr1 (fun y => w * y / x)).
-   rewrite mulrA -2!mulrA mulfV// 2!mulr1 mulfV// => w1; subst w.
-   move:wroot; rewrite prim_root1 => /eqP n1; subst n.
-   move:n1 => /eqP; rewrite -eqn_mul ?adim_gt0 ?(field_dimS EF)// mul1n => /eqP dimEFe.
-   by move:EneF => /negP; apply => /=; rewrite eqEdim EF dimEFe leqnn.
-   - apply/orP; left; apply/andP; split.
-      apply/negP => /eqP n0.
-      by move: n_ne0; rewrite -scaler_nat n0 scale0r eqxx.
-      move:galEF => /galois_fixedField <-; apply/fixedFieldP.
-         by apply rpredX.
-      rewrite GE => + /cycleP [i ->] => _.
-      by rewrite rmorphX/= gXx exprMn exprVn exprAC (prim_expr_order wroot)// expr1n invr1 mul1r.
-apply (rext_trans arad).
+have [k [a [k0 [aE [aF /rext_r arad]]]]]:
+  exists (k : nat) (a : L), (0 < k)%N /\ a \notin E /\ a \in F /\ radical E a k.
+  case /boolP: (n%:R == (0 : L)) => [n0 | n_ne0].
+    move: (natf0_char n_gt0 n0) => [p pchar]; exists p.
+    have /eqP: galTrace E F (-1) = 0.
+      rewrite /galTrace.
+      transitivity (\sum_(x in ('Gal(F / E))%g) (-1 : L)).
+        apply: eq_bigr => x xgal.
+        by rewrite (fixed_gal EF) ?rpredN1.
+      move: n0 => /eqP n0.
+      by rewrite sumr_const -(galois_dim galEF) -dimEF -mulr_natl n0 mul0r.
+    have FN1: -1 \in F by rewrite rpredN1.
+    move=> /(Hilbert's_theorem_90_additive galEF ggen FN1) [a] aF.
+    move=> /(congr1 (@GRing.opp L))/(congr1 (GRing.add a)).
+    rewrite opprK opprB addrCA subrr addr0 => /esym ga.
+    have apF: a ^+ p - a \in F by rewrite rpredB// rpredX.
+    have: a ^+ p - a \in fixedField ('Gal(F / E))%g.
+      apply/fixedFieldP => //. 
+      move=> x; rewrite GE => /cycleP[+ ->]; elim => [|m IHm].
+        by  rewrite expg0 gal_id.
+      rewrite expgSr galM// IHm rmorphB/= rmorphX/= ga.
+      rewrite -(Frobenius_autE pchar (a+1)) rmorphD/= (Frobenius_autE pchar a).
+      by rewrite rmorph1 opprD addrACA subrr addr0.
+    move: (galEF) => /galois_fixedField -> apE.
+    case /boolP: (a \in E) => aE.
+      move: ga; rewrite (fixed_gal EF)//.
+      move=> /(congr1 (fun x => x-a))/esym/eqP.
+      by rewrite addrAC subrr add0r oner_eq0.
+    exists a; repeat split => //.
+      by move: pchar => /andP [/prime_gt0].
+    by apply/orP; right; apply/andP.
+  move: (n_ne0) wroot => /negPf; rewrite natf0_partn//.
+  move=> /negbT; rewrite negbK.
+  move=> /eqP/(congr1 (fun x => (x * n`_[char L]^'))%N).
+  rewrite mul1n partnC => // <- wroot.
+  exists n.
+  have HT90g := Hilbert's_theorem_90 ggen (subvP EF _ wE).
+  have /eqP/HT90g[x [xF xN0]] : galNorm E F w = 1.
+    rewrite /galNorm; under eq_bigr => g' g'G;
+      first by rewrite (fixed_gal EF g'G)//; over.
+    by rewrite prodr_const -galois_dim// -dimEF (prim_expr_order wroot).
+  have gxN0 : g x != 0 by rewrite fmorph_eq0.
+  have wN0 : w != 0. rewrite (primitive_root_eq0 wroot) -lt0n //.
+  move=> /(canLR (mulfVK gxN0))/(canRL (mulKf wN0)) gx.
+  have gXx i : (g ^+ i)%g x = w ^- i * x.
+    elim: i =>  [|i IHi].
+      by rewrite expg0 expr0 invr1 mul1r gal_id.
+    rewrite expgSr exprSr invfM galM// IHi rmorphM/= gx mulrA.
+    by rewrite (fixed_gal EF ggal) ?rpredV ?rpredX.
+  exists x; repeat split=> //.
+  - apply/negP=> xE.
+  move: gx; rewrite (fixed_gal EF)// => /(congr1 (fun y => w * y / x)).
+  rewrite mulrA -2!mulrA mulfV// 2!mulr1 mulfV// => w1; subst w.
+  move: wroot; rewrite prim_root1 => /eqP n1; subst n.
+  move: n1 => /eqP; rewrite -eqn_mul ?adim_gt0 ?(field_dimS EF)//.
+  rewrite mul1n => /eqP dimEFe.
+  by move: EneF => /negP; apply => /=; rewrite eqEdim EF dimEFe leqnn.
+  - apply/orP; left; apply/andP; split.
+    apply/negP => /eqP n0.
+    by move: n_ne0; rewrite -scaler_nat n0 scale0r eqxx.
+    move: galEF => /galois_fixedField <-; apply/fixedFieldP.
+      by apply: rpredX.
+    rewrite GE => + /cycleP [i ->] => _.
+    rewrite rmorphX/= gXx exprMn exprVn exprAC (prim_expr_order wroot)//.
+    by rewrite expr1n invr1 mul1r.
+apply: (rext_trans arad).
 have gala: galois <<E; a>> F.
-   refine (galoisS _ galEF); apply/andP; split; first by apply subv_adjoin.
-   by apply/FadjoinP; split=>//; apply/galois_subW.
+  refine (galoisS _ galEF); apply/andP; split; first by apply: subv_adjoin.
+  by apply/FadjoinP; split=> //; apply/galois_subW.
 have dimEaF: (\dim_(<<E; a>>) F < n)%N.
-   rewrite dimEF ltn_divRL; last by apply/field_dimS/galois_subW.
-   rewrite mulnC muln_divA; last by apply/field_dimS/galois_subW.
-   rewrite ltn_divLR ?adim_gt0// mulnC ltn_mul2l adim_gt0/=.
-   rewrite ltnNge; apply/negP => dimE.
-   move:(eqEdim E <<E; a>>); rewrite dimE subv_adjoin/= => /eqP EE.
-   by move: aE; rewrite EE memv_adjoin.
+  rewrite dimEF ltn_divRL; last by apply/field_dimS/galois_subW.
+  rewrite mulnC muln_divA; last by apply/field_dimS/galois_subW.
+  rewrite ltn_divLR ?adim_gt0// mulnC ltn_mul2l adim_gt0/=.
+  rewrite ltnNge; apply/negP => dimE.
+  move: (eqEdim E <<E; a>>); rewrite dimE subv_adjoin/= => /eqP EE.
+  by move: aE; rewrite EE memv_adjoin.
 case /boolP: (<<E; a>>%AS == F) => [FE | Fne].
-   move:FE => /eqP ->; apply rext_refl.
-apply (IHn _ dimEaF (w ^+ (n`_[char L]^' %/ (\dim_(<<E; a>>) F)`_[char L]^')%N)) => //.
+  move: FE => /eqP ->; apply: rext_refl.
+apply: (IHn _ dimEaF
+  (w ^+ (n`_[char L]^' %/ (\dim_(<<E; a>>) F)`_[char L]^')%N)) => //.
 - rewrite dvdn_prim_root// partn_dvd//.
-   rewrite dimEF dvdn_divRL; last by apply/field_dimS/galois_subW.
-   rewrite mulnC muln_divA; last by apply/field_dimS/galois_subW.
-   rewrite dvdn_divLR ?adim_gt0//.
-      by rewrite mulnC dvdn_mul//; apply/field_dimS/subv_adjoin.
-   by apply dvdn_mull; apply/field_dimS/FadjoinP; rewrite EF aF.
+  rewrite dimEF dvdn_divRL; last by apply/field_dimS/galois_subW.
+  rewrite mulnC muln_divA; last by apply/field_dimS/galois_subW.
+  rewrite dvdn_divLR ?adim_gt0//.
+    by rewrite mulnC dvdn_mul//; apply/field_dimS/subv_adjoin.
+  by apply/dvdn_mull/field_dimS/FadjoinP; rewrite EF aF.
 - by apply/rpredX/subvP_adjoin.
 - exact (cyclicS (galS F (subv_adjoin E a)) cycEF).
 Qed.
@@ -507,8 +525,10 @@ have n_eq : n = (p * d)%N by rewrite /p /d -dim_fixedField dim_fixed_galois;
                              rewrite ?Lagrange ?normal_sub -?galois_dim.
 have Ewm : w ^+ (n`_[char L]^' %/ d`_[char L]^')%N \in E by rewrite rpredX.
 move=> /prime_cyclic/cyclic_radical_ext-/(_ _ _ Ewm galEH)/=.
-rewrite -/d dvdn_prim_root// => [/(_ isT)|]; last by rewrite partn_dvd// n_eq dvdn_mull.
-move=> /rext_trans; apply; apply: (IHk (w ^+ (n`_[char L]^' %/ p`_[char L]^'))) => /=.
+rewrite -/d dvdn_prim_root// => [/(_ isT)|];
+  last by rewrite partn_dvd// n_eq dvdn_mull.
+move=> /rext_trans; apply.
+apply: (IHk (w ^+ (n`_[char L]^' %/ p`_[char L]^'))) => /=.
 - exact: fixedField_galois.
 - rewrite (leq_trans _ le_nk)// -dim_fixedField /n galois_dim// proper_card//.
   by rewrite properEneq H_neq normal_sub.
@@ -526,19 +546,24 @@ move=> w_root galEF solEF; have [EF Ew] := (galois_subW galEF, subv_adjoin E w).
 exists (F * <<E; w>>)%AS; last by rewrite field_subvMr.
 apply: rext_trans (radicalext_Fadjoin_cyclotomic _ w_root) _.
 have galEwFEw: galois <<E; w>> (F * <<E; w>>) by apply: galois_prodvr galEF.
-pose m := \dim_<<E; w>> (F * <<E; w>>); pose w' := w ^+ (n`_[char L]^' %/ m`_[char L]^')%N.
+pose m := \dim_<<E; w>> (F * <<E; w>>).
+pose w' := w ^+ (n`_[char L]^' %/ m`_[char L]^')%N.
 have w'Ew : w' \in <<E; w>>%VS by rewrite rpredX ?memv_adjoin.
 have w'prim : (m`_[char L]^')%N.-primitive_root w'.
   rewrite dvdn_prim_root // /m /n !galois_dim//.
-  by rewrite (card_isog (galois_isog galEF _))// partn_dvd// cardSg ?galS ?subv_cap ?EF//.
-apply: (@solvableWradical_ext w'); rewrite // (isog_sol (galois_isog galEF _))//.
+  rewrite (card_isog (galois_isog galEF _))// partn_dvd//.
+  by rewrite cardSg ?galS ?subv_cap ?EF//.
+apply: (@solvableWradical_ext w') => //.
+rewrite (isog_sol (galois_isog galEF _))//.
 by rewrite (solvableS _ solEF) ?galS// subv_cap EF.
 Qed.
 
 (* Main lemma of part 1 *)
 (* TODO : remove wprim *)
 Lemma ext_solvable_by_radical w E F (n := \dim_E (normalClosure E F)) :
-  (n`_[char L]^')%N.-primitive_root w -> solvable_ext E F -> solvable_by radical E F.
+  (n`_[char L]^')%N.-primitive_root w ->
+  solvable_ext E F ->
+  solvable_by radical E F.
 Proof.
 move=> wprim /andP[sepEF]; have galEF := normalClosure_galois sepEF.
 move=> /(galois_solvable_by_radical wprim galEF) [M EM EFM]; exists M => //.
@@ -706,10 +731,9 @@ rewrite (@pradical_solvable p _ _ w)// ?memv_adjoin//.
 by rewrite (isog_sol (normalField_isog _ _ _)) ?galois_normalW ?subv_adjoin.
 Qed.
 
-Lemma ArtinSchreier_solvable_ext (p : nat) (F0 : fieldType) (L : splittingFieldType F0)
-         (E : {subfield L}) (x : L) :
-       p \in [char L] ->
-       x ^+ p - x \in E -> x \notin E -> solvable_ext E <<E; x>>.
+Lemma ArtinSchreier_solvable_ext (p : nat) (F0 : fieldType) 
+    (L : splittingFieldType F0) (E : {subfield L}) (x : L) : p \in [char L] ->
+  x ^+ p - x \in E -> x \notin E -> solvable_ext E <<E; x>>.
 Proof.
 move=> pchar xpE xE.
 apply/solvable_extP; exists <<E; x>>%AS; rewrite subvv/=.
@@ -719,7 +743,7 @@ rewrite -(galois_dim (ArtinSchreier_galois pchar xpE)) -adjoin_degreeE.
 rewrite (pred_Sn (adjoin_degree E x)) -size_minPoly (minPoly_ArtinSchreier pchar)//.
 move: pchar => /andP[pprim _].
 rewrite -addrA -opprD size_addl size_polyXn// size_opp size_XaddC ltnS.
-by apply prime_gt1.
+by apply: prime_gt1.
 Qed.
 
 Lemma radical_ext_solvable_ext (F0 : fieldType) (L : splittingFieldType F0)
@@ -737,11 +761,11 @@ rewrite (take_nth 0) ?size_tuple// adjoin_rcons.
 apply: solvable_ext_trans IHsol _.
   by rewrite /= subv_adjoin_seq subv_adjoin.
 have := epwP (Ordinal kn); rewrite (tnth_nth 0) (tnth_nth 0%N)/=.
-move=> /pradicalP; case=>[[pwk_prime] | [pwkL]] epwEk.
+move=> /pradicalP; case=> [[pwk_prime] | [pwkL]] epwEk.
   by apply: (pradical_solvable_ext pwk_prime).
 case /boolP: (e`_k \in <<E & take k e>>%VS).
   move=> /Fadjoin_idP ->; exact: solvable_ext_refl.
-by apply (ArtinSchreier_solvable_ext pwkL).
+by apply: (ArtinSchreier_solvable_ext pwkL).
 Qed.
 
 (******************************************************************************)
@@ -773,6 +797,10 @@ Definition solvable_ext_poly (F : fieldType) (p : {poly F}) :=
     p ^^ in_alg L %= \prod_(x <- rs) ('X - x%:P) ->
     solvable 'Gal(<<1 & rs>> / 1).
 
+Definition separable_splittingField (F : fieldType) (p : {poly F}) :=
+  forall (L : splittingFieldType F) (rs : seq L), 
+    p ^^ in_alg L %= \prod_(x <- rs) ('X - x%:P) -> separable 1 <<1 & rs>>.
+
 Lemma galois_solvable (F0 : fieldType) (L : splittingFieldType F0)
       (E F : {subfield L}) :
   galois E F -> solvable_ext E F = solvable 'Gal(F / E).
@@ -791,22 +819,23 @@ Qed.
 (* TODO: check if there is another way to write the first hypothesis. *)
 
 Lemma AbelGaloisPoly (F : fieldType) (p : {poly F}) :
-  (forall (L : splittingFieldType F) (rs : seq L), 
-    p ^^ in_alg L %= \prod_(x <- rs) ('X - x%:P) -> separable 1 <<1 & rs>>) ->
+  separable_splittingField p ->
   solvable_ext_poly p <-> solvable_by_radical_poly p.
 Proof.
-move=>psep.
+move=> psep.
 split=> + L rs pE => [/(_ L rs pE) + w w_prim|solrs]/=.
   have normal_rs : normalField 1 <<1 & rs>>.
     apply/splitting_normalField; rewrite ?sub1v//.
     by exists (p ^^ in_alg _); [apply/polyOver1P; exists p | exists rs].
-  move=> solrs; apply/(@AbelGalois _ _ w); rewrite ?normalClosure_id ?sub1v ?dimv1 ?divn1//.
-  by rewrite/solvable_ext normalClosure_id ?sub1v// solrs andbT psep.
+  move=> solrs; apply/(@AbelGalois _ _ w);
+  rewrite ?normalClosure_id ?sub1v ?dimv1 ?divn1//.
+  by rewrite /solvable_ext normalClosure_id ?sub1v// solrs andbT psep.
 have normal_rs : normalField 1 <<1 & rs>>.
   apply/splitting_normalField; rewrite ?sub1v//.
   by exists (p ^^ in_alg _); [apply/polyOver1P; exists p | exists rs].
 pose n := \dim <<1 & rs>>.
-apply: (@classic_cycloSplitting _ L _ (natf_partn_ne0 F n)) => - [L' [w [iota wL' w_prim]]].
+apply: (@classic_cycloSplitting _ L _ (natf_partn_ne0 F n)).
+move=> - [L' [w [iota wL' w_prim]]].
 suff: solvable_ext 1 <<1 & rs>>.
    by rewrite /solvable_ext psep// normalClosure_id ?sub1v.
 rewrite -(solvable_ext_aimg iota).
@@ -875,8 +904,7 @@ by rewrite -imgg -(aimg1 g)/= -img_map_gal injm_sol ?map_gal_inj ?subsetT//.
 Qed.
 
 Lemma solvable_by_radical_polyP (F : fieldType) (p : {poly F}) : p != 0 ->
-  (forall (L : splittingFieldType F) (rs : seq L), 
-    p ^^ in_alg L %= \prod_(x <- rs) ('X - x%:P) -> separable 1 <<1 & rs>>) ->
+  separable_splittingField p ->
   solvable_by_radical_poly p <->
   classically (exists (L : splittingFieldType F) (rs : seq L),
                 p ^^ in_alg L %= \prod_(x <- rs) ('X - x%:P) /\
@@ -889,7 +917,7 @@ split => sol_p; last first.
   exists L, rs; split => //; rewrite -galois_solvable.
     apply: radical_ext_solvable_ext; rewrite ?sub1v// => v.
   move: (psep L rs prs) => /normalClosure_galois; congr galois.
-  apply normalClosure_id; first by rewrite sub1v.
+  apply: normalClosure_id; first by rewrite sub1v.
   apply/splitting_normalField; first by rewrite sub1v.
   exists (p ^^ in_alg L); first by apply/polyOver1P; exists p.
   by exists rs.
@@ -904,7 +932,7 @@ have splitL : SplittingField.axiom L.
   by move=> /memv_imgP[u _ ->]; rewrite fF/= rpredZ// rpred1.
 pose S := SplittingFieldType F L splitL.
 pose d := ((\dim <<1 & (rs : seq S)>>)`_[char F]^')%N.
-have /classic_cycloSplitting-/(_ S) : d%:R != 0 :> F by apply natf_partn_ne0.
+have /classic_cycloSplitting-/(_ S) : d%:R != 0 :> F by apply: natf_partn_ne0.
 apply/classic_bind => -[C [w [g wg w_prim]]]; apply/classicW.
 have gf : g \o f =1 in_alg C by move=> v /=; rewrite fF rmorph_alg.
 have pgrs : p ^^ in_alg C %= \prod_(x <- [seq g i | i <- rs]) ('X - x%:P).
@@ -957,7 +985,7 @@ have splitS' : splittingFieldFor 1 (p ^^ in_alg S') <<1 & rs'>> by exists rs'.
 have [f /= imgf] := splitting_ahom splitS splitS'.
 exists S', iota', rs'; split => //.
 apply: (p_sol S' rs' prs' w); rewrite -imgf dim_aimg/= -rsf.
-move:w_prim; congr (_.-primitive_root w).
+move: w_prim; congr (_.-primitive_root w).
 rewrite -(partnC [char L'] d_gt0) (eq_partn _ (char_ext L')) -/d {1}/partn.
 by rewrite -big_filter filter_pred0 big_nil mul1n.
 Qed.
@@ -992,7 +1020,7 @@ move=> p_neq0; split.
   by exists L, <<1 & rs>>%AS; first by exists rs.
 have charrat : [char rat] =i pred0 by exact: char_num.
 move=> [L [K [rs prs <-] solK]]; apply/solvable_by_radical_polyP => //.
-  by move=>L' rs' _; apply/char0_separable/char_ext.
+  by move=> L' rs' _; apply/char0_separable/char_ext.
 by apply/classicW; exists L, rs.
 Qed.
 
@@ -1042,7 +1070,7 @@ have [rs prs <-] := numfieldP p_neq0.
 split; last by move=> /(_ (numfield p) rs prs).
 move=> solp; apply/solvable_ext_polyP => //.
   by apply/classicW; exists (numfield p); exists rs; split.
-by move=>L rs _; apply/char0_separable/char_ext.
+by move=> L rs _; apply/char0_separable/char_ext.
 Qed.
 
 Definition numfield_roots (p : {poly rat}) :=
@@ -1713,7 +1741,7 @@ have Cchar := Cchar => p_neq0; split.
   exists (fq * fu + Base (Subvs ck))%algT => /=.
   by rewrite rmorphD rmorphM/= map_polyX map_polyC !hornerE fq_eq.
 move=> mkalg; apply/solvable_by_radical_polyP => //=.
-  by move=>L rs _; apply/char0_separable/char_ext.
+  by move=> L rs _; apply/char0_separable/char_ext.
 have [/= rsalg pE] := closed_field_poly_normal (p ^^ (ratr : _ -> algC)).
 have {}pE : p ^^ ratr %= \prod_(z <- rsalg) ('X - z%:P).
   rewrite pE (eqp_trans (eqp_scale _ _)) ?eqpxx//.

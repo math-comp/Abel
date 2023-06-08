@@ -1195,16 +1195,16 @@ Lemma bigA_distr_bigA2 (R : Type) (zero one : R) (times : Monoid.mul_law zero)
   \big[times/one]_i plus (F i) (G i) =
   \big[plus/zero]_(J in {set I}) \big[times/one]_i (if i \in J then F i else G i).
 Proof.
-transitivity (\big[times/one]_i \big[plus/zero]_(b : bool) if b then F i else G i); first by apply eq_bigr => i _; rewrite big_bool.
+transitivity (\big[times/one]_i \big[plus/zero]_(b : bool) if b then F i else G i); first by apply: eq_bigr => i _; rewrite big_bool.
 rewrite bigA_distr_bigA.
 set f := fun J : {set I} => val J.
 transitivity (\big[plus/zero]_(f0 in (imset f (mem setT))) \big[times/one]_i (if f0 i then F i else G i)).
-  suff <-: setT = imset f (mem setT) by apply congr_big=>// i; rewrite in_setT.
+  suff <-: setT = imset f (mem setT) by apply: congr_big=>// i; rewrite in_setT.
   apply/esym/eqP; rewrite -subTset; apply/subsetP => b _.
   by apply/imsetP; exists (FinSet b).
 rewrite big_imset; last by case => g; case => h _ _; rewrite /f/= => ->.
-apply congr_big=>//; case => g; first by rewrite in_setT.
-move=>_; apply eq_bigr => i _; congr (if _ then _ else _).
+apply: congr_big=>//; case => g; first by rewrite in_setT.
+move=>_; apply: eq_bigr => i _; congr (if _ then _ else _).
 by rewrite SetDef.pred_of_setE.
 Qed.
 
@@ -1218,18 +1218,18 @@ Proof.
 move=> nle.
 have psE: ps = tval (Tuple (eqxx (size ps))) by [].
 transitivity (\prod_(p <- ps) ((- p)%:P + 'X))`_n.
-  by congr ((polyseq _)`_n); apply eq_bigr => i _; rewrite addrC polyCN.
+  by congr ((polyseq _)`_n); apply: eq_bigr => i _; rewrite addrC polyCN.
 rewrite {1}psE -(map_tnth_enum (Tuple _)) big_map enumT bigA_distr_bigA2 /=.
 rewrite coef_sum.
 transitivity (\sum_(I in {set 'I_(size ps)}) if #|I| == (size ps - n)%N then \prod_(i < size ps | i \in I) - (tnth (Tuple (eqxx (size ps))) i) else 0).
-  apply eq_bigr => I _.
+  apply: eq_bigr => I _.
   rewrite big_if/= big_const iter_mulr_1.
   rewrite -(rmorph_prod (@polyC_rmorphism R))/= coefCM coefXn.
   rewrite -[#|I| == _](eqn_add2l n) addnBA// [(_ + (size ps))%N]addnC -addnBA// subnn addn0 [(n + _)%N]addnC.
   rewrite -[in X in _ = if _ == X then _ else _](card_ord (size ps)) -(cardC I) eqn_add2l.
   by case: (n == #|[predC I]|); rewrite ?mulr1 ?mulr0.
-rewrite -big_mkcond mulr_sumr/=; apply eq_bigr => I /eqP cardI.
-rewrite prodrN cardI; congr GRing.mul; apply eq_bigr => i _.
+rewrite -big_mkcond mulr_sumr/=; apply: eq_bigr => I /eqP cardI.
+rewrite prodrN cardI; congr GRing.mul; apply: eq_bigr => i _.
 by rewrite (tnth_nth (GRing.zero R)) -psE.
 Qed.
 
@@ -1240,18 +1240,18 @@ Lemma coefPn_prod_XsubC {R : comRingType} (ps : seq R) :
 Proof.
 rewrite coefn_prod_XsubC ?leq_pred// => ps0.
 have ->: (size ps - (size ps).-1 = 1)%N.
-  by move: ps0; case: (size ps)=>// n _; apply subSnn.
+  by move: ps0; case: (size ps)=>// n _; apply: subSnn.
 rewrite expr1 mulN1r; congr GRing.opp.
 set f : 'I_(size ps) -> {set 'I_(size ps)} := fun a => [set a].
 transitivity (\sum_(I in imset f (mem setT)) \prod_(i in I) ps`_i).
-  apply congr_big=>// I /=.
+  apply: congr_big=>// I /=.
   apply/cards1P/imsetP.
     by move=>[a ->]; exists a.
   by move=>[a _ ->]; exists a.
 rewrite big_imset/=; last by move=> i j _ _; rewrite/f => ij; apply/set1P; rewrite -ij set11.
 have psE: ps = tval (Tuple (eqxx (size ps))) by [].
 rewrite [in RHS]psE -(map_tnth_enum (Tuple _)) big_map enumT.
-apply congr_big => // i; first by rewrite in_setT.
+apply: congr_big => // i; first by rewrite in_setT.
 by move=>_; rewrite big_set1 (tnth_nth (GRing.zero R)) -psE.
 Qed.
 
@@ -1261,14 +1261,14 @@ Lemma coefP0_prod_XsubC {R : comRingType} (ps : seq R) :
 Proof.
 rewrite coefn_prod_XsubC// subn0; congr GRing.mul.
 transitivity (\sum_(I in [set setT : {set 'I_(size ps)}]) \prod_(i in I) ps`_i).
-  apply congr_big=>// i/=.
+  apply: congr_big=>// i/=.
   apply/idP/set1P.
     by move=>/eqP cardE; apply/eqP; rewrite eqEcard subsetT cardsT card_ord cardE leqnn.
   by move=>->; rewrite cardsT card_ord.
 rewrite big_set1.
 have psE: ps = tval (Tuple (eqxx (size ps))) by [].
 rewrite [in RHS]psE -(map_tnth_enum (Tuple _)) big_map enumT.
-apply congr_big => // i; first by rewrite in_setT.
+apply: congr_big => // i; first by rewrite in_setT.
 by move=>_; rewrite (tnth_nth (GRing.zero R)) -psE.
 Qed.
 
