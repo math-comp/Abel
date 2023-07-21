@@ -125,33 +125,6 @@ Section Properties.
 Implicit Types r : {vspace L} -> L -> nat -> bool.
 Implicit Types (U V : {subfield L}).
 
-(* TODO: rename and move to the proper place *)
-Lemma prim_root_natf_neq0 (w : L) (n : nat) :
-  n.-primitive_root w -> n%:R != (0 : F0).
-Proof.
-case: n => // n /andP[_ /forallP w1].
-rewrite natf_neq0; apply/andP; split=> //.
-rewrite -(negbK (all _ _)) -has_predC.
-apply/negP => /hasP[p]; rewrite mem_primes => /and3P[p_prime _ /dvdnP][].
-case=> // m nE.
-rewrite /negn inE negbK => /andP [_ p0].
-have: p \in [char L] by rewrite (char_lalg L) inE; apply/andP; split=> //.
-move=> {p0} p_char.
-move: (w1 (Ordinal (ltnSn n))) => /= /eqP.
-rewrite eqxx /root_of_unity /root !hornerE ?hornerXn.
-  (* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
-rewrite nE exprM -(@expr1n _ p).
-rewrite -(Frobenius_autE p_char (w ^+ m.+1)) -(Frobenius_autE p_char 1).
-rewrite subr_eq0 => /eqP/fmorph_inj wm1.
-have mn: (m.+1 < n.+1)%N.
-  by rewrite nE; apply: ltn_Pmulr => //; apply: prime_gt1.
-  have: ((Ordinal (ltn_trans (ltnSn m) mn)).+1).-unity_root w.
-  by rewrite /root_of_unity /root/= !hornerE ?hornerXn wm1 subrr.
-  (* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
-move: (w1 (Ordinal (ltn_trans (ltnSn m) mn))) => /eqP -> /= /eqP mnE.
-by move: mn; rewrite mnE ltnn.
-Qed.
-
 Lemma rext_refl r (E : {subfield L}) : r.-ext E E.
 Proof. by exists trivExt; rewrite ?Fadjoin_nil//=; apply/towerP => -[]. Qed.
 
@@ -301,7 +274,9 @@ Lemma radicalext_Fadjoin_cyclotomic (E : {subfield L}) (w : L) (n : nat) :
   n.-primitive_root w -> radical.-ext E <<E; w>>%AS.
 Proof.
 move=> wprim; apply: (@radical_ext_Fadjoin1 n w E).
-   exact: (prim_root_natf_neq0 wprim).
+  apply/negP => /eqP n0.
+  move: (prim_root_natf_neq0 wprim).
+  by rewrite -scaler_nat n0 scale0r eqxx.
 by rewrite (prim_expr_order wprim) mem1v.
 Qed.
 
@@ -537,7 +512,6 @@ apply: (IHk (w ^+ (n`_[char L]^' %/ p`_[char L]^'))) => /=.
 - by rewrite gal_fixedField (solvableS (normal_sub Hnormal)).
 Qed.
 
-(* TODO : remove wprim *)
 Lemma galois_solvable_by_radical w E F (n := \dim_E F) :
     (n`_[char L]^')%N.-primitive_root w -> galois E F ->
   solvable 'Gal(F / E) -> solvable_by radical E F.
@@ -559,7 +533,6 @@ by rewrite (solvableS _ solEF) ?galS// subv_cap EF.
 Qed.
 
 (* Main lemma of part 1 *)
-(* TODO : remove wprim *)
 Lemma ext_solvable_by_radical w E F (n := \dim_E (normalClosure E F)) :
   (n`_[char L]^')%N.-primitive_root w ->
   solvable_ext E F ->
@@ -815,8 +788,6 @@ Proof.
 move=> /normalClosure_galois /[swap] EF /[swap] /(normalClosure_id EF) ->.
 by apply: galois_solvable.
 Qed.
-
-(* TODO: check if there is another way to write the first hypothesis. *)
 
 Lemma AbelGaloisPoly (F : fieldType) (p : {poly F}) :
   separable_splittingField p ->
