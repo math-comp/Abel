@@ -255,7 +255,7 @@ have trE d : d \in E -> galTrace K E d = \sum_(0 <= i < n.+1) (x ^+ i)%g d.
    by rewrite (big_imset _ (in2W (@cycle_imset_inj _ x))) /= ordx big_mkord.
 have trI d : d \in E -> \sum_(0 <= i < n) (x ^+ i.+1)%g d = galTrace K E d - d.
   by move=> dE; rewrite trE// [in RHS]big_nat_recl//= expg0 gal_id addrC addKr.
-set c : L := (galTrace K E b)^-1
+pose c : L := (galTrace K E b)^-1
   * \sum_(0 <= i < n) (\sum_(0 <= j < i.+1) (x ^+ j)%g a) * (x ^+ i.+1)%g b.
 have tr_b_E : galTrace K E b \in E by rewrite rpred_sum// => * /[!memv_gal].
 exists c.
