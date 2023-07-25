@@ -114,13 +114,9 @@ End tnth_shift.
 (**********)
 
 Lemma ffun_sum [T : finType] [R : ringType] [E : vectType R]
-  (f : seq (ffun_vectType T E)) (x : T) :
+  (f : seq {ffun T -> E}) (x : T) :
   ((\sum_(i <- f) i) x = \sum_(i <- f) i x)%R.
-Proof.
-elim: f; first by rewrite 2!big_nil ffunE.
-move=> a f IHf.
-by rewrite 2!big_cons ffunE IHf.
-Qed.
+Proof. by elim/big_rec2: _ => [|? ? ? ? <-]; rewrite ffunE. Qed.
 
 (*********)
 (* prime *)
