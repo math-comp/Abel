@@ -2,7 +2,6 @@ From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field polyrcf.
 From Abel Require Import various classic_ext map_gal algR.
 From Abel Require Import char0 cyclotomic_ext real_closed_ext artin_scheier.
-From Abel Require Import temp.
 
 (*****************************************************************************)
 (* We work inside a enclosing splittingFieldType L over a base field F0      *)
@@ -365,23 +364,10 @@ Section Part1.
 Variables (F0 : fieldType) (L : splittingFieldType F0).
 Implicit Types (E F K : {subfield L}) (w : L) (n : nat).
 
-Lemma muln_div_trans d m n : (d %| m)%N -> (n %| d)%N ->
-  ((m %/ d) * (d %/ n))%N = (m %/ n)%N.
-Proof. by move=> dm nd; rewrite muln_divA// divnK. Qed.
-
-Lemma muln_dimv E F K :
-  (K <= E)%VS -> (E <= F)%VS -> (\dim_K E * \dim_E F)%N = \dim_K F.
-Proof. by move=> KE EF; rewrite mulnC muln_div_trans// ?field_dimS. Qed.
-
-Lemma galX E n (x : gal_of E) [a : L] : a \in E -> (x ^+ n)%g a = iter n x a.
-Proof.
-by elim: n => [|n IHn] aE; rewrite (expg0, expgSr)/= (gal_id, galM)/= ?IHn.
-Qed.
-
 Lemma cyclic_radical_ext w E F : ((\dim_E F)`_[char L]^').-primitive_root w ->
   w \in E -> galois E F -> cyclic 'Gal(F / E) -> radical.-ext E F.
 Proof.
-have [->|NEF] := eqVneq (E : {vspace _}) F; first by [].
+have [->//|NEF] := eqVneq (E : {vspace _}) F.
 have [n] := ubnP (\dim_E F); elim: n => // n IHn in w E F NEF *.
 rewrite ltnS leq_eqVlt => /predU1P[/[dup] dimEF ->|]; last exact: IHn.
 move=> wroot wE galEF /[dup] cycEF /cyclicP[/= g GE].
@@ -389,7 +375,7 @@ have ggen : generator ('Gal(F / E))%g g by rewrite GE generator_cycle.
 have ggal : g \in ('Gal(F / E))%g by rewrite GE cycle_id.
 have EF := galois_subW galEF.
 have n_gt1 : (n > 1)%N.
-  rewrite -dimEF ltn_divRL ?mul1n// ?field_dimS//.
+  rewrite -dimEF ltn_divRL ?field_dimS// mul1n.
   by rewrite eqEdim EF/= -ltnNge in NEF.
 have n_gt0: (0 < n)%N by apply: leq_trans n_gt1.
 suff [k [a [k0 aE aF /rext_r arad]]]:
@@ -428,7 +414,7 @@ have [|x [xF xN0]] := Hilbert's_theorem_90 ggen (subvP EF _ wE) _.
   rewrite /galNorm; under eq_bigr do rewrite (fixed_gal EF)//.
   by rewrite prodr_const -galois_dim// dimEF (prim_expr_order wroot).
 have gxN0 : g x != 0 by rewrite fmorph_eq0.
-have wN0 : w != 0 by rewrite (primitive_root_eq0 wroot) -lt0n // dimEF.
+have wN0 : w != 0 by rewrite (primitive_root_eq0 wroot) -lt0n.
 have [xE|xNE] := boolP (x \in E).
   rewrite (fixed_gal EF)// divff// => w1.
   by rewrite w1 prim_root1// gtn_eqF in wroot.

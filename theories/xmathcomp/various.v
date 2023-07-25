@@ -85,6 +85,14 @@ apply: (iffP andP) => [[ryz rzs] [|i]// /IHs->//|rS].
 by rewrite (rS 0); split=> //; apply/IHs => i /(rS i.+1).
 Qed.
 
+(*******)
+(* div *)
+(*******)
+
+Lemma muln_div_trans (d m n : nat) : (d %| m)%N -> (n %| d)%N ->
+  ((m %/ d) * (d %/ n))%N = (m %/ n)%N.
+Proof. by move=> dm nd; rewrite muln_divA// divnK. Qed.
+
 (*********)
 (* tuple *)
 (*********)
@@ -786,6 +794,10 @@ Qed.
 (* fieldext *)
 (************)
 
+Lemma muln_dimv [F0 : fieldType] [L : fieldExtType F0] (E F K : {subfield L}) :
+  (K <= E)%VS -> (E <= F)%VS -> (\dim_K E * \dim_E F)%N = \dim_K F.
+Proof. by move=> KE EF; rewrite mulnC muln_div_trans// ?field_dimS. Qed.
+
 Lemma ahom_eq_adjoin [F0 : fieldType] [K : fieldExtType F0] [rT : FalgType F0]
   (f g : 'AHom(K, rT)) (U : {subfield K}) (x : K) :
   {in U, f =1 g} -> f x = g x -> {in <<U; x>>%VS, f =1 g}.
@@ -1153,6 +1165,12 @@ Qed.
 (**********)
 (* galois *)
 (**********)
+
+Lemma galX (F0 : fieldType) (L : splittingFieldType F0) (E : {subfield L})
+  n (x : gal_of E) [a : L] : a \in E -> (x ^+ n)%g a = iter n x a.
+Proof.
+by elim: n => [|n IHn] aE; rewrite (expg0, expgSr)/= (gal_id, galM)/= ?IHn.
+Qed.
 
 Lemma gal1 (F0 : fieldType) (L : splittingFieldType F0)
   (K : {subfield L}) (g : gal_of K) : g \in 'Gal(K / 1%VS)%g.
