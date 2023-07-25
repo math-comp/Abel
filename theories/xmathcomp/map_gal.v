@@ -19,8 +19,6 @@ Import AEnd_FinGroup.
 Variables (F0 : fieldType) (L : splittingFieldType F0).
 Implicit Types (K E F : {subfield L}).
 
-Lemma galois_subW E F : galois E F -> (E <= F)%VS. Proof. by case/andP. Qed.
-
 Lemma galois_normalW E F : galois E F -> (normalField E F)%VS.
 Proof. by case/and3P. Qed.
 
@@ -36,9 +34,6 @@ Hint Resolve normalField_refl : core.
 
 Lemma galois_refl E : galois E E.
 Proof. by rewrite /galois subvv separable_refl normalField_refl. Qed.
-
-Lemma gal1 K (g : gal_of K) : g \in 'Gal(K / 1%VS)%g.
-Proof. by rewrite gal_kHom ?sub1v// k1HomE ahomWin. Qed.
 
 Lemma Fadjoin_sub E x y : x \in <<E; y>>%VS -> (<<E; x>> <= <<E; y>>)%VS.
 Proof. by move=> xEy; apply/FadjoinP; rewrite subv_adjoin. Qed.
