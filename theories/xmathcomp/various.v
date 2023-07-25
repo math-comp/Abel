@@ -175,18 +175,13 @@ apply/dvdn_partP => // p /[!(inE, mem_primes)]/and3P[p_prime _ pm].
 by rewrite p_part pfactor_dvdn// vp_le.
 Qed.
 
-Lemma logn_prod [I : eqType] (r : seq I) (P : pred I) (F : I -> nat) (p : nat) :
-  {in r, forall n,  P n -> (0 < F n)%N} ->
+Lemma logn_prod [I : Type] (r : seq I) (P : pred I) (F : I -> nat) (p : nat) :
+  (forall n,  P n -> (0 < F n)%N) ->
   (logn p (\prod_(n <- r | P n) F n) = \sum_(n <- r | P n) logn p (F n))%N.
 Proof.
-elim: r => [|n r IHn Fnr0]; first by rewrite 2!big_nil logn1.
-have Fr0: {in r, forall n : I, P n -> (0 < F n)%N}.
-   by move=> i ir; apply/Fnr0; rewrite in_cons ir orbT.
-rewrite 2!big_cons; case /boolP: (P n) => Pn; last by apply/IHn.
-move: (Fnr0 n); rewrite mem_head Pn => /= /(_ is_true_true is_true_true) Fn0.
-rewrite lognM// ?IHn//.
-rewrite big_seq_cond big_mkcond prodn_gt0// => i.
-by case /boolP: ((i \in r) && P i) => // /andP[/Fr0].
+move=> F_gt0; elim/(big_load (fun n => (n > 0)%N)): _.
+elim/big_rec2: _; first by rewrite logn1.
+by move=> i m n Pi [n_gt0 <-]; rewrite muln_gt0 lognM ?F_gt0.
 Qed.
 
 Lemma logn_partn (p n : nat) (pi : nat_pred) :

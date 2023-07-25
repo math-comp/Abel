@@ -19,8 +19,6 @@ Import AEnd_FinGroup.
 Variables (F0 : fieldType) (L : splittingFieldType F0).
 Implicit Types (K E F : {subfield L}).
 
-Lemma galois_subW E F : galois E F -> (E <= F)%VS. Proof. by case/andP. Qed.
-
 Lemma galois_normalW E F : galois E F -> (normalField E F)%VS.
 Proof. by case/and3P. Qed.
 

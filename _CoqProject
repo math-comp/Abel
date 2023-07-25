@@ -7,7 +7,6 @@ theories/xmathcomp/char0.v
 theories/xmathcomp/cyclotomic_ext.v
 theories/xmathcomp/real_closed_ext.v
 theories/xmathcomp/artin_scheier.v
-theories/xmathcomp/temp.v
 
 -R theories Abel
 -arg -w -arg -projection-no-head-constant
