@@ -31,7 +31,7 @@
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "coq8.15+mc1.14";
+  default-bundle = "coq8.18+mcmathcomp-2.1.0";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration
@@ -43,27 +43,20 @@
                coq.override.version = coqv;
                mathcomp.override.version = mcv;
                mathcomp.job = false;
-        } // (if (mcv == "master") then {
+        } // (if (coqv == "master") then {
+            coq-elpi.override.version = "coq-master";
+            hierarchy-builder.override.version = "master";
+        } else {}) // (if (mcv == "master") then {
             mathcomp-real-closed.override.version = "master";
             mathcomp-bigenough.override.version = "1.0.1";
-        } else {}) // (if (mcv == "mathcomp-1.15.0") then {
-            mathcomp-real-closed.override.version = "1.1.3";
+        } else {}) // (if (mcv == "mathcomp-2.1.0") then {
+            mathcomp-real-closed.override.version = "master";
             mathcomp-bigenough.override.version = "1.0.1";
         } else {});
       }; in
-    gen "8.12" "1.13" //
-    gen "8.13" "1.13" //
-    gen "8.14" "1.13" //
-    gen "8.13" "1.14" //
-    gen "8.14" "1.14" //
-    gen "8.15" "1.14" //
-    gen "8.13" "master" //
-    gen "8.14" "master" //
-    gen "8.15" "master" //
-    gen "8.13" "mathcomp-1.15.0" //
-    gen "8.14" "mathcomp-1.15.0" //
-    gen "8.15" "mathcomp-1.15.0" //
-    gen "8.16" "mathcomp-1.15.0" //
+    gen "8.16" "mathcomp-2.1.0" //
+    gen "8.17" "mathcomp-2.1.0" //
+    gen "8.18" "mathcomp-2.1.0" //
     gen "master" "master";
 
   ## Cachix caches to use in CI

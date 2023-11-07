@@ -1,3 +1,4 @@
+From HB Require Import structures.
 From mathcomp Require Import all_ssreflect all_algebra all_field.
 
 Set Implicit Arguments.
@@ -45,26 +46,36 @@ Hypothesis charF0 : has_char0 F.
 
 Local Notation ratrF := (char0_ratr charF0).
 
-Fact char0_ratr_is_rmorphism : rmorphism ratrF.
+Fact char0_ratr_is_additive : additive ratrF.
 Proof.
 rewrite /char0_ratr.
 have injZtoQ: @injective rat int intr by apply: intr_inj.
 have nz_den x: (denq x)%:~R != 0 :> F by rewrite char0_intr_eq0 // denq_eq0.
-do 2?split; rewrite /ratr ?divr1 // => x y; last first.
-  rewrite mulrC mulrAC; apply: canLR (mulKf (nz_den _)) _; rewrite !mulrA.
-  do 2!apply: canRL (mulfK (nz_den _)) _; rewrite -!rmorphM; congr _%:~R.
-  apply: injZtoQ; rewrite !rmorphM [x * y]lock /= !numqE -lock.
-  by rewrite -!mulrA mulrA mulrCA -!mulrA (mulrCA y).
+rewrite /ratr ?divr1 // => x y.
 apply: (canLR (mulfK (nz_den _))); apply: (mulIf (nz_den x)).
-rewrite mulrAC mulrBl divfK ?nz_den // mulrAC -!rmorphM.
+rewrite mulrAC mulrBl divfK ?nz_den // mulrAC -!rmorphM /=.
 apply: (mulIf (nz_den y)); rewrite mulrAC mulrBl divfK ?nz_den //.
 rewrite -!(rmorphM, rmorphB); congr _%:~R; apply: injZtoQ.
-rewrite !(rmorphM, rmorphB) [_ - _]lock /= -lock !numqE.
-by rewrite (mulrAC y) -!mulrBl -mulrA mulrAC !mulrA.
+rewrite !(rmorphM, rmorphB) [_ - _]lock /= -lock.
+by rewrite !numqE (mulrAC y) -!mulrBl -mulrA mulrAC !mulrA.
 Qed.
 
-Canonical char0_ratr_additive  := Additive char0_ratr_is_rmorphism.
-Canonical char0_ratr_rmorphism := RMorphism char0_ratr_is_rmorphism.
+Fact char0_ratr_is_multiplicative : multiplicative ratrF.
+Proof.
+rewrite /char0_ratr.
+have injZtoQ: @injective rat int intr by apply: intr_inj.
+have nz_den x: (denq x)%:~R != 0 :> F by rewrite char0_intr_eq0 // denq_eq0.
+split; rewrite /ratr ?divr1 // => x y.
+rewrite mulrC mulrAC; apply: canLR (mulKf (nz_den _)) _; rewrite !mulrA.
+do 2!apply: canRL (mulfK (nz_den _)) _; rewrite -!rmorphM; congr _%:~R.
+apply: injZtoQ; rewrite !rmorphM [x * y]lock /= !numqE -lock.
+by rewrite -!mulrA mulrA mulrCA -!mulrA (mulrCA y).
+Qed.
+
+HB.instance Definition _ := GRing.isAdditive.Build rat F ratrF
+  char0_ratr_is_additive.
+HB.instance Definition _ := GRing.isMultiplicative.Build rat F ratrF
+  char0_ratr_is_multiplicative.
 
 End Char0MorphismsField.
 

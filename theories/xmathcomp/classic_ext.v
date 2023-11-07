@@ -1,3 +1,4 @@
+From HB Require Import structures.
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field.
 From Abel Require Import various cyclotomic_ext.
@@ -54,19 +55,23 @@ apply: classic_bind (@classic_EM (irreducible_poly p)) => -[]; last first.
     by rewrite adjoin_cat limg_comp -aimg_adjoin_seq rs1_full rs2_full.
   rewrite big_cat/= big_map (eq_map_poly (comp_lfunE _ _)) map_poly_comp pE.
   rewrite !rmorphM/= mulrC (eqp_trans (eqp_mull _ rE))// eqp_mulr//.
-  have := qE; rewrite -(eqp_map [rmorphism of iota2]) => /eqp_trans->//=.
+  have := qE; rewrite -(eqp_map iota2) => /eqp_trans->//=.
   rewrite (big_morph _ (rmorphM _) (rmorph1 _))/=.
   under eq_bigr do rewrite rmorphB/= -/iota map_polyX map_polyC/=.
   by rewrite eqpxx.
 move=> /irredp_FAdjoin[L1 df [r1 r1_root r1_full]].
-pose L01 := [fieldExtType F0 of baseFieldType L1].
+pose L01 : fieldExtType F0 := baseFieldType L1.
 pose r01 : L01 := r1.
 pose inL01 : L -> L01 := in_alg L1.
-have iota_morph : lrmorphism inL01.
-split; [split; [exact: rmorphB|split; [exact: rmorphM|]]|].
-  by rewrite /inL01 rmorph1.
+have iotam : multiplicative inL01.
+  by split; [exact: rmorphM|rewrite /inL01 rmorph1].
+have iotal : scalable inL01.
   by move=> k a; rewrite /inL01 -mulr_algl rmorphM/= mulr_algl.
-pose iota1 : 'AHom(L, L01) := AHom (linfun_is_ahom (LRMorphism iota_morph)).
+pose iotaaM := GRing.isAdditive.Build _ _ inL01 (rmorphB _).
+pose iotamM := GRing.isMultiplicative.Build _ _ inL01 iotam.
+pose iotalM := GRing.isScalable.Build _ _ _ _ inL01 iotal.
+pose iotaLRM : {lrmorphism _ -> _} := HB.pack inL01 iotaaM iotamM iotalM.
+pose iota1 : 'AHom(L, L01) := AHom (linfun_is_ahom iotaLRM).
 have inL01E : inL01 =1 iota1 by move=> x; rewrite lfunE.
 have r01_root : root (p ^^ iota1) r01 by rewrite -(eq_map_poly inL01E).
 have r01_full : <<limg iota1; r01>>%VS = fullv.
@@ -103,7 +108,7 @@ case: n => [|[_|[two_neq0|n']]]//; first by rewrite eqxx.
   by rewrite lim1g (Fadjoin_idP _)// rpred1.
 - apply/classicW; exists L, (- 1), (id_ahom _) => /=.
     by rewrite lim1g (Fadjoin_idP _)// rpredN1.
-  by rewrite prim2_rootN1// -(rmorph_nat [rmorphism of in_alg L]) fmorph_eq0.
+  by rewrite prim2_rootN1// -(rmorph_nat (in_alg L)) fmorph_eq0.
 set n := n'.+3 => nF0neq0.
 have poly_XnsubC_neq0 : 'X^n - 1 != 0 :> {poly L}.
   by rewrite -size_poly_eq0 size_XnsubC.
@@ -150,7 +155,7 @@ exists (map iota rsq ++ rs); last first.
   by rewrite adjoin_cat -(aimg1 iota) -aimg_adjoin_seq rsqf rsf.
 rewrite big_cat/= rmorphM/= big_map mulrC.
 rewrite (eqp_trans (eqp_mull _ pE))// eqp_mulr//.
-have := qE; rewrite -(eqp_map [rmorphism of iota])/=.
+have := qE; rewrite -(eqp_map iota)/=.
 rewrite (big_morph _ (rmorphM _) (rmorph1 _))/=.
 under eq_bigr do rewrite rmorphB/= map_polyX map_polyC/=.
 by rewrite -map_poly_comp (eq_map_poly (rmorph_alg _)).
@@ -164,7 +169,9 @@ Proof.
 move=> /(@classic_cycloExt _ L).
 apply/classic_bind => -[M [w [iota wfull wprim]]]; apply/classicW.
 suff splitM : SplittingField.axiom M.
-  by exists (SplittingFieldType F0 M splitM), w, iota.
+  pose mM := FieldExt_isSplittingField.Build F0 M splitM.
+  pose mT : splittingFieldType F0 := HB.pack M mM.
+  by exists mT, w, iota.
 apply: (@SplittingFieldExt _ L ('Phi_n ^^ intr) _ iota).
 rewrite -map_poly_comp (eq_map_poly (rmorph_int _)) -wfull.
 by rewrite (Phi_cyclotomic wprim); apply: splitting_Fadjoin_cyclotomic.
@@ -181,8 +188,10 @@ move=> nN0; suff: classically { L' : fieldExtType F & { w : L' &
   have splitL : SplittingField.axiom L.
     exists (cyclotomic w n); rewrite ?cyclotomic_over// -wfull.
     exact: splitting_Fadjoin_cyclotomic.
-  by exists (SplittingFieldType F L splitL), w.
-pose Fo := [splittingFieldType F of F^o].
+  pose lM := FieldExt_isSplittingField.Build F L splitL.
+  pose lT : splittingFieldType F := HB.pack L lM.
+  by exists lT, w.
+pose Fo : splittingFieldType F := F^o.
 apply: classic_bind (@classic_cycloExt _ Fo n nN0).
 case=> [L [w [iota wfull wprim]]]; apply/classicW.
 exists L, w => //; apply/eqP; rewrite eqEsubv subvf/= -wfull.

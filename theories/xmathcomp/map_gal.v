@@ -1,3 +1,4 @@
+From HB Require Import structures.
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field.
 From Abel Require Import various char0.
@@ -49,15 +50,13 @@ apply/trivgP/subsetP=> u uG; rewrite inE.
 by apply/gal_eqP => x xE; rewrite gal_id (fixed_gal _ uG).
 Qed.
 
-Program Canonical prodv_aspace_law :=
-  @Monoid.Law {subfield L} 1%AS (@prodv_aspace _ _) _ _ _.
+Program Definition prodv_aspace_law_mixin :=
+  Monoid.isComLaw.Build {subfield L} 1%AS (@prodv_aspace _ _) _ _ _.
 Next Obligation. by move=> *; apply/val_inj/prodvA. Qed.
-Next Obligation. by move=> *; apply/val_inj/prod1v. Qed.
-Next Obligation. by move=> *; apply/val_inj/prodv1. Qed.
-
-Program Canonical prodv_aspace_com_law :=
-  @Monoid.ComLaw {subfield L} 1%AS prodv_aspace_law _.
 Next Obligation. by move=> *; apply/val_inj/prodvC. Qed.
+Next Obligation. by move=> *; apply/val_inj/prod1v. Qed.
+
+HB.instance Definition _ := prodv_aspace_law_mixin.
 
 Lemma big_prodv_eq_aspace I (r : seq I) (P : {pred I}) (F : I -> {aspace L}) :
   (\big[@prodv _ _/1%VS]_(i <- r | P i) F i) =
@@ -372,14 +371,17 @@ Proof.
 move=> /= k a b; apply/lfunP => x; rewrite /map_hom.
 by rewrite !(comp_lfunE, add_lfunE, scale_lfunE) linearP.
 Qed.
-Canonical map_hom_linear := Linear map_hom_is_linear.
+HB.instance Definition _ := GRing.isLinear.Build F0 'End(L) 'End(L') _ map_hom
+  map_hom_is_linear.
 
 Lemma inv_map_hom_is_linear : linear inv_map_hom.
 Proof.
 move=> /= k a b; apply/lfunP => x; rewrite /map_hom.
 by rewrite !(comp_lfunE, add_lfunE, scale_lfunE) linearP.
 Qed.
-Canonical inv_map_hom_linear := Linear inv_map_hom_is_linear.
+HB.instance Definition _ :=
+  GRing.isLinear.Build F0 'End(L') 'End(L) _ inv_map_hom
+    inv_map_hom_is_linear.
 
 Lemma lker0_map_homC (f : 'End(L)) : lker iota == 0%VS ->
   (map_hom f \o iota = iota \o f)%VF.
@@ -418,7 +420,7 @@ Lemma map_ahom_in (f : 'End(L)) (E : {vspace L}) :
   ahom_in (iota @: E) (map_hom iota f) = ahom_in E f.
 Proof.
 apply/ahom_inP/ahom_inP => -[mfM mf1]; last first.
-  split; last by rewrite -(rmorph1 [rmorphism of iota]) map_hom_algE mf1.
+  split; last by rewrite -(rmorph1 iota) map_hom_algE mf1.
   move=> _ _ /memv_imgP[u uE ->] /memv_imgP[v vE ->].
   by rewrite !(map_hom_algE, =^~rmorphM)/= mfM.
 split=> [x y xE yE|]; last first.
@@ -449,7 +451,7 @@ apply/kHomP/kHomP => -[/= fM s_id].
      rewrite -!rmorphM/= -3?inv_map_homE ?memv_img ?memvf ?fiotaf ?rpredM//.
      by rewrite fM// rmorphM.
   by rewrite -inv_map_homE ?s_id// fiotaf//; apply: subv_trans EF.
-split=> [x y xF yF|x xF]; apply: (fmorph_inj [rmorphism of iota]) => /=.
+split=> [x y xF yF|x xF]; apply: (fmorph_inj iota) => /=.
   by rewrite rmorphM/= !inv_map_homE ?fiotaf ?rpredM// rmorphM fM ?memv_img.
 by rewrite inv_map_homE s_id ?memv_img ?memvf.
 Qed.
@@ -512,7 +514,7 @@ rewrite !kAutE limg_map_ahom limg_ker0 ?AHom_lker0// [LHS]andbC [RHS]andbC.
 have [sF_sub_F|]//= := boolP (s @: F <= F)%VS.
 apply/kAHomP/kAHomP => [s_id x xE|s_id _/memv_imgP[x xE ->]]; last first.
   by rewrite map_ahomE s_id.
-apply: (fmorph_inj [rmorphism of iota]).
+apply: (fmorph_inj iota).
 by rewrite /= -map_ahomE s_id// memv_img.
 Qed.
 
@@ -523,7 +525,7 @@ Proof. by rewrite !inE map_ahom_kAut. Qed.
 Lemma map_ahom_kEnd_img s : map_ahom s \in kAEnd 1 (iota @: {: L})%AS.
 Proof.
 rewrite inE -(aimg1 iota) map_ahom_kAut// kAutfE.
-exact/kHom_lrmorphism/ahom_is_lrmorphism.
+exact/kHom_lrmorphism/ahom_is_multiplicative.
 Qed.
 
 End map_ahom.
@@ -672,7 +674,7 @@ Implicit Types (K E F : {subfield L}).
 Lemma separable_aimgr E F s : s \in kAEndf E ->
    separable E (s @: F) = separable E F.
 Proof.
-rewrite inE => /kHom_kAut_sub/kAHomP s_id; rewrite -(separable_aimg _ _ s).
+rewrite inE => /kHom_kAut_sub/kAHomP s_id; rewrite -[RHS](separable_aimg _ _ s).
 suff /eq_in_limg->: {in E, s =1 \1%VF} by rewrite lim1g.
 by move=> x xE; rewrite lfunE/= s_id.
 Qed.
@@ -773,7 +775,8 @@ Lemma solvable_ext_refl E : solvable_ext E E.
 Proof.
 by apply/solvable_extP; exists E; rewrite subvv galois_refl/= galvv solvable1.
 Qed.
-#[local] Hint Resolve solvable_ext_refl : core.
+#[local] Hint Extern 0 (is_true (solvable_ext (asval _) (asval _))) =>
+  (apply: solvable_ext_refl) : core.
 
 Lemma sub_solvable_ext F K E :
   (E <= F)%VS -> solvable_ext K F -> solvable_ext K E.
@@ -837,10 +840,13 @@ Qed.
 
 End normalClosure.
 
-#[global] Hint Resolve normalClosureSl : core.
-#[global] Hint Resolve normalClosureSr : core.
+#[global] Hint Extern 0 (is_true (subsetv (asval _) (normalClosure _ _))) =>
+  (apply: normalClosureSl) : core.
+#[global] Hint Extern 0 (is_true (subsetv (asval _) (normalClosure _ _))) =>
+  (apply: normalClosureSr) : core.
 #[global] Hint Resolve normalClosure_normal : core.
-#[global] Hint Resolve solvable_ext_refl : core.
+#[global] Hint Extern 0 (is_true (solvable_ext (asval _) (asval _))) =>
+  (apply: solvable_ext_refl) : core.
 
 Lemma aimg_normalClosure (F0 : fieldType) (L L' : splittingFieldType F0)
   (iota : 'AHom(L, L')) (K E : {subfield L}) :

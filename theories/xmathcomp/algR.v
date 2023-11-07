@@ -1,3 +1,4 @@
+From HB Require Import structures.
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field.
 From Abel Require Import various.
@@ -15,37 +16,22 @@ Local Notation "p ^^ f" := (map_poly f p)
 
 Record algR := in_algR {algRval : algC; algRvalP : algRval \is Num.real}.
 
-Canonical algR_subType := [subType for algRval].
-Definition algR_eqMixin := [eqMixin of algR by <:].
-Canonical algR_eqType := EqType algR algR_eqMixin.
-Definition algR_choiceMixin := [choiceMixin of algR by <:].
-Canonical algR_choiceType := ChoiceType algR algR_choiceMixin.
-Definition algR_countMixin := [countMixin of algR by <:].
-Canonical algR_countType := CountType algR algR_countMixin.
-Definition algR_zmodMixin := [zmodMixin of algR by <:].
-Canonical algR_zmodType := ZmodType algR algR_zmodMixin.
-Definition algR_ringMixin := [ringMixin of algR by <:].
-Canonical algR_ringType := RingType algR algR_ringMixin.
-Definition algR_comRingMixin := [comRingMixin of algR by <:].
-Canonical algR_comRingType := ComRingType algR algR_comRingMixin.
-Definition algR_unitRingMixin := [unitRingMixin of algR by <:].
-Canonical algR_unitRingType := UnitRingType algR algR_unitRingMixin.
-Canonical algR_comUnitRingType := [comUnitRingType of algR].
-Definition algR_idomainMixin := [idomainMixin of algR by <:].
-Canonical algR_idomainType := IdomainType algR algR_idomainMixin.
-Definition algR_fieldMixin := [fieldMixin of algR by <:].
-Canonical algR_fieldType := FieldType algR algR_fieldMixin.
-Definition algR_porderMixin := [porderMixin of algR by <:].
-Canonical algR_porderType := POrderType ring_display algR algR_porderMixin.
-Lemma total_algR : totalPOrderMixin [porderType of algR].
+HB.instance Definition _ := [isSub for algRval].
+HB.instance Definition _ := [Countable of algR by <:].
+HB.instance Definition _ := [SubChoice_isSubIntegralDomain of algR by <:].
+HB.instance Definition _ := [SubIntegralDomain_isSubField of algR by <:].
+HB.instance Definition _ : Order.isPOrder ring_display algR :=
+  Order.CancelPartial.Pcan _ valK.
+Lemma total_algR : total (<=%O : rel (algR : porderType _)).
 Proof. by move=> x y; apply/real_leVge/valP/valP. Qed.
-Canonical algR_latticeType := LatticeType algR total_algR.
-Canonical algR_distrLatticeType := DistrLatticeType algR total_algR.
-Canonical algR_orderType := OrderType algR total_algR.
+HB.instance Definition _ := Order.POrder_isTotal.Build _ algR total_algR.
 
-Lemma algRval_is_rmorphism : rmorphism algRval. Proof. by []. Qed.
-Canonical algRval_additive := Additive algRval_is_rmorphism.
-Canonical algRval_rmorphism := RMorphism algRval_is_rmorphism.
+Lemma algRval_is_additive : additive algRval. Proof. by []. Qed.
+Lemma algRval_is_multiplicative : multiplicative algRval. Proof. by []. Qed.
+HB.instance Definition _ := GRing.isAdditive.Build algR algC algRval
+  algRval_is_additive.
+HB.instance Definition _ := GRing.isMultiplicative.Build algR algC algRval
+  algRval_is_multiplicative.
 
 Definition algR_norm (x : algR) : algR := in_algR (normr_real (val x)).
 Lemma algR_ler_norm_add x y : algR_norm (x + y) <= (algR_norm x + algR_norm y).
@@ -58,8 +44,6 @@ Lemma algR_normrN x : algR_norm (- x) = algR_norm x.
 Proof. by apply/val_inj; apply: normrN. Qed.
 
 Section Num.
-Definition algR_normedMixin :=
-  Num.NormedMixin algR_ler_norm_add algR_normr0_eq0 algR_normrMn algR_normrN.
 
 Section withz.
 Let z : algR := 0.
@@ -73,21 +57,13 @@ Lemma algR_ler_def (x y : algR) : (x <= y) = (algR_norm (y - x) == y - x).
 Proof. by apply: ler_def. Qed.
 End withz.
 
-Let algR_ring := (GRing.Ring.Pack (GRing.ComRing.base
-  (GRing.ComUnitRing.base (GRing.IntegralDomain.base
-     (GRing.IntegralDomain.class [idomainType of algR]))))).
-Definition algR_numMixin : @Num.mixin_of algR_ring _ _ :=
-    @Num.Mixin _ _ algR_normedMixin
-      algR_addr_gt0 algR_ger_leVge algR_normrM algR_ler_def.
-
-Canonical algR_numDomainType  := NumDomainType algR algR_numMixin.
-Canonical algR_normedZmodType := NormedZmodType algR algR algR_normedMixin.
-Canonical algR_numFieldType := [numFieldType of algR].
-Canonical algR_realDomainType := [realDomainType of algR].
-Canonical algR_realFieldType := [realFieldType of algR].
+HB.instance Definition _ := Num.Zmodule_isNormed.Build _ algR
+  algR_ler_norm_add algR_normr0_eq0 algR_normrMn algR_normrN.
+HB.instance Definition _ := Num.isNumRing.Build algR
+  algR_addr_gt0 algR_ger_leVge algR_normrM algR_ler_def.
 End Num.
 
-Definition algR_archiFieldMixin : Num.archimedean_axiom [numDomainType of algR].
+Definition algR_archiFieldMixin : Num.archimedean_axiom algR.
 Proof.
 move=> /= x; have /andP[/= _] := floorC_itv (valP `|x|).
 set n := floorC _; have [n_lt0|n_ge0] := ltP n 0.
@@ -96,7 +72,8 @@ set n := floorC _; have [n_lt0|n_ge0] := ltP n 0.
 move=> x_lt; exists (`|(n + 1)%R|%N); apply: lt_le_trans x_lt _.
 by rewrite /= rmorphMn/= pmulrn gez0_abs// addr_ge0.
 Qed.
-Canonical algR_archiFieldType := ArchiFieldType algR algR_archiFieldMixin.
+HB.instance Definition _ := Num.RealField_isArchimedean.Build algR
+  algR_archiFieldMixin.
 
 Definition algRpfactor (x : algC) : {poly algR} :=
   if x \is Num.real =P true is ReflectT xR then 'X - (in_algR xR)%:P else
@@ -123,8 +100,8 @@ Lemma algCpfactorCE (x : algC) : x \isn't Num.real ->
   algCpfactor x = ('X - x%:P) * ('X - x^*%:P).
 Proof.
 move=> xNR; rewrite algRpfactorCE//=.
-rewrite rmorphD rmorphB/= !map_polyZ !map_polyXn/= map_polyX.
-rewrite (map_polyC [rmorphism of algRval])/=.
+rewrite rmorphD /= rmorphB/= !map_polyZ !map_polyXn/= map_polyX.
+rewrite (map_polyC algRval)/=.
 rewrite mulrBl !mulrBr -!addrA; congr (_ + _).
 rewrite opprD addrA opprK -opprD -rmorphM/= -normCK; congr (- _ + _).
 rewrite mulrC !mul_polyC -scalerDl.
@@ -205,7 +182,7 @@ elim: n r => // n IHn [|x r]/= in p pr *.
 rewrite ltnS => r_lt.
 have xJxr : x^* \in x :: r.
   rewrite -root_prod_XsubC -pr.
-  have /eq_map_poly-> : algRval =1 conjC \o algRval.
+  have /eq_map_poly-> : algRval =1 Num.conj_op \o algRval.
     by move=> a /=; rewrite (CrealP (algRvalP _)).
   by rewrite map_poly_comp mapf_root pr root_prod_XsubC mem_head.
 have xJr : (x \isn't Num.real) ==> (x^* \in r) by rewrite implyNb CrealE.
@@ -223,7 +200,7 @@ case: (_ \is _) => /= in xJr *; first by rewrite divp1//.
 by rewrite (big_rem _ xJr)/= mulKp ?polyXsubC_eq0.
 Qed.
 
-Definition algR_rcfMixin : Num.real_closed_axiom [numDomainType of algR].
+Definition algR_rcfMixin : Num.real_closed_axiom algR.
 Proof.
 move=> p a b le_ab /andP[pa_le0 pb_ge0]/=.
 case: ltgtP pa_le0 => //= pa0 _; last first.
@@ -255,8 +232,10 @@ wlog : p pab0 {p_neq0 prs} /
   have := pab0; rewrite pqu !hornerM mulrACA [_ * _ * _ < 0]pmulr_llt0//.
   rewrite !horner_prod -big_split/= prodr_gt0// => x.
   have [xR|xNR] := boolP (x \is Num.real); last first.
-    by rewrite ?ltEsub/= -!horner_map/= mulr_gt0 ?algCpfactorCgt0 ?algRvalP.
-  apply: contraNT; rewrite -leNgt ?leEsub/= -!horner_map/=.
+    rewrite (_ : (0 < ?[a]) = (algRval 0 < algRval ?a))//=.
+    by rewrite -!horner_map/= mulr_gt0 ?algCpfactorCgt0 ?algRvalP.
+  apply: contraNT; rewrite -leNgt.
+  rewrite (_ : (?[a] <= 0) = (algRval ?a <= algRval 0))//= -!horner_map/=.
   by rewrite algRpfactorR_mul_gt0 ?algRvalP.
 rewrite -big_filter; have := filter_all ab rs.
 set rsab := filter _ _.
@@ -268,6 +247,6 @@ case: rsab => [_ _|x rsab]/=; rewrite (big_nil, big_cons).
   by rewrite !hornerE ltr10.
 move=> /andP[xR rsabR] /andP[axb arsb] prsab.
 exists (in_algR xR) => //=.
-by rewrite -(mapf_root [rmorphism of algRval])//= prsab rootM root_XsubC eqxx.
+by rewrite -(mapf_root algRval)//= prsab rootM root_XsubC eqxx.
 Qed.
-Canonical algR_rcfType := RcfType algR algR_rcfMixin.
+HB.instance Definition _ := Num.RealField_isClosed.Build algR algR_rcfMixin.

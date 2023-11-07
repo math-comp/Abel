@@ -1,3 +1,4 @@
+From HB Require Import structures.
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra all_solvable.
 From mathcomp Require Import all_field.
 
@@ -160,11 +161,8 @@ Proof. by move=> x; apply/ffunP => i; rewrite !ffunE mulVg. Qed.
 Lemma extnprod_mulgA : associative extnprod_mulg.
 Proof. by move=> x y z; apply/ffunP => i; rewrite !ffunE mulgA. Qed.
 
-Definition extnprod_groupMixin :=
-  Eval hnf in FinGroup.Mixin extnprod_mulgA extnprod_mul1g extnprod_mulVg.
-Canonical extnprod_baseFinGroupType :=
-  Eval hnf in BaseFinGroupType gTn extnprod_groupMixin.
-Canonical prod_group := FinGroupType extnprod_mulVg.
+HB.instance Definition _ := isMulGroup.Build gTn
+  extnprod_mulgA extnprod_mul1g extnprod_mulVg.
 
 End ExternalNDirProd.
 
@@ -288,9 +286,9 @@ Section ssrnum.
 Import Num.Theory.
 
 Lemma CrealJ (C : numClosedFieldType) :
-  {mono (@conjC C) : x / x \is Num.real}.
+  {mono (@Num.conj_op C) : x / x \is Num.real}.
 Proof.
-suff realK : {homo (@conjC C) : x / x \is Num.real}.
+suff realK : {homo (@Num.conj_op C) : x / x \is Num.real}.
   by move=> x; apply/idP/idP => /realK//; rewrite conjCK.
 by move=> x xreal; rewrite conj_Creal.
 Qed.
@@ -344,12 +342,12 @@ Lemma map_polyXsubC (aR rR : ringType) (f : {rmorphism aR -> rR}) x :
    map_poly f ('X - x%:P) = 'X - (f x)%:P.
 Proof. by rewrite rmorphB/= map_polyX map_polyC. Qed.
 
-Lemma poly_XsubC_over {R : ringType} c (S : {pred R}) (addS : subringPred S)
-  (kS : keyed_pred addS): c \in kS -> 'X - c%:P \is a polyOver kS.
+Lemma poly_XsubC_over {R : ringType} c (S : subringClosed R) :
+  c \in S -> 'X - c%:P \is a polyOver S.
 Proof. by move=> cS; rewrite rpredB ?polyOverC ?polyOverX. Qed.
 
-Lemma poly_XnsubC_over {R : ringType} n c (S : {pred R}) (addS : subringPred S)
-  (kS : keyed_pred addS): c \in kS -> 'X^n - c%:P \is a polyOver kS.
+Lemma poly_XnsubC_over {R : ringType} n c (S : subringClosed R) :
+  c \in S -> 'X^n - c%:P \is a polyOver S.
 Proof. by move=> cS; rewrite rpredB ?rpredX ?polyOverX ?polyOverC. Qed.
 
 Lemma lead_coef_prod {R : idomainType} (ps : seq {poly R}) :
@@ -382,17 +380,17 @@ by rewrite rmorph_prod big_map; apply/eq_bigr => x /=; rewrite map_polyXsubC.
 Qed.
 
 Lemma eq_in_map_poly_id0 (aR rR : ringType) (f g : aR -> rR)
-  (S0 : {pred aR}) (addS : addrPred S0) (kS : keyed_pred addS) :
+    (S : addrClosed aR) :
   f 0 = 0 -> g 0 = 0 ->
-  {in kS, f =1 g} -> {in polyOver kS, map_poly f =1 map_poly g}.
+  {in S, f =1 g} -> {in polyOver S, map_poly f =1 map_poly g}.
 Proof.
 move=> f0 g0 eq_fg p pP; apply/polyP => i.
 by rewrite !coef_map_id0// eq_fg// (polyOverP _).
 Qed.
 
 Lemma eq_in_map_poly (aR rR : ringType) (f g : {additive aR -> rR})
-  (S0 : {pred aR}) (addS : addrPred S0) (kS : keyed_pred addS) :
-  {in kS, f =1 g} -> {in polyOver kS, map_poly f =1 map_poly g}.
+    (S : addrClosed aR) :
+  {in S, f =1 g} -> {in polyOver S, map_poly f =1 map_poly g}.
 Proof. by move=> /eq_in_map_poly_id0; apply; rewrite //?raddf0. Qed.
 
 Lemma mapf_root (F : fieldType) (R : ringType) (f : {rmorphism F -> R})
@@ -404,7 +402,7 @@ Section multiplicity.
 Variable (L : fieldType).
 
 Definition mup (x : L) (p : {poly L}) :=
-  [arg max_(n > 0 : 'I_(size p).+1 | ('X - x%:P) ^+ n %| p) n] : nat.
+  [arg max_(n > (0 : 'I_(size p).+1) | ('X - x%:P) ^+ n %| p) n] : nat.
 
 Lemma mup_geq x q n : q != 0 -> (n <= mup x q)%N = (('X - x%:P) ^+ n %| q).
 Proof.
@@ -590,7 +588,7 @@ Proof. by apply/val_inj; rewrite /= vsprojK. Qed.
 (* falgebra *)
 (************)
 
-Lemma adjoin_cat (K : fieldType) (aT : FalgType K) (V : {vspace aT})
+Lemma adjoin_cat (K : fieldType) (aT : falgType K) (V : {vspace aT})
     (rs1 rs2 : seq aT) :
   <<V & rs1 ++ rs2>>%VS = <<<<V & rs1>> & rs2>>%VS.
 Proof.
@@ -599,14 +597,14 @@ elim: rs1 => /= [|r rs1 ih] in V *.
 - by rewrite !adjoin_cons ih.
 Qed.
 
-Lemma eq_adjoin (K : fieldType) (aT : FalgType K) (U : {vspace aT})
+Lemma eq_adjoin (K : fieldType) (aT : falgType K) (U : {vspace aT})
     (rs1 rs2 : seq aT) : rs1 =i rs2 ->
   <<U & rs1>>%VS = <<U & rs2>>%VS.
 Proof.
 by move=> rs12; apply/eqP; rewrite eqEsubv !adjoin_seqSr// => x; rewrite rs12.
 Qed.
 
-Lemma memv_mulP (K : fieldType) (aT : FalgType K) (U V : {vspace aT}) w :
+Lemma memv_mulP (K : fieldType) (aT : falgType K) (U V : {vspace aT}) w :
   reflect (exists n (us vs : n.-tuple aT),
              [/\ all (mem U) us, all (mem V) vs &
                  w = \sum_(i < n) tnth us i * tnth vs i])
@@ -626,7 +624,7 @@ by apply: eq_bigr => i; rewrite !tnth_map/= tnth_ord_tuple; case: sig2_eqW.
 Qed.
 
 Lemma big_prodv_seqP (I : eqType) (r : seq I)  (P : {pred I})
-  (K : fieldType) (aT : FalgType K) (U : {vspace aT})
+  (K : fieldType) (aT : falgType K) (U : {vspace aT})
   (V : I -> {vspace aT}) (W : {vspace aT}) : uniq r ->
   reflect (forall u (v : I -> aT), u \in  U -> (forall i, P i -> v i \in V i) ->
                                \big[*%R/u]_(i <- r | P i) v i \in W)
@@ -728,31 +726,27 @@ Arguments prodv_idPr {F0 L K F}.
 
 Section canonicals.
 Variables  (F0 : fieldType) (L : fieldExtType F0).
-Lemma vsproj_is_lrmorphism :  lrmorphism (vsproj {:L}).
-Proof.
-split; last exact/linearZZ.
-split; first exact/raddfB.
+Lemma vsproj_is_multiplicative : multiplicative (vsproj {:L}).
 by split => [v w|]; apply/val_inj; rewrite /= !vsprojK ?memvf ?algid1.
 Qed.
-Canonical vsproj_lrmorphism := LRMorphism vsproj_is_lrmorphism.
-Canonical vsproj_rmorphism := RMorphism vsproj_is_lrmorphism.
+HB.instance Definition _ :=
+  GRing.isMultiplicative.Build L (subvs_of {:L}) (vsproj {:L})
+    vsproj_is_multiplicative.
 
 Definition vssub (k K : {vspace L}) of (k <= K)%VS :
   subvs_of k -> subvs_of K := vsproj _ \o vsval.
 
 Variables (k K : {subfield L}) (kK : (k <= K)%VS).
 
-Lemma vssub_is_lrmorphism : lrmorphism (vssub kK).
-split; last exact/linearZZ.
-split; first exact/raddfB.
+Lemma vssub_is_multiplicative : multiplicative (vssub kK).
 split => [v w|]; apply/val_inj => /=; last first.
   by rewrite vsprojK ?algid1 ?rmorph1 ?rpred1//.
 by rewrite /= !vsprojK/= ?rpredM//= (subvP kK _ (subvsP _)) .
 Qed.
-Canonical vssub_additive := Additive vssub_is_lrmorphism.
-Canonical vssub_linear := Linear vssub_is_lrmorphism.
-Canonical vssub_rmorphism := RMorphism vssub_is_lrmorphism.
-Canonical vssub_lrmorphism := LRMorphism vssub_is_lrmorphism.
+HB.instance Definition _ := GRing.Linear.on (vssub kK).
+HB.instance Definition _ :=
+  GRing.isMultiplicative.Build (subvs_of k) (subvs_of K) (vssub kK)
+    vssub_is_multiplicative.
 
 Lemma vsval_sub (v : subvs_of k) : vsval (vssub kK v) = vsval v.
 Proof. by rewrite vsprojK// (subvP kK)// subvsP. Qed.
@@ -766,26 +760,35 @@ Lemma splitting_ahom (F0 : fieldType) (L L' : fieldExtType F0)
   {iota : 'AHom(L, L') | limg iota = E'}.
 Proof.
 do [suff init (p : {poly L}) (k : {subfield L})
-    (K := [FalgType F0 of subvs_of k]) (f : 'AHom(K, L')) :
+    (K := subvs_of k : falgType F0) (f : 'AHom(K, L')) :
     p \is a polyOver k ->  splittingFieldFor k p fullv ->
     splittingFieldFor (limg f) (p ^^ (f \o vsproj k)) E' ->
       {g : 'AHom(L, L') | limg g = E'}] in p *.
-  move=> pf pE'; pose K := [FalgType F0 of subvs_of (1%VS : {vspace L})].
+  move=> pf pE'; pose K : falgType F0 := subvs_of (1%VS : {vspace L}).
   have [idF0 idF0E] : {f : 'AHom(K, L') | forall x : F0, f x%:A = x%:A}.
-    have flr : lrmorphism
-        (fun v : K => in_alg L' (projT1 (sig_eqW (vlineP _ _ (valP v))))).
-      do ![split] => [? ?|? ?||a ?]/=.
-      - case: sig_eqW => x; case: sig_eqW => /= v->; case: sig_eqW => /= w->.
-        by rewrite -!in_algE -raddfB => /fmorph_inj<-//; rewrite raddfB.
+    pose f (v : K) := in_alg L' (projT1 (sig_eqW (vlineP _ _ (valP v)))).
+    have fa : additive f.
+      move=> ? ?; rewrite /f.
+      case: sig_eqW => x; case: sig_eqW => /= v->; case: sig_eqW => /= w->.
+      by rewrite -!in_algE -raddfB => /fmorph_inj<-//; rewrite raddfB.
+    have fm : multiplicative f.
+      split=> [? ?|]; rewrite /f.
       - case: sig_eqW => x; case: sig_eqW => /= v->; case: sig_eqW => /= w->.
         by rewrite -!in_algE -rmorphM => /fmorph_inj<-//; rewrite rmorphM.
       - case: sig_eqW => /= one /esym/eqP; rewrite algid1.
-        by rewrite -in_algE fmorph_eq1 => /eqP->; rewrite scale1r.
-      - case: sig_eqW => x; case: sig_eqW => /= v->.
-        rewrite -mulr_algl -in_algE -rmorphM => /fmorph_inj<-.
-        by rewrite -in_algE rmorphM mulr_algl.
-    exists (linfun_ahom (LRMorphism flr)) => v; rewrite lfunE/=.
-    by case: sig_eqW => /= x; rewrite algid1 -in_algE => /fmorph_inj->.
+        by rewrite -[X in X == _]in_algE fmorph_eq1 => /eqP->; rewrite scale1r.
+    have fl : scalable f.
+      move=> a ? /=; rewrite /f.
+      case: sig_eqW => x; case: sig_eqW => /= v->.
+      rewrite -[_ *: _]mulr_algl -in_algE -rmorphM => /fmorph_inj<-.
+      by rewrite -in_algE rmorphM mulr_algl.
+    pose faM := GRing.isAdditive.Build _ _ _ fa.
+    pose fmM := GRing.isMultiplicative.Build _ _ _ fm.
+    pose flM := GRing.isScalable.Build _ _ _ _ _ fl.
+    pose fLRM : {lrmorphism _ -> _} := HB.pack f faM fmM flM.
+    exists (linfun_ahom fLRM) => v; rewrite lfunE/= /f.
+    case: sig_eqW => /= x.
+    by rewrite algid1 -[in X in X -> _]in_algE => /fmorph_inj->.
   apply: (init (p ^^ in_alg L) 1%AS idF0) => //.
     by apply/polyOver1P; exists p.
   suff -> : limg idF0 = 1%VS.
@@ -803,11 +806,11 @@ move=> /sig2_eqW[rs prs rsf] /sig2_eqW [rs' prs' <-]{E'}; apply/sig_eqW.
 elim: rs => [|x rs IHrs]//= in k @K f p rs' prs rsf prs' *.
   rewrite ?Fadjoin_nil ?big_nil/= in rsf prs.
   move=> /(@val_inj _ _ _ k) in rsf; rewrite {k}rsf in K f p prs prs' *.
-  have: p %= 1 by rewrite -(eqp_map [rmorphism of vsval]) rmorph1.
-  rewrite -(eqp_map [rmorphism of f]) rmorph1 (eqp_ltrans prs')//.
+  have: p %= 1 by rewrite -(eqp_map vsval) rmorph1.
+  rewrite -(eqp_map f) rmorph1 (eqp_ltrans prs')//.
   move=> /eqp_size; rewrite size_prod_XsubC size_poly1 => -[].
   case: {+}rs' => // _; rewrite Fadjoin_nil/=.
-  exists (linfun_ahom [lrmorphism of f \o vsproj _]).
+  exists (linfun_ahom (f \o vsproj _)).
   apply/vspaceP => v; apply/memv_imgP/memv_imgP => -[u _ ->]/=.
     by exists (vsproj fullv u); rewrite ?memvf//= lfunE/=.
   by exists (val u); rewrite ?memvf//= lfunE/= ?vsvalK.
@@ -816,7 +819,7 @@ have [xk|xNk] := boolP (x \in k).
   rewrite adjoin_cons (Fadjoin_idP _) ?subvsP//= in rsf.
   have xrs' : f x \in rs'.
     rewrite -root_prod_XsubC -(eqp_root prs') mapf_root.
-    rewrite -(mapf_root [lrmorphism of vsval]) (eqp_root prs).
+    rewrite -(mapf_root vsval) (eqp_root prs).
     by rewrite root_prod_XsubC mem_head.
   have -> : <<limg f & rs'>>%VS = <<limg f & rem (f x) rs'>>%VS.
     rewrite (eq_adjoin _ (perm_mem (perm_to_rem xrs'))).
@@ -838,7 +841,7 @@ have size_q : (size q > 1)%N.
 have [x' x'rs qx'0] : exists2 x', x' \in rs' & root (q ^^ f) x'.
   have : q ^^ vsval %| p ^^ vsval.
     by rewrite -eq_q minPoly_dvdp//; apply/polyOver_subvs; exists p.
-  rewrite dvdp_map -(dvdp_map [rmorphism of f]) (eqp_dvdr _ prs').
+  rewrite dvdp_map -(dvdp_map f) (eqp_dvdr _ prs').
   move=> /dvdp_prod_XsubC[m]; rewrite eqp_monic ?map_monic ?monic_prod_XsubC//.
   move=> /eqP; case rs'_eq : mask => [|x' rs'x].
     move=> /(congr1 (psize _))/=.
@@ -847,7 +850,7 @@ have [x' x'rs qx'0] : exists2 x', x' \in rs' & root (q ^^ f) x'.
     by rewrite (@mem_mask _ _ m)// rs'_eq mem_head.
   by rewrite q_eq rootE !hornerE subrr mul0r.
 have rpx' : root (p ^^ f) x' by rewrite (eqp_root prs') root_prod_XsubC.
-pose Kx := [fieldExtType F0 of subvs_of <<k; x>>].
+pose Kx : fieldExtType F0 := subvs_of <<k; x>>.
 pose mpsI := map_inj_poly subvs_inj (rmorph0 _).
 pose x0 := Subvs (memv_adjoin k x).
 pose KKx :=  vssub (subv_adjoin k x).
@@ -888,15 +891,21 @@ have polM (v w : Kx) : pol (val v * val w) = pol (val v) * pol (val w) %% q.
   - by rewrite -ltnS -size_minPoly ltn_modp ?monic_neq0 ?monic_minPoly//.
   rewrite -Fadjoin_poly_mod ?rpredM ?Fadjoin_polyOver//.
   by rewrite hornerM !Fadjoin_poly_eq//= ?rpredM ?subvsP.
-have hlr : lrmorphism (fun v : Kx => (pol (val v) ^^ f).[x']).
-  do ![split] => [v w|v w||w v]/=.
-  - by rewrite -raddfB/= polB raddfB !hornerE.
-  - by rewrite -rmorphM/= polM map_modp/= horner_mod// rmorphM hornerE.
-  - by rewrite algid1 pol1 rmorph1 hornerE.
-  - by rewrite polZ linearZ/= rmorph_alg hornerE mulr_algl.
-pose h := linfun_ahom (LRMorphism hlr).
-exists h; first by rewrite lfunE/= polX map_polyX hornerX.
-by move=> v; rewrite /comp lfunE/= vsval_sub/= polC map_polyC hornerC.
+pose h (v : Kx) := (pol (val v) ^^ f).[x'].
+have ha : additive h.
+  by move=> v w; rewrite /h/= -raddfB/= polB raddfB !hornerE.
+have hm : multiplicative h.
+  split=> [v w|].
+  - by rewrite /h /= -rmorphM/= polM map_modp/= horner_mod// rmorphM hornerE.
+  - by rewrite /h /= algid1 pol1 rmorph1 hornerE.
+have hl : scalable h.
+  by move=> ? ?; rewrite /h /= polZ linearZ/= rmorph_alg hornerE mulr_algl.
+pose haM := GRing.isAdditive.Build _ _ _ ha.
+pose hmM := GRing.isMultiplicative.Build _ _ _ hm.
+pose hlM := GRing.isScalable.Build _ _ _ _ _ hl.
+pose hLRM : {lrmorphism _ -> _} := HB.pack h haM hmM hlM.
+exists (linfun_ahom hLRM); first by rewrite lfunE/= /h polX map_polyX hornerX.
+by move=> v; rewrite /comp lfunE/= /h/= vsval_sub/= polC map_polyC hornerC.
 Qed.
 
 Lemma lker0_img_cap (K : fieldType) (aT rT : vectType K) (f : 'Hom(aT, rT))
@@ -1108,7 +1117,9 @@ Lemma sol_setXn n (gT : 'I_n -> finGroupType) (G : forall i, {group gT i}) :
 Proof.
 elim: n => [|n IHn] in gT G * => solG; first by rewrite setX0 solvable1.
 pose gT' (i : 'I_n) := gT (lift ord0 i).
-pose f (x : prod_group gT) : prod_group gT' := [ffun i => x (lift ord0 i)].
+pose prod_group_gT := [the finGroupType of {dffun forall i, gT i}].
+pose prod_group_gT' := [the finGroupType of {dffun forall i, gT' i}].
+pose f (x : prod_group_gT) : prod_group_gT' := [ffun i => x (lift ord0 i)].
 have fm : morphic (setXn G) f.
   apply/'forall_implyP => -[a b]; rewrite !inE/=.
   by move=> /andP[/forallP aG /forallP bG]; apply/eqP/ffunP => i; rewrite !ffunE.
@@ -1119,8 +1130,8 @@ have -> : (morphm fm @* setXn G)%g = setXn (fun i => G (lift ord0 i)).
     move=> /imsetP[/=x]; rewrite inE => /forallP/= xG ->.
     by move=> i; rewrite morphmE ffunE xG.
   move=> vG; apply/imsetP.
-  pose w : prod_group gT := [ffun i : 'I_n.+1 =>
-             match unliftP ord0 i with
+  pose w := [ffun i : 'I_n.+1 =>
+             match unliftP ord0 i return (gT i) : Type with
              | UnliftSome j i_eq => ecast i (gT i) (esym i_eq) (v j)
              | UnliftNone i0 => 1%g
              end].
@@ -1133,8 +1144,12 @@ have -> : (morphm fm @* setXn G)%g = setXn (fun i => G (lift ord0 i)).
   rewrite inE; apply/forallP => i.
   by case: (unliftP ord0 i) => [j|]->; rewrite ?wl ?w0 ?vG.
 rewrite IHn ?andbT//; last by move=> i; apply: solG.
-pose k (x : gT ord0) : prod_group gT :=
-   [ffun i : 'I_n.+1 => if (ord0 =P i) is ReflectT P then ecast i (gT i) P x else 1%g].
+pose k (x : gT ord0) : prod_group_gT :=
+  [ffun i : 'I_n.+1 =>
+     match (ord0 =P i) return (gT i) : Type with
+     | ReflectT P => ecast i (gT i) P x
+     | _ => 1%g
+     end].
 have km : morphic (G ord0) k.
   apply/'forall_implyP => -[a b]; rewrite !inE/= => /andP[aG bG].
   apply/eqP/ffunP => i; rewrite !ffunE; case: eqP => //; rewrite ?mulg1//.
