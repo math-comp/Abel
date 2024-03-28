@@ -11,98 +11,11 @@ Unset Printing Implicit Defensive.
 (********************)
 
 (*************)
-(* gproduct? *)
+(* gproduct *)
 (*************)
 
-Section ExternalNDirProd.
-
-Variables (n : nat) (gT : 'I_n -> finGroupType).
-Notation gTn := {dffun forall i, gT i}.
-
-Definition extnprod_mulg (x y : gTn) : gTn := [ffun i => (x i * y i)%g].
-Definition extnprod_invg (x : gTn) : gTn := [ffun i => (x i)^-1%g].
-
-Lemma extnprod_mul1g : left_id [ffun=> 1%g] extnprod_mulg.
-Proof. by move=> x; apply/ffunP => i; rewrite !ffunE mul1g. Qed.
-
-Lemma extnprod_mulVg : left_inverse [ffun=> 1%g] extnprod_invg extnprod_mulg.
-Proof. by move=> x; apply/ffunP => i; rewrite !ffunE mulVg. Qed.
-
-Lemma extnprod_mulgA : associative extnprod_mulg.
-Proof. by move=> x y z; apply/ffunP => i; rewrite !ffunE mulgA. Qed.
-
-HB.instance Definition _ := isMulGroup.Build gTn
-  extnprod_mulgA extnprod_mul1g extnprod_mulVg.
-
-End ExternalNDirProd.
-
-Definition setXn n (fT : 'I_n -> finType) (A : forall i, {set fT i}) :
-   {set {dffun forall i, fT i}} :=
-   [set x : {dffun forall i, fT i} | [forall i : 'I_n, x i \in A i]].
-
-Lemma setXn_group_set n (gT : 'I_n -> finGroupType) (G : forall i, {group gT i}) :
-  group_set (setXn G).
-Proof.
-apply/andP => /=; split.
-  by rewrite inE; apply/forallP => i; rewrite ffunE group1.
-apply/subsetP => x /mulsgP[u v]; rewrite !inE => /forallP uG /forallP vG {x}->.
-by apply/forallP => x; rewrite ffunE groupM ?uG ?vG.
-Qed.
-
-Canonical setXn_group n (gT : 'I_n -> finGroupType) (G : forall i, {group gT i}) :=
-  Group (setXn_group_set G).
-
-Lemma setX0 (gT : 'I_0 -> finGroupType) (G : forall i, {group gT i}) :
-  setXn G = 1%g.
-Proof.
-apply/setP => x; rewrite !inE; apply/forallP/idP => [_|? []//].
-by apply/eqP/ffunP => -[].
-Qed.
-
-(********)
-(* perm *)
-(********)
-
-Lemma tpermJt (X : finType) (x y z : X) : x != z -> y != z ->
-   (tperm x z ^ tperm x y)%g = tperm y z.
-Proof.
-by move=> neq_xz neq_yz; rewrite tpermJ tpermL [tperm _ _ z]tpermD.
-Qed.
-
-Lemma gen_tperm (X : finType) x :
-  <<[set tperm x y | y in X]>>%g = [set: {perm X}].
-Proof.
-apply/eqP; rewrite eqEsubset subsetT/=; apply/subsetP => s _.
-have [ts -> _] := prod_tpermP s; rewrite group_prod// => -[/= y z] _.
-have [<-|Nyz] := eqVneq y z; first by rewrite tperm1 group1.
-have [<-|Nxz] := eqVneq x z; first by rewrite tpermC mem_gen ?imset_f.
-by rewrite -(tpermJt Nxz Nyz) groupJ ?mem_gen ?imset_f.
-Qed.
-
-Lemma prime_orbit (X : finType) x c :
-  prime #|X| -> #[c]%g = #|X| -> orbit 'P <[c]> x = [set: X].
-Proof.
-move=> X_prime ord_c; have dvd_orbit y : (#|orbit 'P <[c]> y| %| #|X|)%N.
-  by rewrite (dvdn_trans (dvdn_orbit _ _ _))// [#|<[_]>%g|]ord_c.
-have [] := boolP [forall y, #|orbit 'P <[c]> y| == 1%N].
-  move=> /'forall_eqP-/(_ _)/card_orbit1 orbit1; suff c_eq_1 : c = 1%g.
-    by rewrite c_eq_1 ?order1 in ord_c; rewrite -ord_c in X_prime.
-  apply/permP => y; rewrite perm1.
-  suff: c y \in orbit 'P <[c]> y by rewrite orbit1 inE => /eqP->.
-  by apply/orbitP; exists c => //; rewrite mem_gen ?inE.
-move=> /forallPn[y orbit_y_neq0]; have orbit_y : orbit 'P <[c]> y = [set: X].
-  apply/eqP; rewrite eqEcard subsetT cardsT.
-  by have /(prime_nt_dvdP X_prime orbit_y_neq0)<-/= := dvd_orbit y.
-by have /orbit_in_eqP-> : x \in orbit 'P <[c]> y; rewrite ?subsetT ?orbit_y.
-Qed.
-
-Lemma prime_astab (X : finType) (x : X) (c : {perm X}) :
-  prime #|X| -> #[c]%g = #|X| -> 'C_<[c]>[x | 'P]%g = 1%g.
-Proof.
-move=> X_prime ord_c; have /= := card_orbit_stab 'P [group of <[c]>%g] x.
-rewrite prime_orbit// cardsT [#|<[_]>%g|]ord_c -[RHS]muln1 => /eqP.
-by rewrite eqn_mul2l gtn_eqF ?prime_gt0//= -trivg_card1 => /eqP.
-Qed.
+Definition setX0 := groupX0.
+#[deprecated(since="mathcomp 2.3",note="Use groupX0 instead.")]
 
 (*******************)
 (* package algebra *)
