@@ -157,7 +157,7 @@ have := svalP (prim_rootP w_is_nth_root (hg_gal _ g_in)).
 have h1_in : (h ^-1)%g \in 'Gal(<<E; w>> / E)%g by rewrite ?groupV.
 have := svalP (prim_rootP w_is_nth_root (hg_gal _ h1_in)).
 set ih1 := sval _ => hh1; set ig := sval _ => hg.
-rewrite hh1 rmorphX /= hg exprAC -hh1 rmorphX /=.
+rewrite hh1 rmorphXn /= hg exprAC -hh1 rmorphXn /=.
 by rewrite -galM ?memv_adjoin // mulVg gal_id.
 Qed.
 
