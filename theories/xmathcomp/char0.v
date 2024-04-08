@@ -112,7 +112,7 @@ Lemma char0_ratr_prod I r (P : pred I) E :
 Proof. exact: rmorph_prod. Qed.
 
 Lemma char0_ratrX n : {morph ratrL : x / x ^+ n}.
-Proof. exact: rmorphX.  Qed.
+Proof. exact: rmorphXn. Qed.
 
 Lemma char0_nat n : ratrL n%:R = n%:R. Proof. exact: ratr_nat. Qed.
 

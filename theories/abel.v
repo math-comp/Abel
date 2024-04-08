@@ -310,7 +310,7 @@ suff -> : F = <<E; x>>%AS.
   apply: radical_ext_Fadjoin n_gt0 _.
   rewrite -(galois_fixedField galois_EF) -/G GE.
   apply/fixedFieldP; first by rewrite rpredX.
-  move=> _ /cycleP[i ->]; rewrite rmorphX/= gXx exprMn exprVn exprAC.
+  move=> _ /cycleP[i ->]; rewrite rmorphXn/= gXx exprMn exprVn exprAC.
   by rewrite (prim_expr_order w_root)// expr1n invr1 mul1r.
 apply/val_inj/eqP => /=.
 have -> : F = fixedField (1%g : {set gal_of F}) :> {vspace L}.
@@ -533,7 +533,7 @@ Proof.
 move=> p_prime p_neq0 xpE; have p_gt0 := prime_gt0 p_prime.
 wlog [w w_root] : L E x xpE / {w : L | p.-primitive_root w} => [hwlog|].
   apply: (@classic_cycloSplitting _ L p p_neq0) => -[L' [w [f wf rw]]].
-  rewrite -(solvable_ext_aimg f) aimg_adjoin hwlog -?rmorphX ?memv_img//.
+  rewrite -(solvable_ext_aimg f) aimg_adjoin hwlog -?rmorphXn ?memv_img//.
   by exists w.
 have galEw := galois_Fadjoin_cyclotomic E w_root.
 have solEw := solvable_Fadjoin_cyclotomic E w_root.
@@ -1286,7 +1286,7 @@ rewrite deriv_poly_example /root.
 rewrite rmorphB /= linearZ map_polyC/= map_polyXn !pesimp.
 rewrite -[5%:R]sqr_sqrtr ?ler0n// (exprM _ 2 2) -exprMn (natrX _ 2 2) subr_sqr.
 rewrite mulf_eq0 [_ + 2%:R == 0]gt_eqF ?orbF; last first.
-  by rewrite ltr_spaddr ?ltr0n// mulr_ge0 ?sqrtr_ge0// exprn_even_ge0.
+  by rewrite ltr_pwDr ?ltr0n// mulr_ge0 ?sqrtr_ge0// exprn_even_ge0.
 have sqrt5N0 : Num.sqrt (5%:R : algR) != 0 by rewrite gt_eqF// sqrtr_gt0 ?ltr0n.
 rewrite subr_eq0 (can2_eq (mulKf _) (mulVKf _))// mulrC -subr_eq0.
 rewrite -[X in _ - X]sqr_sqrtr; last first.
@@ -1502,7 +1502,7 @@ have Cchar := Cchar => p_neq0; split.
   move=> /radicalP[]; case: i => // i in epw * => _ uik.
   pose v := i.+1.-root (iota (u ^+ i.+1)).
   have : ('X ^+ i.+1 - (v ^+ i.+1)%:P).[iota u] == 0.
-    by rewrite !hornerE ?hornerXn rootCK// rmorphX subrr.
+    by rewrite !hornerE ?hornerXn rootCK// rmorphXn subrr.
     (* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
   have /Xn_sub_xnE->// := prim1rootP (isT : 0 < i.+1)%N.
   rewrite horner_prod prodf_seq_eq0/= => /hasP[/= l _].
@@ -1614,10 +1614,10 @@ elim: f => //= [x|c|u f1 IHf1|b f1 IHf1 f2 IHf2] in k {r fr} als1 als1E *.
   + rewrite (Fadjoin_idP _); first exact: rext_refl.
     by have /fmorph_inj-> := IHl; rewrite rpredV.
   + rewrite (Fadjoin_idP _); first exact: rext_refl.
-    by have := IHl; rewrite -rmorphX => /fmorph_inj->; rewrite rpredX.
+    by have := IHl; rewrite -rmorphXn => /fmorph_inj->; rewrite rpredX.
   apply/(@rext_r _ _ _ n.+1)/radicalP; split => //.
   have /(congr1 ((@GRing.exp _)^~ n.+1)) := IHl.
-  by rewrite rootCK// -rmorphX => /fmorph_inj->.
+  by rewrite rootCK// -rmorphXn => /fmorph_inj->.
 - case: als1 als1E => //= a l [IHl IHlu].
   rewrite -(eq_adjoin _ (mem_rcons _ _)) adjoin_rcons.
   pose n := size (subeval ratr f1); rewrite -[l](cat_take_drop n).

@@ -35,7 +35,7 @@ HB.instance Definition _ := GRing.isMultiplicative.Build algR algC algRval
 
 Definition algR_norm (x : algR) : algR := in_algR (normr_real (val x)).
 Lemma algR_ler_norm_add x y : algR_norm (x + y) <= (algR_norm x + algR_norm y).
-Proof. exact: ler_norm_add. Qed.
+Proof. exact: ler_normD. Qed.
 Lemma algR_normr0_eq0 x : algR_norm x = 0 -> x = 0.
 Proof. by move=> /(congr1 val)/normr0_eq0 ?; apply/val_inj. Qed.
 Lemma algR_normrMn x n : algR_norm (x *+ n) = algR_norm x *+ n.
@@ -67,7 +67,7 @@ Definition algR_archiFieldMixin : Num.archimedean_axiom algR.
 Proof.
 move=> /= x; have /andP[/= _] := floorC_itv (valP `|x|).
 set n := floorC _; have [n_lt0|n_ge0] := ltP n 0.
-  move=> /(@lt_le_trans _ _ _ _ 0); rewrite lerz0 lez_addr1.
+  move=> /(@lt_le_trans _ _ _ _ 0); rewrite lerz0 lezD1.
   by move=> /(_ n_lt0); rewrite normr_lt0.
 move=> x_lt; exists (`|(n + 1)%R|%N); apply: lt_le_trans x_lt _.
 by rewrite /= rmorphMn/= pmulrn gez0_abs// addr_ge0.
@@ -135,7 +135,7 @@ Lemma algCpfactorCgt0 x y : x \isn't Num.real -> y \is Num.real ->
 Proof.
 move=> xNR yR; rewrite algCpfactorCE// hornerM !hornerXsubC.
 rewrite [x]algCrect conjC_rect ?Creal_Re ?Creal_Im// !opprD !addrA opprK.
-rewrite -subr_sqr exprMn sqrCi mulN1r opprK ltr_paddl//.
+rewrite -subr_sqr exprMn sqrCi mulN1r opprK ltr_wpDl//.
 - by rewrite real_exprn_even_ge0// ?rpredB// ?Creal_Re.
 by rewrite real_exprn_even_gt0 ?Creal_Im ?orTb//=; apply/eqP/Creal_ImP.
 Qed.
