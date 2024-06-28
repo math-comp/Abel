@@ -1300,7 +1300,7 @@ rewrite -!sum1_count; pose pR : {poly algR} := poly_example ^^ ratr.
 have pR0 : pR != 0 by rewrite map_poly_eq0.
 suff cR : (\sum_(j <- example_roots | j \is Num.real) 1)%N = 3%N.
   have := size_example_roots; rewrite -sum1_size (bigID (mem Num.real))/=.
-  by rewrite cR => -[->].
+  by rewrite cR => -[].
 rewrite -big_filter (perm_big (map algRval (rootsR pR))); last first.
   rewrite uniq_perm ?filter_uniq ?example_roots_uniq//.
     by rewrite (map_inj_uniq (fmorph_inj _)) uniq_roots.
