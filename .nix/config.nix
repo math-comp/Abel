@@ -46,17 +46,15 @@
         } // (if (coqv == "master") then {
             coq-elpi.override.version = "coq-master";
             hierarchy-builder.override.version = "master";
-        } else {}) // (if (mcv == "master") then {
+        } else {}) // {
             mathcomp-real-closed.override.version = "master";
             mathcomp-bigenough.override.version = "1.0.1";
-        } else {}) // (if (mcv == "mathcomp-2.1.0") then {
-            mathcomp-real-closed.override.version = "master";
-            mathcomp-bigenough.override.version = "1.0.1";
-        } else {});
+        };
       }; in
     gen "8.16" "mathcomp-2.1.0" //
     gen "8.17" "mathcomp-2.1.0" //
     gen "8.18" "mathcomp-2.1.0" //
+    gen "8.19" "mathcomp-2.2.0" //
     gen "master" "master";
 
   ## Cachix caches to use in CI
