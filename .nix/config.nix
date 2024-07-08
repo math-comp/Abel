@@ -38,24 +38,26 @@
   ## When generating GitHub Action CI, one workflow file
   ## will be created per bundle
   bundles = let
-    gen = coqv: mcv:
-      { "coq${coqv}+mc${mcv}".coqPackages = {
-               coq.override.version = coqv;
-               mathcomp.override.version = mcv;
-               mathcomp.job = false;
+    gen = coqv: mcv: elpiv:
+      { "coq${coqv}+mc${mcv}" = {
+        coqPackages = {
+          coq.override.version = coqv;
+          mathcomp.override.version = mcv;
+          mathcomp.job = false;
         } // (if (coqv == "master") then {
-            coq-elpi.override.version = "coq-master";
-            hierarchy-builder.override.version = "master";
+          coq-elpi.override.version = "master";
+          hierarchy-builder.override.version = "master";
         } else {}) // {
-            mathcomp-real-closed.override.version = "master";
-            mathcomp-bigenough.override.version = "1.0.1";
+          mathcomp-real-closed.override.version = "master";
+          mathcomp-bigenough.override.version = "1.0.1";
         };
-      }; in
-    gen "8.16" "mathcomp-2.1.0" //
-    gen "8.17" "mathcomp-2.1.0" //
-    gen "8.18" "mathcomp-2.1.0" //
-    gen "8.19" "mathcomp-2.2.0" //
-    gen "master" "master";
+        ocamlPackages = if (elpiv != "") then { elpi.override.version = elpiv; } else {};
+      }; }; in
+    gen "8.16" "mathcomp-2.1.0" "" //
+    gen "8.17" "mathcomp-2.1.0" "" //
+    gen "8.18" "mathcomp-2.1.0" "" //
+    gen "8.19" "mathcomp-2.2.0" "" //
+    gen "master" "master" "1.19.2";
 
   ## Cachix caches to use in CI
   ## Below we list some standard ones
