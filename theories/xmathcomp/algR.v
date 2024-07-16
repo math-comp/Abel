@@ -1,5 +1,5 @@
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
+From mathcomp Require Import all_ssreflect all_fingroup all_algebra archimedean.
 From mathcomp Require Import all_solvable all_field.
 From Abel Require Import various.
 
@@ -63,16 +63,21 @@ HB.instance Definition _ := Num.isNumRing.Build algR
   algR_addr_gt0 algR_ger_leVge algR_normrM algR_ler_def.
 End Num.
 
+(* TODO: remove when dropping the support for MathComp 2.2 *)
+Local Fact real_floor_itv (R : archiNumDomainType) (x : R) :
+       x \is Num.real -> (Num.floor x)%:~R <= x < (Num.floor x + 1)%:~R.
+Proof. exact: real_floor_itv || exact: floor_itv. Qed.
+
 Definition algR_archiFieldMixin : Num.archimedean_axiom algR.
 Proof.
-move=> /= x; have /andP[/= _] := floorC_itv (valP `|x|).
-set n := floorC _; have [n_lt0|n_ge0] := ltP n 0.
+move=> /= x; have /andP[/= _] := real_floor_itv (valP `|x|).
+set n := Num.floor _; have [n_lt0|n_ge0] := ltP n 0.
   move=> /(@lt_le_trans _ _ _ _ 0); rewrite lerz0 lezD1.
   by move=> /(_ n_lt0); rewrite normr_lt0.
 move=> x_lt; exists (`|(n + 1)%R|%N); apply: lt_le_trans x_lt _.
 by rewrite /= rmorphMn/= pmulrn gez0_abs// addr_ge0.
 Qed.
-HB.instance Definition _ := Num.RealField_isArchimedean.Build algR
+HB.instance Definition _ := Num.NumDomain_bounded_isArchimedean.Build algR
   algR_archiFieldMixin.
 
 Definition algRpfactor (x : algC) : {poly algR} :=
