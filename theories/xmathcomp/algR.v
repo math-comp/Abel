@@ -20,8 +20,8 @@ HB.instance Definition _ := [isSub for algRval].
 HB.instance Definition _ := [Countable of algR by <:].
 HB.instance Definition _ := [SubChoice_isSubIntegralDomain of algR by <:].
 HB.instance Definition _ := [SubIntegralDomain_isSubField of algR by <:].
-HB.instance Definition _ : Order.isPOrder ring_display algR :=
-  Order.CancelPartial.Pcan _ valK.
+HB.instance Definition _ : Order.POrder.axioms_ ring_display algR :=
+  Order.POrder.copy algR (pcan_type valK).
 Lemma total_algR : total (<=%O : rel (algR : porderType _)).
 Proof. by move=> x y; apply/real_leVge/valP/valP. Qed.
 HB.instance Definition _ := Order.POrder_isTotal.Build _ algR total_algR.
