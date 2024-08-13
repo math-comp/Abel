@@ -244,7 +244,7 @@ name: Nix CI for bundle coq8.16+mcmathcomp-2.1.0
 'on':
   pull_request:
     paths:
-    - .github/workflows/**
+    - .github/workflows/nix-action-coq8.16+mcmathcomp-2.1.0.yml
   pull_request_target:
     paths-ignore:
     - .github/workflows/nix-action-coq8.16+mcmathcomp-2.1.0.yml
