@@ -650,7 +650,7 @@ Lemma solvable_ext_polyP (F : fieldType) (p : {poly F}) : p != 0 ->
                 solvable 'Gal(<<1 & rs>> / 1)).
 Proof.
 move=> p_neq0 charF; split => sol_p.
-have FoE (v : F^o) : v = in_alg F^o v by rewrite /= /(_%:A)/= mulr1.
+have FoE (v : F^o) : v = in_alg F^o v by rewrite in_algE /(_%:A)/= mulr1.
 apply: classic_bind (@classic_fieldExtFor _ _ (p : {poly F^o}) p_neq0).
   move=> [L [rs [iota rsf p_eq]]]; apply/classicW.
   have iotaF : iota =1 in_alg L by move=> v; rewrite [v in LHS]FoE rmorph_alg.
@@ -715,7 +715,7 @@ split => sol_p; last first.
   rewrite char0_galois// ?sub1v//.
   apply/splitting_normalField; rewrite ?sub1v//.
   by exists (p ^^ in_alg _); [apply/polyOver1P; exists p | exists rs].
-have FoE (v : F^o) : v = in_alg F^o v by rewrite /= /(_%:A)/= mulr1.
+have FoE (v : F^o) : v = in_alg F^o v by rewrite in_algE /(_%:A)/= mulr1.
 apply: classic_bind (@classic_fieldExtFor _ _ (p : {poly F^o}) p_neq0).
 move=> [L [rs [f rsf p_eq]]].
 have fF : f =1 in_alg L by move=> v; rewrite [v in LHS]FoE rmorph_alg.

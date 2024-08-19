@@ -776,7 +776,8 @@ do [suff init (p : {poly L}) (k : {subfield L})
       - case: sig_eqW => x; case: sig_eqW => /= v->; case: sig_eqW => /= w->.
         by rewrite -!in_algE -rmorphM => /fmorph_inj<-//; rewrite rmorphM.
       - case: sig_eqW => /= one /esym/eqP; rewrite algid1.
-        by rewrite -[X in X == _]in_algE fmorph_eq1 => /eqP->; rewrite scale1r.
+        rewrite -[X in X == _]in_algE fmorph_eq1 => /eqP->.
+        by rewrite -in_algE rmorph1.
     have fl : scalable f.
       move=> a ? /=; rewrite /f.
       case: sig_eqW => x; case: sig_eqW => /= v->.

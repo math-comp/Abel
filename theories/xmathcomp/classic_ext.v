@@ -119,7 +119,7 @@ rewrite eqp_monic ?monic_XnsubC ?monic_prod_XsubC// => /eqP Xnsub1E.
 have rs_uniq : uniq rs.
   rewrite -separable_prod_XsubC -Xnsub1E separable_Xn_sub_1//.
   have: in_alg L' n%:R != 0 by rewrite fmorph_eq0.
-  by rewrite raddfMn/= -(@in_algE _ L') rmorph1.
+  by rewrite raddfMn/= -in_algE rmorph1.
 have rs_ge : (n <= size rs)%N.
   have /(congr1 (fun p : {poly _} => size p)) := Xnsub1E.
   rewrite size_XnsubC// size_prod_seq; last first.
