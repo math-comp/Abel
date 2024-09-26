@@ -31,21 +31,6 @@ move=> NfNP; apply/classicPT => exPF; apply: NfNP => x Px.
 by apply: exPF; exists x.
 Qed.
 
-(*******)
-(* seq *)
-(*******)
-
-Lemma subset_mapP (X Y : eqType) (f : X -> Y) (s : seq X) (s' : seq Y) :
-    {subset s' <= map f s} <-> exists2 t, all (mem s) t & s' = map f t.
-Proof.
-split => [|[r /allP/= rE ->] _ /mapP[x xr ->]]; last by rewrite map_f ?rE.
-elim: s' => [|x s' IHs'] subss'; first by exists [::].
-have /mapP[y ys ->] := subss' _ (mem_head _ _).
-have [x' x's'|t st ->] := IHs'; first by rewrite subss'// inE x's' orbT.
-by exists (y :: t); rewrite //= ys st.
-Qed.
-Arguments subset_mapP {X Y}.
-
 (*********)
 (* bigop *)
 (*********)
