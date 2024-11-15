@@ -6,8 +6,8 @@ Follow the instructions on https://github.com/coq-community/templates to regener
 
 [![Docker CI][docker-action-shield]][docker-action-link]
 
-[docker-action-shield]: https://github.com/math-comp/abel/workflows/Docker%20CI/badge.svg?branch=master
-[docker-action-link]: https://github.com/math-comp/abel/actions?query=workflow:"Docker%20CI"
+[docker-action-shield]: https://github.com/math-comp/abel/actions/workflows/docker-action.yml/badge.svg?branch=master
+[docker-action-link]: https://github.com/math-comp/abel/actions/workflows/docker-action.yml
 
 
 
@@ -28,12 +28,12 @@ Mathematical Components library.
 - License: [CeCILL-B](CeCILL-B)
 - Compatible Coq versions: Coq 8.10 to 8.16
 - Additional dependencies:
-  - [MathComp ssreflect 1.13 and later](https://math-comp.github.io)
-  - [MathComp fingroup 1.13 and later](https://math-comp.github.io)
-  - [MathComp algebra 1.13 and later](https://math-comp.github.io)
-  - [MathComp solvable 1.13 and later](https://math-comp.github.io)
-  - [MathComp field 1.13 and later](https://math-comp.github.io)
-  - [MathComp real closed >= 1.1.1](https://github.com/math-comp/real-closed)
+  - [MathComp ssreflect 2.0 and later](https://math-comp.github.io)
+  - [MathComp fingroup](https://math-comp.github.io)
+  - [MathComp algebra](https://math-comp.github.io)
+  - [MathComp solvable](https://math-comp.github.io)
+  - [MathComp field](https://math-comp.github.io)
+  - [MathComp real closed >= 2.0.0](https://github.com/math-comp/real-closed)
 - Coq namespace: `Abel`
 - Related publication(s):
   - [Unsolvability of the Quintic Formalized in Dependent Type Theory
