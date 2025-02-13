@@ -1,3 +1,4 @@
+From Coq Require Import Setoid.
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field polyrcf.
