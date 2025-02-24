@@ -41,23 +41,19 @@ license:
   file: CeCILL-B
 
 supported_coq_versions:
-  text: Coq 8.10 to 8.16
-  opam: '{ (>= "8.10" & < "8.20~") | = "dev" }'
+  text: Coq 8.18 to 9.0
+  opam: '{ (>= "8.18" & < "9.1~") | = "dev" }'
 
 tested_coq_opam_versions:
-- version: 'coq-dev'
+- version: 'coq-8.20'
   repo: 'mathcomp/mathcomp-dev'
 - version: 'coq-8.19'
   repo: 'mathcomp/mathcomp-dev'
-- version: 'coq-8.18'
-  repo: 'mathcomp/mathcomp-dev'
+- version: '2.2.0-coq-8.20'
+  repo: 'mathcomp/mathcomp'
 - version: '2.2.0-coq-8.19'
   repo: 'mathcomp/mathcomp'
 - version: '2.1.0-coq-8.18'
-  repo: 'mathcomp/mathcomp'
-- version: '2.1.0-coq-8.17'
-  repo: 'mathcomp/mathcomp'
-- version: '2.1.0-coq-8.16'
   repo: 'mathcomp/mathcomp'
 
 dependencies:
