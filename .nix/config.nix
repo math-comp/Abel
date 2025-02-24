@@ -31,7 +31,7 @@
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "coq8.18+mcmathcomp-2.1.0";
+  default-bundle = "coq8.20+mcmathcomp-2.3.0";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration
@@ -53,11 +53,34 @@
         };
         ocamlPackages = if (elpiv != "") then { elpi.override.version = elpiv; } else {};
       }; }; in
-    gen "8.16" "mathcomp-2.1.0" "" //
-    gen "8.17" "mathcomp-2.1.0" "" //
     gen "8.18" "mathcomp-2.1.0" "" //
     gen "8.19" "mathcomp-2.2.0" "" //
-    gen "master" "master" "1.19.2";
+    gen "8.20" "mathcomp-2.3.0" "" // {
+      "coq-9.0".coqPackages = {
+        coq.override.version = "9.0";
+        coq-elpi.job = true;
+        hierarchy-builder.job = true;
+        mathcomp-real-closed.override.version = "master";
+        mathcomp-bigenough.override.version = "1.0.2";
+      };
+      "coq-master" = { rocqPackages = {
+        rocq-core.override.version = "master";
+        rocq-elpi.override.version = "master";
+        rocq-elpi.override.elpi-version = "2.0.7";
+        stdlib.override.version = "master";
+        bignums.override.version = "master";
+      }; coqPackages = {
+        coq.override.version = "master";
+        coq-elpi.override.version = "master";
+        coq-elpi.override.elpi-version = "2.0.7";
+        hierarchy-builder.override.version = "master";
+        mathcomp.override.version = "master";
+        mathcomp-real-closed.override.version = "master";
+        mathcomp-bigenough.override.version = "1.0.2";
+        stdlib.override.version = "master";
+        bignums.override.version = "master";
+      }; };
+    };
 
   ## Cachix caches to use in CI
   ## Below we list some standard ones
