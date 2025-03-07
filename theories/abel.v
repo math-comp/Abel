@@ -1325,8 +1325,8 @@ have p2  : Num.sg pR.[2%:~R]        =   1 by rewrite pRE !pesimp -lock rmorph1.
 have simp := (pN2, pN1, p1, p2, mulN1r, mulrN1).
 have [||x0 /andP[_ x0N1] rx0] := @ivt_sign _ pR (- 2%:R) (- 1); rewrite ?simp//.
   by rewrite -subr_ge0 opprK addKr ler01.
-(have [||x1 /andP[x10 x11] rx1] := @ivt_sign _ pR (-1) 1; rewrite ?simp) => [|//|].
-  by rewrite -subr_ge0 opprK addr_ge0 ?ler01.  (* add a by above and Remove this line when requiring mathcomp >= 2.4.0 *)
+have [||x1 /andP[x10 x11] rx1] := @ivt_sign _ pR (-1) 1; rewrite ?simp//.
+  by rewrite -subr_ge0 opprK addr_ge0 ?ler01.
 have [||x2 /andP[/= x21 _] rx2] := @ivt_sign _ pR 1 2%:R; rewrite ?simp//.
   by rewrite -subr_ge0 addrK ler01.
 have: sorted <%R [:: x0; x1; x2] by rewrite /= (lt_trans x0N1) ?(lt_trans x11).
