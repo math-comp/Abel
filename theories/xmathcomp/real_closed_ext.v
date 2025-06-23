@@ -35,10 +35,10 @@ have sizep_gt1 : (size p > 1)%N.
 have dp_neq0 : p^`() != 0 by rewrite -size_poly_eq0 size_deriv -lt0n ltn_predRL.
 have p_neq0 : p != 0 by apply: contraTneq sizep_gt1 => ->; rewrite size_poly0.
 have Silt k (i : 'I_k.-1) : (i.+1 < k)%N by rewrite -ltn_predRL.
-have slt (i : 'I_n.-1) : s`_i < s`_i.+1 by apply/sortedP; rewrite ?sorted_roots.
+have slt (i : 'I_n.-1) : s`_i < s`_(i.+1) by apply/sortedP; rewrite ?sorted_roots.
 have peq0 i : (i < n)%N -> p.[s`_i] = 0.
   by move=> i_lt; apply/rootP; rewrite -[root _ _]mem_rootsR// mem_nth.
-have peq (i : 'I_n.-1) : p.[s`_i] = p.[s`_i.+1] by rewrite !peq0// ltnW.
+have peq (i : 'I_n.-1) : p.[s`_i] = p.[s`_(i.+1)] by rewrite !peq0// ltnW.
 have /all_sig2[r rs p'r] := rolle (slt _) (peq _).
 have rtE (i : 'I_n.-1) : [tuple r i | i < n.-1]`_i = r i.
   by rewrite (nth_map i) ?size_enum_ord ?nth_ord_enum.
