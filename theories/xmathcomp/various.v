@@ -1100,7 +1100,7 @@ have phixy : phi (tperm x y) = tperm 0 k.
   apply/permP => i; rewrite permE/= /gsf/=; apply: (canLR fK).
   by rewrite !permE/= -f0 -[y]gK !(can_eq fK) -!fun_if.
 have phic : phi c = perm (addrI 1%R).
-  apply/permP => i; rewrite permE /gsf/=; apply: (canLR fK).
+  apply/permP => i; rewrite [LHS]permE /gsf/=; apply: (canLR fK).
   by rewrite !permE /f /Zpm -permM addrC expgDzmod.
 rewrite -(injmSK phi_inj)//= morphim_gen/= ?subsetT//= -/phi.
 rewrite phiT /morphim !setTI/= -/phi imsetU1 imset_set1/= phixy phic.

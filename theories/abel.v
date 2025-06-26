@@ -1226,7 +1226,7 @@ Proof.
 rewrite separable_poly.unlock.
 apply/coprimepP => q /(irredp_XsubCP irreducible_example) [//| eqq].
 have size_deriv_example : size poly_example^`() = 5%N.
-  rewrite !derivCE addr0 alg_polyC -scaler_nat addr0.
+  rewrite !derivCE ?mul0rn ?addr0 alg_polyC -scaler_nat.
   by rewrite size_addl ?size_scale ?size_opp ?size_polyXn ?size_polyC.
 rewrite gtNdvdp -?size_poly_eq0 ?size_deriv_example//.
 by rewrite (eqp_size eqq) ?size_poly_example.
@@ -1263,7 +1263,7 @@ by rewrite separable_map separable_example.
 Qed.
 
 Lemma deriv_poly_example : poly_example^`() = 5%:R *: 'X^4 - 4%:R%:P.
-Proof. by rewrite /poly_example !derivE addr0 alg_polyC scaler_nat ?addr0. Qed.
+Proof. by rewrite /poly_example !derivE ?mul0rn?addr0 alg_polyC scaler_nat. Qed.
 
 Lemma deriv_poly_example_neq0 : poly_example^`() != 0.
 Proof.
