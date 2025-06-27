@@ -556,7 +556,7 @@ Qed.
 Lemma gal_kAEndf (K E : {subfield L}) : (K <= E)%VS ->
    (gal E @* kAEndf K)%g = (gal E @* kAEnd K E)%g :> {set _}.
 Proof.
-move=> KE; rewrite kAEnd_split morphimIG ?ker_gal ?kAEndSl// (setIidPr _)//=.
+move=> KE; rewrite (kAEnd_split K) morphimIG ?ker_gal ?kAEndSl ?(setIidPr _)//=.
 by rewrite (subset_trans (morphim_sub _ _))//= morphimS// subfield_closed.
 Qed.
 
