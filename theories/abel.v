@@ -319,10 +319,10 @@ Section Abel.
 
 Lemma radical_aimg (F0 : fieldType) (L L' : splittingFieldType F0)
   (iota : 'AHom(L, L')) (U : {vspace L})
-  (x : Falgebra.vect_ringType L) (n : nat) :
+  (x : L) (n : nat) :
   radical (iota @: U) (iota x) n = radical U x n.
 Proof.
-rewrite /radical (fmorph_char (ahom_rmorphism iota))/=-rmorphX/= -rmorphB/=.
+rewrite /radical (fmorph_char iota)/=-rmorphXn/= -rmorphB/=.
 have inE: forall y, iota y \in (iota @: U)%VS = (y \in U).
   move=> y; apply/idP/idP.
     by move=> /memv_imgP [u uU] /fmorph_inj ->.
@@ -409,7 +409,7 @@ have [n0 | n_ne0] := boolP (n%:R == 0 :> L).
   have apF : a ^+ p - a \in F by rewrite rpredB// rpredX.
   apply/fixedFieldP => // h /[!GE]/cycleP[+ ->].
   elim=> [|m IHm]; first by rewrite expg0 gal_id.
-  rewrite expgSr galM// IHm rmorphB/= rmorphX/= ga -Frobenius_autE.
+  rewrite expgSr galM// IHm rmorphB/= rmorphXn/= ga -Frobenius_autE.
   by rewrite rmorphD/= rmorph1 !Frobenius_autE opprD addrACA subrr add0r.
 exists n; rewrite part_pnat_id -?natf_neq0// in wroot.
 have [|x [xF xN0]] := Hilbert's_theorem_90 ggen (subvP EF _ wE) _.
@@ -428,7 +428,7 @@ rewrite -(galois_fixedField galEF).
 have xnF : x ^+ n \in F by rewrite rpredX.
 apply/fixedFieldP => //= h /[!GE]/cycleP[+ ->].
 elim=> [|m IHm]; first by rewrite expg0 gal_id.
-rewrite expgSr galM// IHm rmorphX/= gx exprMn exprVn.
+rewrite expgSr galM// IHm rmorphXn/= gx exprMn exprVn.
 by rewrite (prim_expr_order wroot) invr1 mul1r.
 Qed.
 
@@ -768,14 +768,14 @@ suff: solvable_ext 1 <<1 & rs>>.
 rewrite -(solvable_ext_aimg iota).
 have nE: ((\dim <<1 & rs>>%AS)`_[char L']^' = n`_[char F]^')%N.
   apply/eq_partn/eq_negn => x.
-  by rewrite -(char_lalg L); apply/fmorph_char/ahom_rmorphism.
+  by rewrite -(char_lalg L); apply/fmorph_char/iota.
 apply/(@AbelGalois _ _ w) => //.
 - by rewrite limgS// sub1v.
 - rewrite -aimg_normalClosure //= aimg1 dimv1 divn1 dim_aimg/=.
   by rewrite normalClosure_id ?sub1v// nE.
 have /= := solrs L' (map iota rs) _ w.
 rewrite -(aimg1 iota) -!aimg_adjoin_seq dim_aimg.
-apply => //; have := pE; rewrite -(eqp_map [rmorphism of iota]).
+apply => //; have := pE; rewrite -(eqp_map iota).
    by rewrite -map_poly_comp/= (eq_map_poly (rmorph_alg _)) map_prod_XsubC.
 by rewrite nE.
 Qed.
@@ -802,7 +802,7 @@ apply: classic_bind (@classic_fieldExtFor _ _ (p : {poly F^o}) p_neq0).
   exists S, rs; split => //=; first by rewrite -(eq_map_poly iotaF).
   by apply: (sol_p S rs); rewrite -(eq_map_poly iotaF).
 move=> L rs prs; apply: sol_p => -[M [rs' [prs']]].
-pose K := [fieldExtType F of subvs_of <<1 & rs>>%VS].
+pose K : fieldExtType _ := subvs_of <<1 & rs>>%VS.
 pose rsK := map (vsproj <<1 & rs>>%VS) rs.
 have pKrs : p ^^ in_alg K %= \prod_(x <- rsK) ('X - x%:P).
   rewrite -(eqp_map vsval)/= map_prod_XsubC/= -map_poly_comp/=.
@@ -859,7 +859,7 @@ have splitL : SplittingField.axiom L.
   exists rs => //; suff <- : limg f = 1%VS by [].
   apply/eqP; rewrite eqEsubv sub1v andbT; apply/subvP => v.
   by move=> /memv_imgP[u _ ->]; rewrite fF/= rpredZ// rpred1.
-pose S := SplittingFieldType F L splitL.
+pose S : splittingFieldType _ := HB.pack L (FieldExt_isSplittingField.Build _ L splitL).
 pose d := ((\dim <<1 & (rs : seq S)>>)`_[char F]^')%N.
 have /classic_cycloSplitting-/(_ S) : d%:R != 0 :> F by apply: natf_partn_ne0.
 apply/classic_bind => -[C [w [g wg w_prim]]]; apply/classicW.
@@ -1755,7 +1755,7 @@ elim: f => //= [x|c|u f1 IHf1|b f1 IHf1 f2 IHf2] in k {r fr} als1 als1E *.
   + rewrite (Fadjoin_idP _); first exact: rext_refl.
     by have /fmorph_inj-> := IHl; rewrite rpredV.
   + rewrite (Fadjoin_idP _); first exact: rext_refl.
-    by have := IHl; rewrite -rmorphX => /fmorph_inj->; rewrite rpredX.
+    by have := IHl; rewrite -rmorphXn => /fmorph_inj->; rewrite rpredX.
   apply/(@rext_r _ _ _ n.+1)/radicalP; left; split.
     by apply/negP; rewrite pnatr_eq0.
   have /(congr1 ((@GRing.exp _)^~ n.+1)) := IHl.

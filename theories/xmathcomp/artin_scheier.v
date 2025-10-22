@@ -49,7 +49,7 @@ have lcLHS : lead_coef ('X^p - 'X - (x ^+ p - x)%:P) = 1.
 rewrite [LHS](@all_roots_prod_XsubC _ _ rs).
 - by rewrite lcLHS scale1r big_map big_enum.
 - by rewrite size_tuple ?size_addl ?size_opp// size_polyXn.
-- apply/allP => y /mapP[/= i _ ->]; rewrite rootE !hornerE hornerXn.
+- apply/allP => y /mapP[/= i _ ->]; rewrite rootE !hornerE ?hornerXn.
   rewrite -!Frobenius_autE rmorphD rmorph_nat.
   by rewrite opprD addrACA subrr addr0 subrr.
 - by rewrite uniq_rootsE/= map_inj_uniq ?enum_uniq// => i j /addrI/ZprI; apply.
@@ -74,7 +74,7 @@ Lemma ArtinSchreier_galois : galois E <<E; x>>.
 Proof.
 apply/splitting_galoisField; exists ('X^p - 'X - (x ^+ p - x)%:P); split.
 - exact ArtinSchreier_polyOver.
-- rewrite /separable_poly derivB derivC subr0 derivB derivXn derivX -scaler_nat.
+- rewrite unlock derivB derivC subr0 derivB derivXn derivX -scaler_nat.
   rewrite charf0// scale0r add0r -(@coprimepZr _ (-1)) ?oppr_eq0 ?oner_eq0//.
   by rewrite scaleNr scale1r opprK coprimep1.
 - by apply: ArtinSchreier_splitting.

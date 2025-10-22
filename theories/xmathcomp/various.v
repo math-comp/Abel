@@ -103,7 +103,7 @@ Context {T : Type} {n1 n2} (t1 : n1.-tuple T) (t2 : n2.-tuple T).
 
 Lemma tnth_cons (x : T) (l : seq T) (i : 'I_(size l)) :
   tnth (in_tuple (x :: l)) (lift ord0 i) = tnth (in_tuple l) i.
-Proof. by rewrite /tnth/=; apply/set_nth_default. Qed.
+Proof. exact/set_nth_default/(valP i). Qed.
 
 Lemma tnth_lshift i : tnth [tuple of t1 ++ t2] (lshift n2 i) = tnth t1 i.
 Proof.
@@ -527,14 +527,6 @@ Lemma poly_XnsubC_over {R : ringType} n c (S : subringClosed R) :
   c \in S -> 'X^n - c%:P \is a polyOver S.
 Proof. by move=> cS; rewrite rpredB ?rpredX ?polyOverX ?polyOverC. Qed.
 
-Lemma polyOver_mulr_2closed [R : ringType] [S : {pred R}]
-  [addS : addrPred S] (kS : keyed_pred addS) : 
-  GRing.mulr_2closed kS -> GRing.mulr_2closed (polyOver kS).
-Proof.
-move=> SM u vz /polyOverP uS /polyOverP vS; apply/polyOverP => i.
-by rewrite coefM rpred_sum // => j _; apply/SM.
-Qed.
-
 Lemma lead_coef_prod {R : idomainType} (ps : seq {poly R}) :
   lead_coef (\prod_(p <- ps) p) = \prod_(p <- ps) lead_coef p.
 Proof. by apply/big_morph/lead_coef1; apply: lead_coefM. Qed.
@@ -849,7 +841,7 @@ Proof.
 move=> fgU fgx y /Fadjoin_poly_eq <-.
 move: (Fadjoin_poly U x y) (Fadjoin_polyOver U x y) => p /polyOverP pU.
 rewrite -(coefK p) horner_poly 2!rmorph_sum/=; apply/eq_bigr => i _.
-by rewrite 2!rmorphM /= fgU// 2!rmorphX/= fgx.
+by rewrite 2!rmorphM /= fgU// 2!rmorphXn/= fgx.
 Qed.
 
 Lemma ahom_eq_adjoin_seq [F0 : fieldType] [K : fieldExtType F0]
@@ -1351,12 +1343,12 @@ move: (galTrace_ne_0 K E) => [b [bE tb]].
 remember (\dim_K E) as n.
 have ordx: #[x]%g = n by rewrite orderE -DgalE -(galois_dim Egal).
 move: (expg_order x); rewrite ordx => xord.
-move: (Egal) => /galois_subW/field_dimS/ltn_divRL/[dup]/(_ 0%N). 
+move: (Egal) => /andP[]/[dup] KE /field_dimS/ltn_divRL/[dup]/(_ 0%N) + + _. 
 rewrite mul0n adim_gt0 => dimgt0 /(_ 1%N); rewrite mul1n => dimgt1.
 case: n => [|n] in Heqn ordx xord *; first by move: dimgt0; rewrite -Heqn.
 case: n => [|n] in Heqn ordx xord *.
    move:  dimgt1; rewrite -Heqn ltnn => /esym/negbT; rewrite -leqNgt => dimEK.
-   move: (eqEdim K E); rewrite dimEK (galois_subW Egal) => /=/eqP KE.
+   move: (eqEdim K E); rewrite dimEK KE => /=/eqP {}KE.
    move: normEa1; rewrite /galTrace.
    have ->: \sum_(x0 in ('Gal(E / K))%g) x0 a = \sum_(x0 in ('Gal(E / K))%g) a.
       apply/eq_bigr => f fgal.
@@ -1616,22 +1608,22 @@ case: (Q a) => /=; first by rewrite IHr Monoid.mulmA.
 by rewrite IHr Monoid.mulmCA.
 Qed.
 
-Lemma bigA_distr_bigA2 (R : Type) (zero one : R) (times : Monoid.mul_law zero)
-  (plus : Monoid.add_law zero times) (I : finType) (F G : I -> R) :
-  \big[times/one]_i plus (F i) (G i) =
-  \big[plus/zero]_(J in {set I}) \big[times/one]_i (if i \in J then F i else G i).
+Lemma bigA_distr_bigA2 (R : Type) (zero one : R) (mul : Monoid.mul_law zero)
+  (add : Monoid.add_law zero mul) (I : finType) (F G : I -> R) :
+  \big[mul/one]_i add (F i) (G i) =
+  \big[add/zero]_(J in {set I}) \big[mul/one]_i (if i \in J then F i else G i).
 Proof.
-transitivity (\big[times/one]_i \big[plus/zero]_(b : bool) if b then F i else G i); first by apply: eq_bigr => i _; rewrite big_bool.
+under eq_bigr => i _ do rewrite -(big_bool _ (fun b => if b then F i else G i)).
 rewrite bigA_distr_bigA.
 set f := fun J : {set I} => val J.
-transitivity (\big[plus/zero]_(f0 in (imset f (mem setT))) \big[times/one]_i (if f0 i then F i else G i)).
+transitivity (\big[add/zero]_(f0 in (imset f (mem setT)))
+                \big[mul/one]_i (if f0 i then F i else G i)).
   suff <-: setT = imset f (mem setT) by apply: congr_big=>// i; rewrite in_setT.
   apply/esym/eqP; rewrite -subTset; apply/subsetP => b _.
   by apply/imsetP; exists (FinSet b).
-rewrite big_imset; last by case => g; case => h _ _; rewrite /f/= => ->.
-apply: congr_big=>//; case => g; first by rewrite in_setT.
-move=>_; apply: eq_bigr => i _; congr (if _ then _ else _).
-by rewrite SetDef.pred_of_setE.
+rewrite big_imset; last by case=> g; case=> h _ _; rewrite /f => /= ->.
+apply: congr_big => //; case=> g; first exact: in_setT.
+by move=> _; apply: eq_bigr => i _; congr (if _ then _ else _); rewrite unlock.
 Qed.
 
 Lemma coefn_prod_XsubC {R : comRingType} (ps : seq R) (n : nat) :
@@ -1650,13 +1642,13 @@ rewrite coef_sum.
 transitivity (\sum_(I in {set 'I_(size ps)}) if #|I| == (size ps - n)%N then \prod_(i < size ps | i \in I) - (tnth (Tuple (eqxx (size ps))) i) else 0).
   apply: eq_bigr => I _.
   rewrite big_if/= big_const iter_mulr_1.
-  rewrite -(rmorph_prod (@polyC_rmorphism R))/= coefCM coefXn.
+  rewrite -(rmorph_prod (@polyC R))/= coefCM coefXn.
   rewrite -[#|I| == _](eqn_add2l n) addnBA// [(_ + (size ps))%N]addnC -addnBA// subnn addn0 [(n + _)%N]addnC.
   rewrite -[in X in _ = if _ == X then _ else _](card_ord (size ps)) -(cardC I) eqn_add2l.
   by case: (n == #|[predC I]|); rewrite ?mulr1 ?mulr0.
 rewrite -big_mkcond mulr_sumr/=; apply: eq_bigr => I /eqP cardI.
 rewrite prodrN cardI; congr GRing.mul; apply: eq_bigr => i _.
-by rewrite (tnth_nth (GRing.zero R)) -psE.
+by rewrite (tnth_nth (@GRing.zero R)) -psE.
 Qed.
 
 Lemma coefPn_prod_XsubC {R : comRingType} (ps : seq R) :
@@ -1678,7 +1670,7 @@ rewrite big_imset/=; last by move=> i j _ _; rewrite/f => ij; apply/set1P; rewri
 have psE: ps = tval (Tuple (eqxx (size ps))) by [].
 rewrite [in RHS]psE -(map_tnth_enum (Tuple _)) big_map enumT.
 apply: congr_big => // i; first by rewrite in_setT.
-by move=>_; rewrite big_set1 (tnth_nth (GRing.zero R)) -psE.
+by move=>_; rewrite big_set1 (tnth_nth (@GRing.zero R)) -psE.
 Qed.
 
 Lemma coefP0_prod_XsubC {R : comRingType} (ps : seq R) :
@@ -1695,7 +1687,7 @@ rewrite big_set1.
 have psE: ps = tval (Tuple (eqxx (size ps))) by [].
 rewrite [in RHS]psE -(map_tnth_enum (Tuple _)) big_map enumT.
 apply: congr_big => // i; first by rewrite in_setT.
-by move=>_; rewrite (tnth_nth (GRing.zero R)) -psE.
+by move=>_; rewrite (tnth_nth (@GRing.zero R)) -psE.
 Qed.
 
 
