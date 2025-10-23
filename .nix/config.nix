@@ -31,7 +31,7 @@
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "coq8.20+mcmathcomp-2.3.0";
+  default-bundle = "coq-9.0";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration
