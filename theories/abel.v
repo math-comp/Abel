@@ -2,6 +2,7 @@ From Corelib Require Import Setoid.
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field polyrcf.
+Set SsrOldRewriteGoalsOrder.  (* change Set to Unset when porting the file, then remove the line when requiring MathComp >= 2.6 *)
 From Abel Require Import various classic_ext map_gal algR.
 From Abel Require Import char0 cyclotomic_ext real_closed_ext.
 
