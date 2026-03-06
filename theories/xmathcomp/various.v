@@ -734,7 +734,7 @@ HB.instance Definition _ :=
   GRing.isMultiplicative.Build L (subvs_of {:L}) (vsproj {:L})
     vsproj_is_multiplicative.
 
-Definition vssub (k K : {vspace L}) of (k <= K)%VS :
+Definition vssub (k K : {vspace L}) & (k <= K)%VS :
   subvs_of k -> subvs_of K := vsproj _ \o vsval.
 
 Variables (k K : {subfield L}) (kK : (k <= K)%VS).
