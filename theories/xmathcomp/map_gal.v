@@ -193,7 +193,7 @@ by rewrite eqEsubset eqEsubv galois_sub// galois_connection.
 Qed.
 
 Lemma galois_misom (k K F : {subfield L})
-  (H := 'Gal((K * F) / F)%g) (H' := 'Gal (K / (K :&: F))%g) :
+  (H := 'Gal((K * F) / F)%g) (H' := 'Gal (K / F)%g) :
   galois k K -> (k <= F)%VS -> misom H H' (normalField_cast K).
 Proof.
 move=> gal_kK kF; have kK := galois_subW gal_kK.
@@ -214,7 +214,8 @@ apply/misomP; exists r_H_morphic; apply/isomP; split.
   have /eqP/gal_eqP/(_ _ xiK) := mker ker_u.
   rewrite /normalField_cast galK ?KF// => ->; rewrite gal_id.
   by rewrite (fixed_gal _ Hu)// field_subvMl.
-apply/eqP; rewrite eq_sym galois_eq ?(capv_galois kF gal_kK)//.
+apply/esym/eqP; rewrite [X in X == _]gal_cap capvC.
+rewrite galois_eq ?(capv_galois kF gal_kK)//.
 rewrite eqEsubv; apply/andP; split; apply/subvP => x; last first.
   rewrite memv_cap => /andP[Kx Fx].
   apply/fixedFieldP => // _ /morphimP[/= v Hv _ ->].
@@ -228,7 +229,7 @@ by rewrite /normalField_cast galK ?KF//; apply; apply/morphimP; exists u.
 Qed.
 
 Lemma galois_isog (k K F : {subfield L}) : galois k K -> (k <= F)%VS ->
-  'Gal((K * F) / F) \isog 'Gal (K / K :&: F).
+  'Gal((K * F) / F) \isog 'Gal (K / F).
 Proof. by move=> galkK /(galois_misom galkK) /misom_isog. Qed.
 
 Lemma subv_big_prodv_seq I r (P : {pred I}) (k : {subfield L})
@@ -794,8 +795,7 @@ exists ([aspace of normalClosure k E] * F)%AS.
 rewrite (@galois_prodvr _ _ k) ?normalClosure_galois//.
 rewrite ?prodvSl ?sub_normalClosure//=.
 rewrite (isog_sol (galois_isog (normalClosure_galois _) _))//.
-rewrite (solvableS _ solkE)// galS// subv_cap kF.
-by rewrite galois_subW ?normalClosure_galois.
+by rewrite (solvableS _ solkE)// galS//.
 Qed.
 
 Import AEnd_FinGroup.
