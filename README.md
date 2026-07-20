@@ -26,15 +26,15 @@ Mathematical Components library.
   - Assia Mahboubi (initial)
   - Pierre-Yves Strub (initial)
 - License: [CeCILL-B](CeCILL-B)
-- Compatible Coq versions: Coq 8.10 to 8.16
+- Compatible Rocq/Coq versions: 9.0 or later
 - Additional dependencies:
-  - [MathComp ssreflect 2.0 and later](https://math-comp.github.io)
+  - [MathComp ssreflect 2.4 and later](https://math-comp.github.io)
   - [MathComp fingroup](https://math-comp.github.io)
   - [MathComp algebra](https://math-comp.github.io)
   - [MathComp solvable](https://math-comp.github.io)
   - [MathComp field](https://math-comp.github.io)
-  - [MathComp real closed >= 2.0.0](https://github.com/math-comp/real-closed)
-- Coq namespace: `Abel`
+  - [MathComp real closed](https://github.com/math-comp/real-closed)
+- Rocq/Coq namespace: `Abel`
 - Related publication(s):
   - [Unsolvability of the Quintic Formalized in Dependent Type Theory
 ](https://hal.inria.fr/hal-03136002) 
@@ -45,15 +45,19 @@ The easiest way to install the latest released version of Abel - Ruffini Theorem
 is via [OPAM](https://opam.ocaml.org/doc/Install.html):
 
 ```shell
-opam repo add coq-released https://coq.inria.fr/opam/released
+opam repo add rocq-released https://rocq-prover.org/opam/released
 opam install coq-mathcomp-abel
 ```
 
-To instead build and install manually, do:
+To instead build and install manually, you need to make sure that all the
+libraries this development depends on are installed.  The easiest way to do that
+is still to rely on opam:
 
 ``` shell
 git clone https://github.com/math-comp/abel.git
 cd abel
+opam repo add rocq-released https://rocq-prover.org/opam/released
+opam install --deps-only .
 make   # or make -j <number-of-cores-on-your-machine> 
 make install
 ```

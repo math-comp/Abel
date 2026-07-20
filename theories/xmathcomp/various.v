@@ -241,7 +241,7 @@ Qed.
 
 Import GRing.Theory.
 Local Open Scope ring_scope.
-Notation has_char0 L := ([char L] =i pred0).
+Notation has_char0 L := ([pchar L] =i pred0).
 
 (**********)
 (* ssralg *)
@@ -250,14 +250,14 @@ Notation has_char0 L := ([char L] =i pred0).
 Lemma iter_addr (V : zmodType) n x y : iter n (+%R x) y = x *+ n + y :> V.
 Proof. by elim: n => [|n ih]; rewrite ?add0r //= ih mulrS addrA. Qed.
 
-Lemma prodrMl {R : comRingType} {I : finType} (A : pred I) (x : R) F :
+Lemma prodrMl {R : comPzRingType} {I : finType} (A : pred I) (x : R) F :
   \prod_(i in A) (x * F i) = x ^+ #|A| * \prod_(i in A) F i.
 Proof.
 rewrite -sum1_card; elim/big_rec3: _; first by rewrite expr0 mulr1.
 by move=> i y p z iA ->; rewrite mulrACA exprS.
 Qed.
 
-Lemma expr_sum {R : ringType} {T : Type} (x : R) (F : T -> nat) P s :
+Lemma expr_sum {R : pzRingType} {T : Type} (x : R) (F : T -> nat) P s :
   x ^+ (\sum_(i <- s | P i) F i) = \prod_(i <- s | P i) x ^+ (F i).
 Proof. by apply: big_morph; [exact: exprD | exact: expr0]. Qed.
 
@@ -265,14 +265,14 @@ Lemma prim_root_natf_neq0 (F : fieldType) n (w : F) :
   n.-primitive_root w -> (n%:R != 0 :> F).
 Proof.
 have [->//|n_gt0] := posnP n => x_prim; apply/negPf/negP => nFneq0.
-have /natf0_char[//|p char_p] := nFneq0.
-have p_prime : prime p := charf_prime char_p.
-move: nFneq0; rewrite -(dvdn_charf char_p) => dvdpn.
+have /natf0_pchar[//|p char_p] := nFneq0.
+have p_prime : prime p := pcharf_prime char_p.
+move: nFneq0; rewrite -(dvdn_pcharf char_p) => dvdpn.
 have [k cpk nE] := pfactor_coprime p_prime n_gt0.
 have k_gt0 : (k > 0)%N by move: n_gt0; rewrite nE muln_gt0 => /andP[].
 have /prim_expr_order/eqP := x_prim; rewrite nE exprM.
 elim: (logn p n) => [|i IHi]; last first.
-  rewrite expnSr exprM -subr_eq0 -Frobenius_autE -(Frobenius_aut1 char_p).
+  rewrite expnSr exprM -subr_eq0 -pFrobenius_autE -(pFrobenius_aut1 char_p).
   by rewrite -rmorphB fmorph_eq0 subr_eq0.
 rewrite -(prim_order_dvd x_prim) nE mulnC Gauss_dvd ?coprimeXl//.
 rewrite pfactor_dvdn// ltn_geF// -[k]muln1 logn_Gauss ?logn1//.
@@ -299,10 +299,10 @@ End ssrnum.
 (* ssrint *)
 (**********)
 
-Lemma dvdz_charf (R : ringType) (p : nat) :
-  p \in [char R] -> forall n : int, (p %| n)%Z = (n%:~R == 0 :> R).
+Lemma dvdz_charf (R : nzRingType) (p : nat) :
+  p \in [pchar R] -> forall n : int, (p %| n)%Z = (n%:~R == 0 :> R).
 Proof.
-move=> charRp [] n; rewrite [LHS](dvdn_charf charRp)//.
+move=> charRp [] n; rewrite [LHS](dvdn_pcharf charRp)//.
 by rewrite NegzE abszN rmorphN// oppr_eq0.
 Qed.
 
@@ -316,38 +316,39 @@ Local Notation "p ^^ f" := (map_poly f p)
 Lemma irredp_XaddC (F : fieldType) (x : F) : irreducible_poly ('X + x%:P).
 Proof. by rewrite -[x]opprK rmorphN; apply: irredp_XsubC. Qed.
 
-Lemma lead_coef_XnsubC {R : ringType} n (c : R) : (0 < n)%N ->
+Lemma lead_coef_XnsubC {R : nzRingType} n (c : R) : (0 < n)%N ->
   lead_coef ('X^n - c%:P) = 1.
 Proof.
 move=> gt0_n; rewrite lead_coefDl ?lead_coefXn //.
-by rewrite size_opp size_polyC size_polyXn ltnS (leq_trans (leq_b1 _)).
+by rewrite size_polyN size_polyC size_polyXn ltnS (leq_trans (leq_b1 _)).
 Qed.
 
-Lemma lead_coef_XsubC {R : ringType} (c : R) :
-  lead_coef ('X - c%:P) = 1.
+Lemma lead_coef_XsubC {R : nzRingType} (c : R) : lead_coef ('X - c%:P) = 1.
 Proof. by apply: (@lead_coef_XnsubC _ 1%N). Qed.
 
-Lemma monic_XsubC {R : ringType} (c : R) : 'X - c%:P \is monic.
+Lemma monic_XsubC {R : nzRingType} (c : R) : 'X - c%:P \is monic.
 Proof. by rewrite monicE lead_coef_XsubC. Qed.
 
-Lemma monic_XnsubC {R : ringType} n (c : R) : (0 < n)%N -> 'X^n - c%:P \is monic.
+Lemma monic_XnsubC {R : nzRingType} n (c : R) :
+  (0 < n)%N -> 'X^n - c%:P \is monic.
 Proof. by move=> gt0_n; rewrite monicE lead_coef_XnsubC. Qed.
 
-Lemma size_XnsubC {R : ringType} n (c : R) : (0 < n)%N -> size ('X^n - c%:P) = n.+1.
+Lemma size_XnsubC {R : nzRingType} n (c : R) :
+  (0 < n)%N -> size ('X^n - c%:P) = n.+1.
 Proof.
-move=> gt0_n; rewrite size_addl ?size_polyXn //.
-by rewrite size_opp size_polyC; case: (c =P 0).
+move=> gt0_n; rewrite size_polyDl ?size_polyXn //.
+by rewrite size_polyN size_polyC; case: (c =P 0).
 Qed.
 
-Lemma map_polyXsubC (aR rR : ringType) (f : {rmorphism aR -> rR}) x :
+Lemma map_polyXsubC (aR rR : nzRingType) (f : {rmorphism aR -> rR}) x :
    map_poly f ('X - x%:P) = 'X - (f x)%:P.
 Proof. by rewrite rmorphB/= map_polyX map_polyC. Qed.
 
-Lemma poly_XsubC_over {R : ringType} c (S : subringClosed R) :
+Lemma poly_XsubC_over {R : nzRingType} c (S : subringClosed R) :
   c \in S -> 'X - c%:P \is a polyOver S.
 Proof. by move=> cS; rewrite rpredB ?polyOverC ?polyOverX. Qed.
 
-Lemma poly_XnsubC_over {R : ringType} n c (S : subringClosed R) :
+Lemma poly_XnsubC_over {R : nzRingType} n c (S : subringClosed R) :
   c \in S -> 'X^n - c%:P \is a polyOver S.
 Proof. by move=> cS; rewrite rpredB ?rpredX ?polyOverX ?polyOverC. Qed.
 
@@ -363,24 +364,24 @@ rewrite lead_coef_prod big_seq (eq_bigr (fun=> 1)) ?big1 //=.
 by move=> i /mapP[c _ ->]; apply: lead_coef_XsubC.
 Qed.
 
-Lemma coef0M {R : ringType} (p q : {poly R}) : (p * q)`_0 = p`_0 * q`_0.
+Lemma coef0M {R : nzRingType} (p q : {poly R}) : (p * q)`_0 = p`_0 * q`_0.
 Proof. by rewrite coefM big_ord1. Qed.
 
-Lemma coef0_prod {R : ringType} {T : Type} (ps : seq T) (F : T -> {poly R}) P :
+Lemma coef0_prod {R : nzRingType} {T : Type} (ps : seq T) (F : T -> {poly R}) P :
   (\prod_(p <- ps | P p) F p)`_0 = \prod_(p <- ps | P p) (F p)`_0.
 Proof.
 by apply: (big_morph (fun p : {poly R} => p`_0));
    [apply: coef0M | rewrite coefC eqxx].
 Qed.
 
-Lemma map_prod_XsubC (aR rR : ringType) (f : {rmorphism aR -> rR}) rs :
+Lemma map_prod_XsubC (aR rR : nzRingType) (f : {rmorphism aR -> rR}) rs :
   map_poly f (\prod_(x <- rs) ('X - x%:P)) =
   \prod_(x <- map f rs) ('X - x%:P).
 Proof.
 by rewrite rmorph_prod big_map; apply/eq_bigr => x /=; rewrite map_polyXsubC.
 Qed.
 
-Lemma eq_in_map_poly_id0 (aR rR : ringType) (f g : aR -> rR)
+Lemma eq_in_map_poly_id0 (aR rR : nzRingType) (f g : aR -> rR)
     (S : addrClosed aR) :
   f 0 = 0 -> g 0 = 0 ->
   {in S, f =1 g} -> {in polyOver S, map_poly f =1 map_poly g}.
@@ -389,12 +390,12 @@ move=> f0 g0 eq_fg p pP; apply/polyP => i.
 by rewrite !coef_map_id0// eq_fg// (polyOverP _).
 Qed.
 
-Lemma eq_in_map_poly (aR rR : ringType) (f g : {additive aR -> rR})
+Lemma eq_in_map_poly (aR rR : nzRingType) (f g : {additive aR -> rR})
     (S : addrClosed aR) :
   {in S, f =1 g} -> {in polyOver S, map_poly f =1 map_poly g}.
 Proof. by move=> /eq_in_map_poly_id0; apply; rewrite //?raddf0. Qed.
 
-Lemma mapf_root (F : fieldType) (R : ringType) (f : {rmorphism F -> R})
+Lemma mapf_root (F : fieldType) (R : nzRingType) (f : {rmorphism F -> R})
     (p : {poly F}) (x : F) :
   root (p ^^ f) (f x) = root p x.
 Proof. by rewrite !rootE horner_map fmorph_eq0. Qed.
@@ -527,14 +528,14 @@ rewrite size_map_poly_id0 ?intr_eq0 ?lead_coef_eq0// in fN1.
 have [/eqP/size_poly1P[c cN0 ->]|gN1] := eqVneq (size g) 1%N.
   by rewrite mulrC mul_polyC map_polyZ/= eqp_sym eqp_scale// intr_eq0.
 have c_neq0 : (lead_coef q)%:~R != 0 :> 'F_p
-   by rewrite -(dvdz_charf (char_Fp _)).
+   by rewrite -(dvdz_charf (pchar_Fp _)).
 have : map_poly (intr : int -> 'F_p) q = (lead_coef q)%:~R *: 'X^((size q).-1).
   apply/val_inj/(@eq_from_nth _ 0) => [|i]; rewrite size_map_poly_id0//.
     by rewrite size_scale// size_polyXn -polySpred.
   move=> i_small; rewrite coef_poly i_small coefZ coefXn lead_coefE.
   move: i_small; rewrite polySpred// ltnS/=.
   case: ltngtP => // [i_lt|->]; rewrite (mulr1, mulr0)//= => _.
-  by apply/eqP; rewrite -(dvdz_charf (char_Fp _))// dvd_pq.
+  by apply/eqP; rewrite -(dvdz_charf (pchar_Fp _))// dvd_pq.
 rewrite [in LHS]q_eq rmorphM/=.
 set c := (X in X *: _); set n := (_.-1).
 set pf := map_poly _ f; set pg := map_poly _ g => pfMpg.
@@ -553,7 +554,7 @@ have pfN1 : size pf != 1%N by rewrite size_map_poly_id0.
 have pgN1 : size pg != 1%N by rewrite size_map_poly_id0.
 have /(dvdXn _ pgN1) /eqP : pg %| c *: 'X^n by rewrite -pfMpg dvdp_mull.
 have /(dvdXn _ pfN1) /eqP : pf %| c *: 'X^n by rewrite -pfMpg dvdp_mulr.
-by rewrite !coef_map// -!(dvdz_charf (char_Fp _))//; apply: dvdz_mul.
+by rewrite !coef_map// -!(dvdz_charf (pchar_Fp _))//; apply: dvdz_mul.
 Qed.
 
 (***********)

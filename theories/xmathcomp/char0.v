@@ -10,7 +10,7 @@ Import GRing.Theory.
 
 Local Open Scope ring_scope.
 
-Local Notation has_char0 L := ([char L] =i pred0).
+Local Notation has_char0 L := ([pchar L] =i pred0).
 
 Section Char0MorphismsIdomain.
 
@@ -23,7 +23,7 @@ Lemma char0_intr_eq0 (z : int) : ((z%:~R : R) == 0) = (z == 0).
 Proof.
 suff hPos (m : nat) : (m%:~R == 0 :> R) = (Posz m == 0).
   by case: z => [m | m] => //; rewrite NegzE rmorphN /= !oppr_eq0.
-by rewrite [m%:~R]/(m%:R); move/charf0P: (charR0)->.
+by rewrite [m%:~R]/(m%:R); move/pcharf0P: (charR0)->.
 Qed.
 
 Lemma char0_intr_inj : injective (fun i => i%:~R : R).
@@ -85,7 +85,7 @@ Section NumberFieldsProps.
 Variable (L : fieldExtType rat).
 
 Lemma char_ext : has_char0 L. (* this works more generally for `lalgType rat` *)
-Proof. by move=> x; rewrite char_lalg Num.Theory.char_num. Qed.
+Proof. by move=> x; rewrite pchar_lalg Num.Theory.pchar_num. Qed.
 Hint Resolve char_ext : core.
 
 Lemma rat_extratr0 : ratr 0 = 0 :> L.
@@ -170,7 +170,7 @@ set r := (_ * f + _)%R.
 have Nrx : ~~ root r x.
   rewrite /root !hornerE subrr mulr0 add0r mulf_neq0//.
   have -> : m.+1%:R = m.+1%:R%:P :> {poly L} by rewrite !raddfMn.
-  rewrite hornerC natf_neq0/= (eq_pnat _ (eq_negn charL))/=.
+  rewrite hornerC natf_neq0_pchar/= (eq_pnat _ (eq_negn charL))/=.
   by apply/andP; split => //; apply/allP.
 rewrite (eqp_dvdr _ (eqp_divr _ (gcdp_mul2r _ _ _))).
 rewrite divp_pmul2r//; last 2 first.
