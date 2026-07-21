@@ -64,7 +64,7 @@ pose q := \prod_(d <- rem n (divisors n)) Q d.
 have ePp : P n * p = 'X^n - 1 by rewrite -eP fact.
 have eQq : Q n * q = 'X^n - 1 by rewrite -eQ fact.
 have Xnsub1N0 : 'X^n - 1 != 0 :> {poly F}.
-  by rewrite -size_poly_gt0 size_Xn_sub_1.
+  by rewrite -size_poly_gt0 size_XnsubC.
 have pN0 : p != 0 by apply: dvdpN0 Xnsub1N0; rewrite -ePp dvdp_mulIr.
 have epq : p = q.
   case: (divisors_correct n_gt0) => uniqd sortedd dP.

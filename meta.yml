@@ -41,27 +41,33 @@ license:
   file: CeCILL-B
 
 supported_coq_versions:
-  text: Coq 8.18 to 9.0
-  opam: '{ (>= "8.18" & < "9.1~") | = "dev" }'
+  text: '9.0 or later'
+  opam: '{>= "9.0"}'
 
 tested_coq_opam_versions:
-- version: 'coq-8.20'
+- version: 'rocq-prover-dev'
   repo: 'mathcomp/mathcomp-dev'
-- version: 'coq-8.19'
+- version: 'rocq-prover-9.2'
   repo: 'mathcomp/mathcomp-dev'
-- version: '2.2.0-coq-8.20'
+- version: 'rocq-prover-9.1'
+  repo: 'mathcomp/mathcomp-dev'
+- version: 'rocq-prover-9.0'
+  repo: 'mathcomp/mathcomp-dev'
+- version: '2.5.0-rocq-prover-9.1'
   repo: 'mathcomp/mathcomp'
-- version: '2.2.0-coq-8.19'
+- version: '2.5.0-rocq-prover-9.0'
   repo: 'mathcomp/mathcomp'
-- version: '2.1.0-coq-8.18'
+- version: '2.4.0-rocq-prover-9.1'
+  repo: 'mathcomp/mathcomp'
+- version: '2.4.0-rocq-prover-9.0'
   repo: 'mathcomp/mathcomp'
 
 dependencies:
 - opam:
     name: coq-mathcomp-ssreflect
-    version: '{ (>= "2.0.0" & < "2.3~") | = "dev" }'
+    version: '{>= "2.4"}'
   description: |-
-    [MathComp ssreflect 2.0 and later](https://math-comp.github.io)
+    [MathComp ssreflect 2.4 and later](https://math-comp.github.io)
 - opam:
     name: coq-mathcomp-fingroup
   description: |-
@@ -80,9 +86,8 @@ dependencies:
     [MathComp field](https://math-comp.github.io)
 - opam:
     name: coq-mathcomp-real-closed
-    version: '{ (>= "2.0.0") | = "dev" }'
   description: |-
-    [MathComp real closed >= 2.0.0](https://github.com/math-comp/real-closed)
+    [MathComp real closed](https://github.com/math-comp/real-closed)
 namespace: Abel
 
 keywords:
