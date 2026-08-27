@@ -25,10 +25,6 @@
   ## /!\ Manual overlays in `.nix/coq-overlays` should be preferred then.
   # buildInputs = [ ];
 
-  ## Set this when the package has no rocqPackages version yet
-  ## (either in nixpkgs or in .nix/rocq-overlays)
-  no-rocq-yet = true;
-
   ## Indicate the relative location of your _CoqProject
   ## If not specified, it defaults to "_CoqProject"
   # coqproject = "_CoqProject";
@@ -43,26 +39,28 @@
   ## will be created per bundle
   bundles =
     {
-      "rocq-master" = { rocqPackages = {
+      "rocq-master".rocqPackages = {
         rocq-core.override.version = "master";
+        coq.override.version = "master";
         rocq-elpi.override.version = "master";
         hierarchy-builder.override.version = "master";
         micromega-plugin.override.version = "master";
         mathcomp.override.version = "master";
+        mathcomp-bigenough.override.version = "master";
         mathcomp-real-closed.override.version = "master";
-      }; coqPackages = {
-        coq.override.version = "master";
-        coq-elpi.override.version = "master";
-        hierarchy-builder.override.version = "master";
-        micromega-plugin.override.version = "master";
-        mathcomp.override.version = "master";
-        mathcomp-real-closed.override.version = "master";
-      }; };
-      "rocq-9.1" = { rocqPackages = {
+      };
+      "rocq-9.3".rocqPackages = {
+        rocq-core.override.version = "9.3";
+        coq.override.version = "9.3";
+      };
+      "rocq-9.2".rocqPackages = {
+        rocq-core.override.version = "9.2";
+        coq.override.version = "9.2";
+      };
+      "rocq-9.1".rocqPackages = {
         rocq-core.override.version = "9.1";
-      }; coqPackages = {
         coq.override.version = "9.1";
-      }; };
+      };
     };
 
   ## Cachix caches to use in CI
@@ -70,17 +68,17 @@
   cachix.coq = {};
   cachix.math-comp.authToken = "CACHIX_AUTH_TOKEN";
   cachix.coq-community = {};
-  
+
   ## If you have write access to one of these caches you can
   ## provide the auth token or signing key through a secret
-  ## variable on GitHub. Then, you should give the variable
+  ## variable on GitHub. Then, you should give the variable
   ## name here. For instance, coq-community projects can use
   ## the following line instead of the one above:
   # cachix.coq-community.authToken = "CACHIX_AUTH_TOKEN";
-  
+
   ## Or if you have a signing key for a given Cachix cache:
   # cachix.my-cache.signingKey = "CACHIX_SIGNING_KEY"
-  
+
   ## Note that here, CACHIX_AUTH_TOKEN and CACHIX_SIGNING_KEY
   ## are the names of secret variables. They are set in
   ## GitHub's web interface.
