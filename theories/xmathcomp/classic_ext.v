@@ -116,7 +116,7 @@ have poly_XnsubC_neq0 : 'X^n - 1 != 0 :> {poly L}.
 apply: classic_bind (classic_fieldExtFor (poly_XnsubC_neq0)).
 case=> [L' [rs [iota rs_full]]].
 rewrite rmorphB rmorph1/= map_polyXn.
-rewrite eqp_monic ?monic_XnsubC ?monic_prod_XsubC// => /eqP Xnsub1E.
+rewrite eqp_monic ?monicXnsubC ?monic_prod_XsubC// => /eqP Xnsub1E.
 have rs_uniq : uniq rs.
   rewrite -separable_prod_XsubC -Xnsub1E separable_Xn_sub_1//.
   have: in_alg L' n%:R != 0 by rewrite fmorph_eq0.
