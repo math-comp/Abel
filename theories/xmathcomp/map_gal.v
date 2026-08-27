@@ -1,6 +1,6 @@
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
-From mathcomp Require Import all_solvable all_field.
+From mathcomp Require Import all_boot all_fingroup all_algebra all_solvable.
+From mathcomp Require Import all_field.
 Set SsrOldRewriteGoalsOrder.  (* change Set to Unset when porting the file, then remove the line when requiring MathComp >= 2.6 *)
 From Abel Require Import various char0.
 
@@ -447,14 +447,14 @@ Lemma inv_map_hom_kHom (E F : {subfield L}) (f : 'End(L')) :
 Proof.
 move=> EF fiotaF; have fiotaf u : u \in F -> f (iota u) \in limg iota.
   by move=> uF; apply: subv_trans fiotaF; do !apply: memv_img.
-apply/kHomP/kHomP => -[/= fM s_id].
-   split=> [_ _/memv_imgP[x xF ->]|_] /memv_imgP[y yF ->].
-     rewrite -!rmorphM/= -3?inv_map_homE ?memv_img ?memvf ?fiotaf ?rpredM//.
-     by rewrite fM// rmorphM.
-  by rewrite -inv_map_homE ?s_id// fiotaf//; apply: subv_trans EF.
-split=> [x y xF yF|x xF]; apply: (fmorph_inj iota) => /=.
-  by rewrite rmorphM/= !inv_map_homE ?fiotaf ?rpredM// rmorphM fM ?memv_img.
-by rewrite inv_map_homE s_id ?memv_img ?memvf.
+apply/kHomP_tmp/kHomP_tmp => -[/= s_id fM].
+  split=> [_|_ _/memv_imgP[x xF ->]] /memv_imgP[y yF ->].
+    by rewrite -inv_map_homE ?s_id// fiotaf//; apply: subv_trans EF.
+  rewrite -!rmorphM/= -3?inv_map_homE ?memv_img ?memvf ?fiotaf ?rpredM//.
+  by rewrite fM// rmorphM.
+split=> [x xF|x y xF yF]; apply: (fmorph_inj iota) => /=.
+  by rewrite inv_map_homE s_id ?memv_img ?memvf.
+by rewrite rmorphM/= !inv_map_homE ?fiotaf ?rpredM// rmorphM fM ?memv_img.
 Qed.
 
 Lemma limg_inv_map_ahom  (E : {subfield L}) (f : 'End(L')) :
@@ -526,7 +526,7 @@ Proof. by rewrite !inE map_ahom_kAut. Qed.
 Lemma map_ahom_kEnd_img s : map_ahom s \in kAEnd 1 (iota @: {: L})%AS.
 Proof.
 rewrite inE -(aimg1 iota) map_ahom_kAut// kAutfE.
-exact/kHom_lrmorphism/ahom_is_multiplicative.
+exact/kHom_monoid_morphism/ahom_is_monoid_morphism.
 Qed.
 
 End map_ahom.

@@ -1,5 +1,5 @@
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect all_fingroup all_algebra all_solvable.
+From mathcomp Require Import all_boot all_fingroup all_algebra all_solvable.
 From mathcomp Require Import all_field.
 Set SsrOldRewriteGoalsOrder.  (* change Set to Unset when porting the file, then remove the line when requiring MathComp >= 2.6 *)
 
@@ -267,27 +267,27 @@ Arguments prodv_idPr {F0 L K F}.
 
 Section canonicals.
 Variables  (F0 : fieldType) (L : fieldExtType F0).
-Lemma vsproj_is_multiplicative : multiplicative (vsproj {:L}).
-by split => [v w|]; apply/val_inj; rewrite /= !vsprojK ?memvf ?algid1.
+Lemma vsproj_is_monoid_morphism : monoid_morphism (vsproj {:L}).
+by split => [|v w]; apply/val_inj; rewrite /= !vsprojK ?memvf ?algid1.
 Qed.
 HB.instance Definition _ :=
-  GRing.isMultiplicative.Build L (subvs_of {:L}) (vsproj {:L})
-    vsproj_is_multiplicative.
+  GRing.isMonoidMorphism.Build L (subvs_of {:L}) (vsproj {:L})
+    vsproj_is_monoid_morphism.
 
 Definition vssub (k K : {vspace L}) & (k <= K)%VS :
   subvs_of k -> subvs_of K := vsproj _ \o vsval.
 
 Variables (k K : {subfield L}) (kK : (k <= K)%VS).
 
-Lemma vssub_is_multiplicative : multiplicative (vssub kK).
-split => [v w|]; apply/val_inj => /=; last first.
+Lemma vssub_is_monoid_morphism : monoid_morphism (vssub kK).
+split => [|v w]; apply/val_inj => /=.
   by rewrite vsprojK ?algid1 ?rmorph1 ?rpred1//.
 by rewrite /= !vsprojK/= ?rpredM//= (subvP kK _ (subvsP _)) .
 Qed.
 HB.instance Definition _ := GRing.Linear.on (vssub kK).
 HB.instance Definition _ :=
-  GRing.isMultiplicative.Build (subvs_of k) (subvs_of K) (vssub kK)
-    vssub_is_multiplicative.
+  GRing.isMonoidMorphism.Build (subvs_of k) (subvs_of K) (vssub kK)
+    vssub_is_monoid_morphism.
 
 Lemma vsval_sub (v : subvs_of k) : vsval (vssub kK v) = vsval v.
 Proof. by rewrite vsprojK// (subvP kK)// subvsP. Qed.
@@ -308,23 +308,23 @@ do [suff init (p : {poly L}) (k : {subfield L})
   move=> pf pE'; pose K : falgType F0 := subvs_of (1%VS : {vspace L}).
   have [idF0 idF0E] : {f : 'AHom(K, L') | forall x : F0, f x%:A = x%:A}.
     pose f (v : K) := in_alg L' (projT1 (sig_eqW (vlineP _ _ (valP v)))).
-    have fa : additive f.
+    have fa : zmod_morphism f.
       move=> ? ?; rewrite /f.
       case: sig_eqW => x; case: sig_eqW => /= v->; case: sig_eqW => /= w->.
       by rewrite -!in_algE -raddfB => /fmorph_inj<-//; rewrite raddfB.
-    have fm : multiplicative f.
-      split=> [? ?|]; rewrite /f.
-      - case: sig_eqW => x; case: sig_eqW => /= v->; case: sig_eqW => /= w->.
-        by rewrite -!in_algE -rmorphM => /fmorph_inj<-//; rewrite rmorphM.
+    have fm : monoid_morphism f.
+      split=> [|? ?]; rewrite /f.
       - case: sig_eqW => /= one /esym/eqP; rewrite algid1.
         by rewrite -[X in X == _]in_algE fmorph_eq1 => /eqP->; rewrite scale1r.
+      - case: sig_eqW => x; case: sig_eqW => /= v->; case: sig_eqW => /= w->.
+        by rewrite -!in_algE -rmorphM => /fmorph_inj<-//; rewrite rmorphM.
     have fl : scalable f.
       move=> a ? /=; rewrite /f.
       case: sig_eqW => x; case: sig_eqW => /= v->.
       rewrite -[_ *: _]mulr_algl -in_algE -rmorphM => /fmorph_inj<-.
       by rewrite -in_algE rmorphM mulr_algl.
-    pose faM := GRing.isAdditive.Build _ _ _ fa.
-    pose fmM := GRing.isMultiplicative.Build _ _ _ fm.
+    pose faM := GRing.isZmodMorphism.Build _ _ _ fa.
+    pose fmM := GRing.isMonoidMorphism.Build _ _ _ fm.
     pose flM := GRing.isScalable.Build _ _ _ _ _ fl.
     pose fLRM : {lrmorphism _ -> _} := HB.pack f faM fmM flM.
     exists (linfun_ahom fLRM) => v; rewrite lfunE/= /f.
@@ -433,16 +433,16 @@ have polM (v w : Kx) : pol (val v * val w) = pol (val v) * pol (val w) %% q.
   rewrite -Fadjoin_poly_mod ?rpredM ?Fadjoin_polyOver//.
   by rewrite hornerM !Fadjoin_poly_eq//= ?rpredM ?subvsP.
 pose h (v : Kx) := (pol (val v) ^^ f).[x'].
-have ha : additive h.
+have ha : zmod_morphism h.
   by move=> v w; rewrite /h/= -raddfB/= polB raddfB !hornerE.
-have hm : multiplicative h.
-  split=> [v w|].
-  - by rewrite /h /= -rmorphM/= polM map_modp/= horner_mod// rmorphM hornerE.
+have hm : monoid_morphism h.
+  split=> [|v w].
   - by rewrite /h /= algid1 pol1 rmorph1 hornerE.
+  - by rewrite /h /= -rmorphM/= polM map_modp/= horner_mod// rmorphM hornerE.
 have hl : scalable h.
   by move=> ? ?; rewrite /h /= polZ linearZ/= rmorph_alg hornerE mulr_algl.
-pose haM := GRing.isAdditive.Build _ _ _ ha.
-pose hmM := GRing.isMultiplicative.Build _ _ _ hm.
+pose haM := GRing.isZmodMorphism.Build _ _ _ ha.
+pose hmM := GRing.isMonoidMorphism.Build _ _ _ hm.
 pose hlM := GRing.isScalable.Build _ _ _ _ _ hl.
 pose hLRM : {lrmorphism _ -> _} := HB.pack h haM hmM hlM.
 exists (linfun_ahom hLRM); first by rewrite lfunE/= /h polX map_polyX hornerX.
@@ -612,7 +612,8 @@ have [g fK gK] : bijective f.
   have : (c ^+ (j - i)%R)%g \in stabx.
     by rewrite !inE ?groupX ?mem_gen ?sub1set ?inE// ['P%act _ _]cjix eqxx.
   rewrite [stabx]perm_prime_astab// => /set1gP.
-  move=> /(congr1 (mulg (c ^+ i))); rewrite -expgDzmod// addrC addrNK mulg1.
+  move=> /(congr1 (monoid.mul (c ^+ i))).
+  rewrite -expgDzmod// addrC addrNK mulg1.
   by move=> /eqP; rewrite eq_expg_ord// ?cppSS ?ord_c// => /eqP->.
 pose gsf s := g \o s \o f.
 have gsf_inj (s : {perm X}) : injective (gsf s).

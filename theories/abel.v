@@ -1,6 +1,6 @@
 From Corelib Require Import Setoid.
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
+From mathcomp Require Import all_boot all_order all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field polyrcf.
 Set SsrOldRewriteGoalsOrder.  (* change Set to Unset when porting the file, then remove the line when requiring MathComp >= 2.6 *)
 From Abel Require Import various classic_ext map_gal algR.
@@ -1086,7 +1086,7 @@ Lemma gal_perm_cycle_order : #[(gal_perm gal_cycle)]%g = d.
 Proof. by rewrite order_injm ?gal_cycle_order ?injm_gal_perm ?gal1. Qed.
 
 Definition conjL : {lrmorphism L -> L} :=
-  projT1 (restrict_aut_to_normal_num_field iota Num.conj_op).
+  projT1 (restrict_aut_to_normal_num_field iota Num.conj).
 
 Definition iotaJ : {morph iota : x / conjL x >-> x^*} :=
   projT2 (restrict_aut_to_normal_num_field _ _).

@@ -1,5 +1,5 @@
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect all_algebra all_field.
+From mathcomp Require Import all_boot all_algebra all_field.
 Set SsrOldRewriteGoalsOrder.  (* change Set to Unset when porting the file, then remove the line when requiring MathComp >= 2.6 *)
 
 Set Implicit Arguments.
@@ -47,7 +47,7 @@ Hypothesis charF0 : has_char0 F.
 
 Local Notation ratrF := (char0_ratr charF0).
 
-Fact char0_ratr_is_additive : additive ratrF.
+Fact char0_ratr_is_zmod_morphism : zmod_morphism ratrF.
 Proof.
 rewrite /char0_ratr.
 have injZtoQ: @injective rat int intr by apply: intr_inj.
@@ -61,7 +61,7 @@ rewrite !(rmorphM, rmorphB) [_ - _]lock /= -lock.
 by rewrite !numqE (mulrAC y) -!mulrBl -mulrA mulrAC !mulrA.
 Qed.
 
-Fact char0_ratr_is_multiplicative : multiplicative ratrF.
+Fact char0_ratr_is_monoid_morphism : monoid_morphism ratrF.
 Proof.
 rewrite /char0_ratr.
 have injZtoQ: @injective rat int intr by apply: intr_inj.
@@ -73,10 +73,10 @@ apply: injZtoQ; rewrite !rmorphM [x * y]lock /= !numqE -lock.
 by rewrite -!mulrA mulrA mulrCA -!mulrA (mulrCA y).
 Qed.
 
-HB.instance Definition _ := GRing.isAdditive.Build rat F ratrF
-  char0_ratr_is_additive.
-HB.instance Definition _ := GRing.isMultiplicative.Build rat F ratrF
-  char0_ratr_is_multiplicative.
+HB.instance Definition _ := GRing.isZmodMorphism.Build rat F ratrF
+  char0_ratr_is_zmod_morphism.
+HB.instance Definition _ := GRing.isMonoidMorphism.Build rat F ratrF
+  char0_ratr_is_monoid_morphism.
 
 End Char0MorphismsField.
 

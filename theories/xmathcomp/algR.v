@@ -1,5 +1,5 @@
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect all_fingroup all_algebra archimedean.
+From mathcomp Require Import all_boot all_order all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field.
 Set SsrOldRewriteGoalsOrder.  (* change Set to Unset when porting the file, then remove the line when requiring MathComp >= 2.6 *)
 From Abel Require Import various.
@@ -27,12 +27,12 @@ Lemma total_algR : total (<=%O : rel (algR : porderType _)).
 Proof. by move=> x y; apply/real_leVge/valP/valP. Qed.
 HB.instance Definition _ := Order.POrder_isTotal.Build _ algR total_algR.
 
-Lemma algRval_is_additive : additive algRval. Proof. by []. Qed.
-Lemma algRval_is_multiplicative : multiplicative algRval. Proof. by []. Qed.
-HB.instance Definition _ := GRing.isAdditive.Build algR algC algRval
-  algRval_is_additive.
-HB.instance Definition _ := GRing.isMultiplicative.Build algR algC algRval
-  algRval_is_multiplicative.
+Lemma algRval_is_zmod_morphism : zmod_morphism algRval. Proof. by []. Qed.
+Lemma algRval_is_monoid_morphism : monoid_morphism algRval. Proof. by []. Qed.
+HB.instance Definition _ := GRing.isZmodMorphism.Build algR algC algRval
+  algRval_is_zmod_morphism.
+HB.instance Definition _ := GRing.isMonoidMorphism.Build algR algC algRval
+  algRval_is_monoid_morphism.
 
 Definition algR_norm (x : algR) : algR := in_algR (normr_real (val x)).
 Lemma algR_ler_norm_add x y : algR_norm (x + y) <= (algR_norm x + algR_norm y).
@@ -188,7 +188,7 @@ elim: n r => // n IHn [|x r]/= in p pr *.
 rewrite ltnS => r_lt.
 have xJxr : x^* \in x :: r.
   rewrite -root_prod_XsubC -pr.
-  have /eq_map_poly-> : algRval =1 Num.conj_op \o algRval.
+  have /eq_map_poly-> : algRval =1 Num.conj \o algRval.
     by move=> a /=; rewrite (CrealP (algRvalP _)).
   by rewrite map_poly_comp mapf_root pr root_prod_XsubC mem_head.
 have xJr : (x \isn't Num.real) ==> (x^* \in r) by rewrite implyNb CrealE.

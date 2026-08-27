@@ -47,45 +47,55 @@ supported_coq_versions:
 tested_coq_opam_versions:
 - version: 'rocq-prover-dev'
   repo: 'mathcomp/mathcomp-dev'
+- version: 'rocq-prover-9.3'
+  repo: 'mathcomp/mathcomp-dev'
 - version: 'rocq-prover-9.2'
   repo: 'mathcomp/mathcomp-dev'
 - version: 'rocq-prover-9.1'
   repo: 'mathcomp/mathcomp-dev'
 - version: 'rocq-prover-9.0'
   repo: 'mathcomp/mathcomp-dev'
+- version: '2.6.0-rocq-prover-9.3'
+  repo: 'mathcomp/mathcomp'
+- version: '2.6.0-rocq-prover-9.2'
+  repo: 'mathcomp/mathcomp'
+- version: '2.6.0-rocq-prover-9.1'
+  repo: 'mathcomp/mathcomp'
+- version: '2.6.0-rocq-prover-9.0'
+  repo: 'mathcomp/mathcomp'
 - version: '2.5.0-rocq-prover-9.1'
   repo: 'mathcomp/mathcomp'
 - version: '2.5.0-rocq-prover-9.0'
   repo: 'mathcomp/mathcomp'
-- version: '2.4.0-rocq-prover-9.1'
-  repo: 'mathcomp/mathcomp'
-- version: '2.4.0-rocq-prover-9.0'
-  repo: 'mathcomp/mathcomp'
 
 dependencies:
 - opam:
-    name: coq-mathcomp-ssreflect
-    version: '{>= "2.4"}'
+    name: rocq-mathcomp-boot
+    version: '{>= "2.5"}'
   description: |-
-    [MathComp ssreflect 2.4 and later](https://math-comp.github.io)
+    [MathComp boot 2.5 and later](https://math-comp.github.io)
 - opam:
-    name: coq-mathcomp-fingroup
+    name: rocq-mathcomp-order
+  description: |-
+    [MathComp order](https://math-comp.github.io)
+- opam:
+    name: rocq-mathcomp-fingroup
   description: |-
     [MathComp fingroup](https://math-comp.github.io)
 - opam:
-    name: coq-mathcomp-algebra
+    name: rocq-mathcomp-algebra
   description: |-
     [MathComp algebra](https://math-comp.github.io)
 - opam:
-    name: coq-mathcomp-solvable
+    name: rocq-mathcomp-solvable
   description: |-
     [MathComp solvable](https://math-comp.github.io)
 - opam:
-    name: coq-mathcomp-field
+    name: rocq-mathcomp-field
   description: |-
     [MathComp field](https://math-comp.github.io)
 - opam:
-    name: coq-mathcomp-real-closed
+    name: rocq-mathcomp-real-closed
   description: |-
     [MathComp real closed](https://github.com/math-comp/real-closed)
 namespace: Abel
