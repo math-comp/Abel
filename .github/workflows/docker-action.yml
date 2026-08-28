@@ -19,13 +19,13 @@ jobs:
       matrix:
         image:
           - 'mathcomp/mathcomp-dev:rocq-prover-dev'
+          - 'mathcomp/mathcomp-dev:rocq-prover-9.3'
           - 'mathcomp/mathcomp-dev:rocq-prover-9.2'
           - 'mathcomp/mathcomp-dev:rocq-prover-9.1'
-          - 'mathcomp/mathcomp-dev:rocq-prover-9.0'
+          - 'mathcomp/mathcomp:2.6.0-rocq-prover-9.3'
+          - 'mathcomp/mathcomp:2.6.0-rocq-prover-9.2'
+          - 'mathcomp/mathcomp:2.6.0-rocq-prover-9.1'
           - 'mathcomp/mathcomp:2.5.0-rocq-prover-9.1'
-          - 'mathcomp/mathcomp:2.5.0-rocq-prover-9.0'
-          - 'mathcomp/mathcomp:2.4.0-rocq-prover-9.1'
-          - 'mathcomp/mathcomp:2.4.0-rocq-prover-9.0'
       fail-fast: false
     steps:
       - uses: actions/checkout@v4

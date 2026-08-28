@@ -1,5 +1,5 @@
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
+From mathcomp Require Import all_boot all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field.
 Set SsrOldRewriteGoalsOrder.  (* change Set to Unset when porting the file, then remove the line when requiring MathComp >= 2.6 *)
 From Abel Require Import various cyclotomic_ext.
@@ -64,12 +64,12 @@ move=> /irredp_FAdjoin[L1 df [r1 r1_root r1_full]].
 pose L01 : fieldExtType F0 := baseFieldType L1.
 pose r01 : L01 := r1.
 pose inL01 : L -> L01 := in_alg L1.
-have iotam : multiplicative inL01.
-  by split; [exact: rmorphM|rewrite /inL01 rmorph1].
+have iotam : monoid_morphism inL01.
+  by split; [rewrite /inL01 rmorph1|exact: rmorphM].
 have iotal : scalable inL01.
   by move=> k a; rewrite /inL01 -mulr_algl rmorphM/= mulr_algl.
-pose iotaaM := GRing.isAdditive.Build _ _ inL01 (rmorphB _).
-pose iotamM := GRing.isMultiplicative.Build _ _ inL01 iotam.
+pose iotaaM := GRing.isZmodMorphism.Build _ _ inL01 (rmorphB _).
+pose iotamM := GRing.isMonoidMorphism.Build _ _ inL01 iotam.
 pose iotalM := GRing.isScalable.Build _ _ _ _ inL01 iotal.
 pose iotaLRM : {lrmorphism _ -> _} := HB.pack inL01 iotaaM iotamM iotalM.
 pose iota1 : 'AHom(L, L01) := AHom (linfun_is_ahom iotaLRM).
@@ -116,7 +116,7 @@ have poly_XnsubC_neq0 : 'X^n - 1 != 0 :> {poly L}.
 apply: classic_bind (classic_fieldExtFor (poly_XnsubC_neq0)).
 case=> [L' [rs [iota rs_full]]].
 rewrite rmorphB rmorph1/= map_polyXn.
-rewrite eqp_monic ?monic_XnsubC ?monic_prod_XsubC// => /eqP Xnsub1E.
+rewrite eqp_monic ?monicXnsubC ?monic_prod_XsubC// => /eqP Xnsub1E.
 have rs_uniq : uniq rs.
   rewrite -separable_prod_XsubC -Xnsub1E separable_Xn_sub_1//.
   have: in_alg L' n%:R != 0 by rewrite fmorph_eq0.

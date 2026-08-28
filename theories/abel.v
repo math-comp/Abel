@@ -1,6 +1,6 @@
 From Corelib Require Import Setoid.
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
+From mathcomp Require Import all_boot all_order all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field polyrcf.
 Set SsrOldRewriteGoalsOrder.  (* change Set to Unset when porting the file, then remove the line when requiring MathComp >= 2.6 *)
 From Abel Require Import various classic_ext map_gal algR.
@@ -300,7 +300,7 @@ have /eqP/HT90g[x [xF xN0]] : galNorm E F w = 1.
   rewrite /galNorm; under eq_bigr => g' g'G. rewrite (fixed_gal EF g'G)//. over.
   by rewrite prodr_const -galois_dim// (prim_expr_order w_root).
 have gxN0 : g x != 0 by rewrite fmorph_eq0.
-have wN0 : w != 0 by rewrite (primitive_root_eq0 w_root) -lt0n.
+have wN0 : w != 0 by rewrite (prim_root_eq0 w_root) -lt0n.
 move=> /(canLR (mulfVK gxN0))/(canRL (mulKf wN0)) gx.
 have gXx i : (g ^+ i)%g x = w ^- i * x.
   elim: i =>  [|i IHi].
@@ -417,10 +417,9 @@ move=> n_gt0; have [->|xN0] := eqVneq x 0.
   under eq_bigr do rewrite mul0r subr0.
   by rewrite expr0n gtn_eqF// subr0 prodr_const card_ord.
 rewrite [LHS](@all_roots_prod_XsubC _ _ ws).
-- by rewrite (monicP _) ?monic_XnsubC// scale1r big_map big_enum.
+- by rewrite (monicP _) ?monicXnsubC// scale1r big_map big_enum.
 - by rewrite size_XnsubC// size_map size_enum_ord.
-- rewrite all_map; apply/allP => i _ /=; rewrite /root !hornerE ?hornerXn.
-  (* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
+- rewrite all_map; apply/allP => i _ /=; rewrite /root !hornerE.
   by rewrite exprMn exprAC [w ^+ _]prim_expr_order// expr1n mulr1 subrr.
 - by rewrite uniq_rootsE uniq_roots_Xn_sub_xn.
 Qed.
@@ -437,8 +436,7 @@ Lemma dvdp_minpoly_Xn_subn E :
   (x ^+ p)%R \in E -> minPoly E x %| ('X^p - (x ^+ p)%:P).
 Proof using.
 move=> xpE; have [->|p_gt0] := posnP p; first by rewrite !expr0 subrr dvdp0.
-by rewrite minPoly_dvdp /root ?poly_XnsubC_over// !hornerE ?hornerXn subrr.
-(* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
+by rewrite minPoly_dvdp /root ?polyOverXnsubC// !hornerE subrr.
 Qed.
 
 Lemma galois_cyclo_radical E : (p > 0)%N -> x ^+ p \in E ->
@@ -483,7 +481,7 @@ Proof using w_root p_prime wE xNE xpE p_gt0.
 have xN0 : x != 0 by apply: contraNneq xNE => ->; rewrite rpred0.
 have := dvdp_minpoly_Xn_subn xpE; rewrite (Xn_sub_xnE _ w_root)// -big_enum/=.
 move=> /dvdp_prod_XsubC[m]; rewrite eqp_monic ?monic_minPoly//; last first.
-  by rewrite monic_prod// => i _; rewrite monic_XsubC.
+  by rewrite monic_prod// => i _; rewrite monicXsubC.
 have [{}m sm ->] := resize_mask m (enum 'I_p); set s := mask _ _ => /eqP mEx.
 have [|smp_gt0] := posnP (size s).
   case: s mEx => // /(congr1 (horner^~x))/esym/eqP.
@@ -497,7 +495,7 @@ have xXE (i : nat) : x ^+ i \in E -> (p %| i)%N.
   by rewrite expfB// rpredM ?rpredV// mulnC exprM rpredX.
 have /polyOverP/(_ 0%N) := minPolyOver E x; rewrite {}mEx coef0_prod.
 under eq_bigr do rewrite coefB coefX coefC add0r -mulrN/=.
-have w_neq0 : w != 0 by rewrite (primitive_root_eq0 w_root) -lt0n.
+have w_neq0 : w != 0 by rewrite (prim_root_eq0 w_root) -lt0n.
 rewrite big_split/= fpredMr; last first.
 - by rewrite prodf_seq_eq0; apply/hasPn => i _/=; rewrite oppr_eq0 expf_neq0.
 - by rewrite rpred_prod// => i _/=; rewrite rpredN rpredX.
@@ -1088,7 +1086,7 @@ Lemma gal_perm_cycle_order : #[(gal_perm gal_cycle)]%g = d.
 Proof. by rewrite order_injm ?gal_cycle_order ?injm_gal_perm ?gal1. Qed.
 
 Definition conjL : {lrmorphism L -> L} :=
-  projT1 (restrict_aut_to_normal_num_field iota Num.conj_op).
+  projT1 (restrict_aut_to_normal_num_field iota Num.conj).
 
 Definition iotaJ : {morph iota : x / conjL x >-> x^*} :=
   projT2 (restrict_aut_to_normal_num_field _ _).
@@ -1504,8 +1502,7 @@ have Cchar := Cpchar => p_neq0; split.
   move=> /radicalP[]; case: i => // i in epw * => _ uik.
   pose v := i.+1.-root (iota (u ^+ i.+1)).
   have : ('X ^+ i.+1 - (v ^+ i.+1)%:P).[iota u] == 0.
-    by rewrite !hornerE ?hornerXn rootCK// rmorphXn subrr.
-    (* FIXME: remove ?hornerXn when requiring MC >= 1.16.0 *)
+    by rewrite !hornerE rootCK// rmorphXn subrr.
   have /Xn_sub_xnE->// := prim1rootP (isT : 0 < i.+1)%N.
   rewrite horner_prod prodf_seq_eq0/= => /hasP[/= l _].
   rewrite hornerXsubC subr_eq0 => /eqP u_eq.

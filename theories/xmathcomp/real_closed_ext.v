@@ -1,4 +1,4 @@
-From mathcomp Require Import all_ssreflect all_fingroup all_algebra.
+From mathcomp Require Import all_boot all_order all_fingroup all_algebra.
 From mathcomp Require Import all_solvable all_field polyrcf polyorder.
 Set SsrOldRewriteGoalsOrder.  (* change Set to Unset when porting the file, then remove the line when requiring MathComp >= 2.6 *)
 From Abel Require Import various.
@@ -40,7 +40,7 @@ have slt (i : 'I_n.-1) : s`_i < s`_(i.+1) by apply/sortedP; rewrite ?sorted_root
 have peq0 i : (i < n)%N -> p.[s`_i] = 0.
   by move=> i_lt; apply/rootP; rewrite -[root _ _]mem_rootsR// mem_nth.
 have peq (i : 'I_n.-1) : p.[s`_i] = p.[s`_(i.+1)] by rewrite !peq0// ltnW.
-have /all_sig2[r rs p'r] := rolle (slt _) (peq _).
+have /all_sig2[r rs p'r] := poly_rolle (slt _) (peq _).
 have rtE (i : 'I_n.-1) : [tuple r i | i < n.-1]`_i = r i.
   by rewrite (nth_map i) ?size_enum_ord ?nth_ord_enum.
 suff /(sorted_uniq lt_trans lt_irreflexive) : sorted <%R [tuple r i | i < _].

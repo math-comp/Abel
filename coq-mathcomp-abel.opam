@@ -21,13 +21,14 @@ Mathematical Components library."""
 build: [make "-j%{jobs}%"]
 install: [make "install"]
 depends: [
-  "rocq-core" {>= "9.0"}
-  "coq-mathcomp-ssreflect" {>= "2.4"}
-  "coq-mathcomp-fingroup" 
-  "coq-mathcomp-algebra" 
-  "coq-mathcomp-solvable" 
-  "coq-mathcomp-field" 
-  "coq-mathcomp-real-closed" 
+  "rocq-core" {>= "9.1"}
+  "rocq-mathcomp-boot" {>= "2.5"}
+  "rocq-mathcomp-order" 
+  "rocq-mathcomp-fingroup" 
+  "rocq-mathcomp-algebra" 
+  "rocq-mathcomp-solvable" 
+  "rocq-mathcomp-field" 
+  "rocq-mathcomp-real-closed" 
 ]
 
 tags: [
