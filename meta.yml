@@ -41,8 +41,8 @@ license:
   file: CeCILL-B
 
 supported_coq_versions:
-  text: '9.0 or later'
-  opam: '{>= "9.0"}'
+  text: '9.1 or later'
+  opam: '{>= "9.1"}'
 
 tested_coq_opam_versions:
 - version: 'rocq-prover-dev'
@@ -53,19 +53,13 @@ tested_coq_opam_versions:
   repo: 'mathcomp/mathcomp-dev'
 - version: 'rocq-prover-9.1'
   repo: 'mathcomp/mathcomp-dev'
-- version: 'rocq-prover-9.0'
-  repo: 'mathcomp/mathcomp-dev'
 - version: '2.6.0-rocq-prover-9.3'
   repo: 'mathcomp/mathcomp'
 - version: '2.6.0-rocq-prover-9.2'
   repo: 'mathcomp/mathcomp'
 - version: '2.6.0-rocq-prover-9.1'
   repo: 'mathcomp/mathcomp'
-- version: '2.6.0-rocq-prover-9.0'
-  repo: 'mathcomp/mathcomp'
 - version: '2.5.0-rocq-prover-9.1'
-  repo: 'mathcomp/mathcomp'
-- version: '2.5.0-rocq-prover-9.0'
   repo: 'mathcomp/mathcomp'
 
 dependencies:

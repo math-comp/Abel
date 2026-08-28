@@ -26,7 +26,7 @@ Mathematical Components library.
   - Assia Mahboubi (initial)
   - Pierre-Yves Strub (initial)
 - License: [CeCILL-B](CeCILL-B)
-- Compatible Rocq/Coq versions: 9.0 or later
+- Compatible Rocq/Coq versions: 9.1 or later
 - Additional dependencies:
   - [MathComp boot 2.5 and later](https://math-comp.github.io)
   - [MathComp order](https://math-comp.github.io)

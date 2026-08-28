@@ -63,11 +63,6 @@
       }; coqPackages = {
         coq.override.version = "9.1";
       }; };
-      "rocq-9.0" = { rocqPackages = {
-        rocq-core.override.version = "9.0";
-      }; coqPackages = {
-        coq.override.version = "9.0";
-      }; };
     };
 
   ## Cachix caches to use in CI
