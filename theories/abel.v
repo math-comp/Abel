@@ -1140,7 +1140,7 @@ apply: (fmorph_inj iota); rewrite iotaJ.
 by rewrite conj_Creal ?nth_rp_real// tpermD// -val_eqE/= ltn_eqF// ltnW.
 Qed.
 
-Definition galJ : gal_of K := gal K (AHom (linfun_is_ahom conjL)).
+Definition galJ : gal_of K := gal K (linfun_ahom conjL).
 
 Lemma galJ_tperm : gal_perm galJ = tperm i0 i1.
 Proof.

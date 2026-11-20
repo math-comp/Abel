@@ -72,7 +72,7 @@ pose iotaaM := GRing.isZmodMorphism.Build _ _ inL01 (rmorphB _).
 pose iotamM := GRing.isMonoidMorphism.Build _ _ inL01 iotam.
 pose iotalM := GRing.isScalable.Build _ _ _ _ inL01 iotal.
 pose iotaLRM : {lrmorphism _ -> _} := HB.pack inL01 iotaaM iotamM iotalM.
-pose iota1 : 'AHom(L, L01) := AHom (linfun_is_ahom iotaLRM).
+pose iota1 : 'AHom(L, L01) := linfun_ahom iotaLRM.
 have inL01E : inL01 =1 iota1 by move=> x; rewrite lfunE.
 have r01_root : root (p ^^ iota1) r01 by rewrite -(eq_map_poly inL01E).
 have r01_full : <<limg iota1; r01>>%VS = fullv.

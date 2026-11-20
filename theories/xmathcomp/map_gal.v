@@ -526,7 +526,7 @@ Proof. by rewrite !inE map_ahom_kAut. Qed.
 Lemma map_ahom_kEnd_img s : map_ahom s \in kAEnd 1 (iota @: {: L})%AS.
 Proof.
 rewrite inE -(aimg1 iota) map_ahom_kAut// kAutfE.
-exact/kHom_monoid_morphism/ahom_is_monoid_morphism.
+exact/kHom_monoid_morphism/rmorphism_monoidP.
 Qed.
 
 End map_ahom.
